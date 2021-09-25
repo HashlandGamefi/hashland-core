@@ -30,6 +30,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
 
     Hn[] public hns;
 
+    uint256[] public nullArr;
+
     /**
      * @param spawner Initialize Spawner Role
      * @param setter Initialize Setter Role
@@ -50,11 +52,7 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         uint256 level,
         uint256 race,
         uint256 class,
-        uint256[] calldata hashrates,
-        uint256[] calldata attributes,
-        uint256[] calldata spells,
-        uint256[] calldata items,
-        uint256[] calldata metadatas
+        uint256[] calldata hashrates
     ) external onlyRole(SPAWNER_ROLE) returns (uint256) {
         uint256 newHnId = hns.length;
 
@@ -66,26 +64,16 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
                 race,
                 class,
                 hashrates,
-                attributes,
-                spells,
-                items,
-                metadatas,
+                nullArr,
+                nullArr,
+                nullArr,
+                nullArr,
                 block.timestamp,
                 uint256(
                     keccak256(
                         abi.encodePacked(
                             newHnId,
                             to,
-                            name,
-                            ip,
-                            level,
-                            race,
-                            class,
-                            hashrates,
-                            attributes,
-                            spells,
-                            items,
-                            metadatas,
                             block.timestamp
                         )
                     )
