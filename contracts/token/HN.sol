@@ -1,74 +1,172 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.7;
 
-pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+/**
+ * @title Hashland NFT
+ * @author HASHLAND-TEAM
+ * @notice This Contract Supply HN
+ */
+contract HN is ERC721Enumerable, AccessControlEnumerable {
+    bytes32 public constant SPAWNER_ROLE = keccak256("SPAWNER_ROLE");
+    bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
 
-contract MiningNFT is ERC721, Ownable, IERC721Receiver 
-{
-	uint256 public autoTokenId;
-	mapping(uint256=>uint8) public tokenLevel;
-
-	uint256 constant UPGRADE_MATERIAL_NUM = 4;
-
-	event UPGRADE(uint256, uint8, uint8);
-
-    constructor() ERC721("HASH LAND NFT", "HLN") 
-    {
-    	autoTokenId = 0;
+    struct Hn {
+        string name;
+        uint256 ip;
+        uint256 level;
+        uint256 race;
+        uint256 class;
+        uint256[] attributes;
+        uint256[] spells;
+        uint256[] items;
+        uint256[] metadatas;
+        uint256 spawnTime;
+        uint256 seed;
     }
 
-    function _autoIncTokenId() internal returns(uint256)
-    {
-    	autoTokenId = autoTokenId + 1;
-    	return autoTokenId;
+    Hn[] public hns;
+
+    /**
+     * @param spawner Initialize Spawner Role
+     * @param setter Initialize Setter Role
+     */
+    constructor(address spawner, address setter) ERC721("Hashland NFT", "HN") {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(SPAWNER_ROLE, spawner);
+        _setupRole(SETTER_ROLE, setter);
     }
 
-    function _setTokenLevel(uint256 tokenId, uint8 level) internal 
-    {
-    	require(_exists(tokenId), "EEXIST");
-    	require(tokenLevel[tokenId] != level, "ESAME");
+    /**
+     * @dev Spawn a New Hn to an Address
+     */
+    function spawnHn(
+        address to,
+        string calldata name,
+        uint256 ip,
+        uint256 level,
+        uint256 race,
+        uint256 class,
+        uint256[] calldata attributes,
+        uint256[] calldata spells,
+        uint256[] calldata items,
+        uint256[] calldata metadatas
+    ) external onlyRole(SPAWNER_ROLE) returns (uint256) {
+        uint256 newHnId = hns.length;
 
-    	emit UPGRADE(tokenId, tokenLevel[tokenId], level);
-    	tokenLevel[tokenId] = level;
+        hns.push(
+            Hn(
+                name,
+                ip,
+                level,
+                race,
+                class,
+                attributes,
+                spells,
+                items,
+                metadatas,
+                block.timestamp,
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            newHnId,
+                            to,
+                            name,
+                            ip,
+                            level,
+                            race,
+                            class,
+                            attributes,
+                            spells,
+                            items,
+                            metadatas,
+                            block.timestamp
+                        )
+                    )
+                )
+            )
+        );
+
+        _safeMint(to, newHnId);
+
+        return newHnId;
     }
 
-    function _mintWithLevel(address to, uint8 level) internal returns(uint256)
+    /**
+     * @dev Set Metadata
+     */
+    function setMetadata(uint256 hnId, uint256[] calldata metadatas)
+        external
+        onlyRole(SETTER_ROLE)
     {
-    	uint256 tokenId = _autoIncTokenId();
-    	require(!_exists(tokenId), "EEXIST");
-
-    	_mint(to, tokenId);
-    	_setTokenLevel(tokenId, level);
-
-    	return tokenId;
+        Hn storage hn = hns[hnId];
+        hn.metadatas = metadatas;
     }
 
-    function mint(address to, uint8 level) public onlyOwner returns(uint256)
-    {
-    	return _mintWithLevel(to, level);
+    /**
+     * @dev Set Metadata By Index
+     */
+    function setMetadataByIndex(
+        uint256 hnId,
+        uint256 metadata,
+        uint256 index
+    ) external onlyRole(SETTER_ROLE) {
+        Hn storage hn = hns[hnId];
+        hn.metadatas[index] = metadata;
     }
 
-    function upgrade(uint256[] calldata material) public returns(uint256)
-    {
-    	require(material.length == UPGRADE_MATERIAL_NUM, "ENUM");
-    	uint8 lvl = tokenLevel[material[0]];
-
-    	for(uint i = 0; i < UPGRADE_MATERIAL_NUM; i ++)
-    	{
-    		require(_exists(material[i]), "EEXIST");
-    		require(lvl == tokenLevel[material[i]], "ELEVEL");
-    		safeTransferFrom(msg.sender, address(this), material[i]);
-    		_burn(material[i]);
-    	}
-
-    	require(lvl + 1 > lvl, "EOVERFLOW");
-    	return _mintWithLevel(msg.sender, lvl + 1);
+    /**
+     * @dev Rename Hn
+     */
+    function renameHn(uint256 hnId, string calldata name) external {
+        require(ownerOf(hnId) == msg.sender, "This Hn is not Own");
+        Hn storage hn = hns[hnId];
+        hn.name = name;
     }
 
-	function onERC721Received(address, address, uint256, bytes calldata) public virtual override returns (bytes4)
-	{
-		return this.onERC721Received.selector;
-	}
-} 
+    /**
+     * @dev Get Hn Metadatas
+     */
+    function getHnMetadatas(uint256 hnId)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        Hn memory hn = hns[hnId];
+        return hn.metadatas;
+    }
+
+    /**
+     * @dev Get Hn Metadata By Index
+     */
+    function getHnMetadataByIndex(uint256 hnId, uint256 index)
+        external
+        view
+        returns (uint256)
+    {
+        Hn memory hn = hns[hnId];
+        return hn.metadatas[index];
+    }
+
+    /**
+     * @dev Get Hn Race
+     */
+    function getHnRace(uint256 hnId) external view returns (uint256) {
+        Hn memory hn = hns[hnId];
+        return hn.race;
+    }
+
+    /**
+     * @dev IERC165-supportsInterface
+     */
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(AccessControlEnumerable, ERC721Enumerable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+}

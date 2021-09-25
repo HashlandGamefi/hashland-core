@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 /**
- * @title HC Token
+ * @title Hashland Coin
  * @author HASHLAND-TEAM
  * @notice This Contract Supply HC
  */
