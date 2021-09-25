@@ -44,27 +44,3 @@ npm run deploy
 ```
 npm run flatten
 ```
-
-## Run Cronjobs on Server
-
-Needs PRIVATE_KEY in `.env` file.
-
-```
-pm2 start
-```
-
-## Check Cronjobs Logs on Server
-
-```
-pm2 logs
-```
-
-## Store NFT Data on IPFS
-
-Needs NFT_STORAGE_API_KEY and PRIVATE_KEY in `.env` file.
-
-If you do not have NFT_STORAGE_API_KEY, go to `https://nft.storage/` and add one.
-
-```
-npm run store
-```
