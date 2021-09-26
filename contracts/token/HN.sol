@@ -13,24 +13,16 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     bytes32 public constant SPAWNER_ROLE = keccak256("SPAWNER_ROLE");
     bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
 
-    struct Hn {
-        string name;
-        uint256 ip;
-        uint256 level;
-        uint256 race;
-        uint256 class;
-        uint256[] hashrates;
-        uint256[] attributes;
-        uint256[] spells;
-        uint256[] items;
-        uint256[] metadatas;
-        uint256 spawntime;
-        uint256 seed;
-    }
+    mapping(uint256 => string) public name;
+    mapping(uint256 => uint256) public ip;
+    mapping(uint256 => uint256) public level;
+    mapping(uint256 => uint256) public spawntime;
+    mapping(uint256 => uint256) public seed;
 
-    Hn[] public hns;
+    mapping(uint256 => mapping(uint256 => uint256)) public hashrates;
 
-    uint256[] public nullArr;
+    mapping(uint256 => mapping(uint256 => uint256)) public numbers;
+    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256))) public numberArrays;
 
     /**
      * @param spawner Initialize Spawner Role
@@ -54,7 +46,7 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         uint256 class,
         uint256[] calldata hashrates
     ) external onlyRole(SPAWNER_ROLE) returns (uint256) {
-        uint256 newHnId = hns.length;
+        uint256 newHnId = totalSupply();
 
         hns.push(
             Hn(
@@ -70,13 +62,7 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
                 nullArr,
                 block.timestamp,
                 uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            newHnId,
-                            to,
-                            block.timestamp
-                        )
-                    )
+                    keccak256(abi.encodePacked(newHnId, to, block.timestamp))
                 )
             )
         );
