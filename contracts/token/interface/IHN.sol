@@ -15,6 +15,8 @@ abstract contract IHN is IERC721Enumerable {
     mapping(uint256 => uint256) public spawntime;
     mapping(uint256 => uint256) public seed;
     mapping(uint256 => uint256[]) public hashrates;
+
+    mapping(uint256 => mapping(string => uint256)) public data;
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
     function spawnHn(
@@ -28,9 +30,15 @@ abstract contract IHN is IERC721Enumerable {
 
     function setSeed(uint256 hnId, uint256 _seed) external virtual;
 
-    function setHashrates(uint256 hnId, uint256[] calldata _hashrate)
+    function setHashrates(uint256 hnId, uint256[] calldata _hashrates)
         external
         virtual;
+
+    function setData(
+        uint256 hnId,
+        string calldata slot,
+        uint256 _data
+    ) external virtual;
 
     function setDatas(
         uint256 hnId,

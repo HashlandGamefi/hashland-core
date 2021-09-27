@@ -22,6 +22,10 @@ contract HNBox is AccessControlEnumerable {
     uint256 public totalBoxesLength;
     uint256 public totalBNBBuyAmount;
 
+    bool public isRaceEqualsClass = true;
+    uint256 public raceLength = 3;
+    uint256 public classLength = 3;
+
     mapping(address => uint256) public userBoxesLength;
     mapping(address => uint256) public userBNBBuyAmount;
 
@@ -95,6 +99,19 @@ contract HNBox is AccessControlEnumerable {
     }
 
     /**
+     * @dev Set Datas
+     */
+    function setDatas(
+        bool _isRaceEqualsClass,
+        uint256 _raceLength,
+        uint256 _classLength
+    ) external onlyRole(MANAGER_ROLE) {
+        isRaceEqualsClass = _isRaceEqualsClass;
+        raceLength = _raceLength;
+        classLength = _classLength;
+    }
+
+    /**
      * @dev Buy Boxes By BNB
      */
     receive() external payable {
@@ -109,9 +126,22 @@ contract HNBox is AccessControlEnumerable {
         uint256[] memory hashrates = new uint256[](1);
         hashrates[0] = 100;
         uint256[] memory hnIds = new uint256[](boxesLength);
-        uint256 randomness;
+        uint256 randomness = uint256(
+            keccak256(
+                abi.encodePacked(
+                    msg.sender,
+                    msg.value,
+                    block.timestamp
+                )
+            )
+        );
         for (uint256 i = 0; i < boxesLength; i++) {
+            uint256 race = ((randomness % 1e2) % raceLength) + 1;
+            uint256 class = (((randomness % 1e4) / 1e2) % classLength) + 1;
+
             uint256 hnId = hn.spawnHn(msg.sender, 1, 1, hashrates);
+            hn.setData(hnId, "race", race);
+            hn.setData(hnId, "class", isRaceEqualsClass ? race : class);
 
             hnIds[i] = hnId;
             randomness /= 1e6;

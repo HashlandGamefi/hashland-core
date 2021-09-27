@@ -19,6 +19,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     mapping(uint256 => uint256) public spawntime;
     mapping(uint256 => uint256) public seed;
     mapping(uint256 => uint256[]) public hashrates;
+
+    mapping(uint256 => mapping(string => uint256)) public data;
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
     /**
@@ -87,11 +89,22 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     /**
      * @dev Set Hashrates
      */
-    function setHashrates(uint256 hnId, uint256[] calldata _hashrate)
+    function setHashrates(uint256 hnId, uint256[] calldata _hashrates)
         external
         onlyRole(SETTER_ROLE)
     {
-        hashrates[hnId] = _hashrate;
+        hashrates[hnId] = _hashrates;
+    }
+
+    /**
+     * @dev Set Data
+     */
+    function setData(
+        uint256 hnId,
+        string calldata slot,
+        uint256 _data
+    ) external onlyRole(SETTER_ROLE) {
+        data[hnId][slot] = _data;
     }
 
     /**
