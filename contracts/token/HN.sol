@@ -14,12 +14,12 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
 
     mapping(uint256 => string) public name;
+    mapping(uint256 => uint256) public ip;
     mapping(uint256 => uint256) public level;
     mapping(uint256 => uint256) public spawntime;
     mapping(uint256 => uint256) public seed;
-    mapping(uint256 => mapping(uint256 => uint256)) public hashrates;
-    mapping(uint256 => mapping(string => mapping(uint256 => uint256)))
-        public datas;
+    mapping(uint256 => uint256[]) public hashrates;
+    mapping(uint256 => mapping(string => uint256[])) public datas;
 
     /**
      * @param spawner Initialize Spawner Role
@@ -36,20 +36,21 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
      */
     function spawnHn(
         address to,
+        uint256 _ip,
         uint256 _level,
         uint256[] calldata _hashrates
     ) external onlyRole(SPAWNER_ROLE) returns (uint256) {
         uint256 newHnId = totalSupply();
 
+        ip[newHnId] = _ip;
         level[newHnId] = _level;
-        for (uint256 i = 0; i < _hashrates.length; i++) {
-            hashrates[newHnId][i] = _hashrates[i];
-        }
+        hashrates[newHnId] = _hashrates;
         spawntime[newHnId] = block.timestamp;
         seed[newHnId] = uint256(
             keccak256(
                 abi.encodePacked(
                     to,
+                    _ip,
                     _level,
                     _hashrates,
                     newHnId,
@@ -84,14 +85,24 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     }
 
     /**
-     * @dev Set Hashrate
+     * @dev Set Hashrates
      */
-    function setHashrate(
+    function setHashrates(uint256 hnId, uint256[] calldata _hashrate)
+        external
+        onlyRole(SETTER_ROLE)
+    {
+        hashrates[hnId] = _hashrate;
+    }
+
+    /**
+     * @dev Set Datas
+     */
+    function setDatas(
         uint256 hnId,
-        uint256 index,
-        uint256 _hashrate
+        string calldata slot,
+        uint256[] calldata _datas
     ) external onlyRole(SETTER_ROLE) {
-        hashrates[hnId][index] = _hashrate;
+        datas[hnId][slot] = _datas;
     }
 
     /**
