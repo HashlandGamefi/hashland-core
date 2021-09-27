@@ -114,6 +114,28 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     }
 
     /**
+     * @dev Get Hashrates
+     */
+    function getHashrates(uint256 hnId)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return hashrates[hnId];
+    }
+
+    /**
+     * @dev Get Datas
+     */
+    function getDatas(uint256 hnId, string calldata slot)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return datas[hnId][slot];
+    }
+
+    /**
      * @dev IERC165-supportsInterface
      */
     function supportsInterface(bytes4 interfaceId)
