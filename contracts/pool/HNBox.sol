@@ -3,6 +3,7 @@ pragma solidity >=0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../token/interface/IHN.sol";
 
 /**
@@ -11,6 +12,8 @@ import "../token/interface/IHN.sol";
  * @notice This Contract Draw HN
  */
 contract HNBox is AccessControlEnumerable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     IHN public hn;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -28,6 +31,8 @@ contract HNBox is AccessControlEnumerable {
 
     mapping(address => uint256) public userBoxesLength;
     mapping(address => uint256) public userBNBBuyAmount;
+
+    EnumerableSet.AddressSet private users;
 
     event BuyBoxes(address indexed user, uint256 boxesLength, uint256[] hnIds);
 
@@ -129,6 +134,13 @@ contract HNBox is AccessControlEnumerable {
         uint256 randomness = uint256(
             keccak256(
                 abi.encodePacked(
+                    boxBNBPrice,
+                    boxesMaxSupply,
+                    totalBoxesLength,
+                    totalBNBBuyAmount,
+                    userBoxesLength[msg.sender],
+                    userBNBBuyAmount[msg.sender],
+                    users.length(),
                     msg.sender,
                     msg.value,
                     block.timestamp
@@ -151,11 +163,33 @@ contract HNBox is AccessControlEnumerable {
         userBNBBuyAmount[msg.sender] += buyAmount;
         totalBoxesLength += boxesLength;
         totalBNBBuyAmount += buyAmount;
+        users.add(msg.sender);
 
         uint256 returnAmount = msg.value - buyAmount;
         if (returnAmount > 0) payable(msg.sender).transfer(returnAmount);
 
         emit BuyBoxes(msg.sender, boxesLength, hnIds);
+    }
+
+    /**
+     * @dev Get Users Length
+     */
+    function getUsersLength() external view returns (uint256) {
+        return users.length();
+    }
+
+    /**
+     * @dev Get User by Index
+     */
+    function getUserByIndex(uint256 index) external view returns (address) {
+        return users.at(index);
+    }
+
+    /**
+     * @dev Get Users
+     */
+    function getUsers() external view returns (address[] memory) {
+        return users.values();
     }
 
     /**
