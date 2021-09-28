@@ -21,7 +21,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     address public receivingAddress;
-    uint256 public upgradePrice = 10e18;
+    uint256 public upgradePrice = 10 * 1e18;
     uint256 public totalUpgradeCount;
     uint256 public totalUpgradeAmount;
 
@@ -105,6 +105,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
         require(level < 5, "Hn Level must < 5");
 
         hc.transferFrom(msg.sender, receivingAddress, upgradePrice);
+
         uint256[] memory hashrates = hn.getHashrates(hnId);
         uint256[] memory attrs = hn.getDatas(hnId, "attrs");
         uint256[] memory items = hn.getDatas(hnId, "items");
@@ -159,11 +160,11 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
         newItems[items.length] = ((randomness % 1e2) % itemsLength) + 1;
         hn.setDatas(hnId, "items", newItems);
 
-        totalUpgradeCount++;
-        totalUpgradeAmount += upgradePrice;
+        upgradedLevels[hnId]++;
         userUpgradeCount[msg.sender]++;
         userUpgradeAmount[msg.sender] += upgradePrice;
-        upgradedLevels[hnId]++;
+        totalUpgradeCount++;
+        totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
 
         emit UpgradeHn(msg.sender, hnId);

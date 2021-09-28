@@ -26,12 +26,12 @@ contract HNBox is AccessControlEnumerable {
     uint256 public totalBNBBuyAmount;
 
     bool public isRaceEqualsClass = true;
-    uint256 public hcLength = 10;
-    uint256 public btcLength = 10;
+    uint256 public hcLength = 6;
+    uint256 public btcLength = 6;
     uint256 public raceLength = 3;
     uint256 public classLength = 3;
     uint256 public itemsLength = 20;
-    uint256 public attrsLength = 5;
+    uint256 public attrsLength = 6;
 
     mapping(address => uint256) public userBoxesLength;
     mapping(address => uint256) public userBNBBuyAmount;
@@ -118,26 +118,6 @@ contract HNBox is AccessControlEnumerable {
         uint256 buyAmount = boxesLength * boxBNBPrice;
         payable(receivingAddress).transfer(buyAmount);
 
-        uint256 random = uint256(
-            keccak256(
-                abi.encodePacked(
-                    boxBNBPrice,
-                    boxesMaxSupply,
-                    totalBoxesLength,
-                    totalBNBBuyAmount,
-                    userBoxesLength[msg.sender],
-                    userBNBBuyAmount[msg.sender],
-                    users.length(),
-                    msg.sender,
-                    msg.value,
-                    block.timestamp
-                )
-            )
-        );
-        uint256[] memory hashrates = new uint256[](2);
-        hashrates[0] = ((random % 1e2) % hcLength) + 95;
-        hashrates[1] = (((random % 1e4) / 1e2) % btcLength) + 95;
-
         uint256[] memory hnIds = new uint256[](boxesLength);
         for (uint256 i = 0; i < boxesLength; i++) {
             uint256 randomness = uint256(
@@ -157,18 +137,25 @@ contract HNBox is AccessControlEnumerable {
                     )
                 )
             );
-            uint256 race = ((randomness % 1e2) % raceLength) + 1;
-            uint256 class = (((randomness % 1e4) / 1e2) % classLength) + 1;
+
+            uint256[] memory hashrates = new uint256[](2);
+            hashrates[0] = ((randomness % 1e2) % hcLength) + 100;
+            hashrates[1] = (((randomness % 1e4) / 1e2) % btcLength) + 100;
+
+            uint256 race = (((randomness % 1e6) / 1e4) % raceLength) + 1;
+            uint256 class = (((randomness % 1e8) / 1e6) % classLength) + 1;
+
             uint256[] memory items = new uint256[](2);
-            items[0] = (((randomness % 1e6) / 1e4) % itemsLength) + 1;
-            items[1] = (((randomness % 1e8) / 1e4) % itemsLength) + 1;
+            items[0] = (((randomness % 1e10) / 1e8) % itemsLength) + 1;
+            items[1] = (((randomness % 1e12) / 1e10) % itemsLength) + 1;
+
             uint256[] memory attrs = new uint256[](6);
-            attrs[0] = (((randomness % 1e10) / 1e8) % attrsLength) + 10;
-            attrs[1] = (((randomness % 1e12) / 1e10) % attrsLength) + 10;
-            attrs[2] = (((randomness % 1e14) / 1e12) % attrsLength) + 10;
-            attrs[3] = (((randomness % 1e16) / 1e14) % attrsLength) + 10;
-            attrs[4] = (((randomness % 1e18) / 1e16) % attrsLength) + 10;
-            attrs[5] = (((randomness % 1e20) / 1e18) % attrsLength) + 10;
+            attrs[0] = (((randomness % 1e14) / 1e12) % attrsLength) + 10;
+            attrs[1] = (((randomness % 1e16) / 1e14) % attrsLength) + 10;
+            attrs[2] = (((randomness % 1e18) / 1e16) % attrsLength) + 10;
+            attrs[3] = (((randomness % 1e20) / 1e18) % attrsLength) + 10;
+            attrs[4] = (((randomness % 1e22) / 1e20) % attrsLength) + 10;
+            attrs[5] = (((randomness % 1e24) / 1e22) % attrsLength) + 10;
 
             uint256 hnId = hn.spawnHn(msg.sender, 1, 1, hashrates);
             hn.setData(hnId, "race", race);
