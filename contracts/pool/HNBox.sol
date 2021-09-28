@@ -26,6 +26,8 @@ contract HNBox is AccessControlEnumerable {
     uint256 public totalBNBBuyAmount;
 
     bool public isRaceEqualsClass = true;
+    uint256 public hcLength = 10;
+    uint256 public btcLength = 10;
     uint256 public raceLength = 3;
     uint256 public classLength = 3;
     uint256 public itemsLength = 20;
@@ -88,12 +90,16 @@ contract HNBox is AccessControlEnumerable {
      */
     function setDatas(
         bool _isRaceEqualsClass,
+        uint256 _hcLength,
+        uint256 _btcLength,
         uint256 _raceLength,
         uint256 _classLength,
         uint256 _itemsLength,
         uint256 _attrsLength
     ) external onlyRole(MANAGER_ROLE) {
         isRaceEqualsClass = _isRaceEqualsClass;
+        hcLength = _hcLength;
+        btcLength = _btcLength;
         raceLength = _raceLength;
         classLength = _classLength;
         itemsLength = _itemsLength;
@@ -112,9 +118,26 @@ contract HNBox is AccessControlEnumerable {
         uint256 buyAmount = boxesLength * boxBNBPrice;
         payable(receivingAddress).transfer(buyAmount);
 
+        uint256 random = uint256(
+            keccak256(
+                abi.encodePacked(
+                    boxBNBPrice,
+                    boxesMaxSupply,
+                    totalBoxesLength,
+                    totalBNBBuyAmount,
+                    userBoxesLength[msg.sender],
+                    userBNBBuyAmount[msg.sender],
+                    users.length(),
+                    msg.sender,
+                    msg.value,
+                    block.timestamp
+                )
+            )
+        );
         uint256[] memory hashrates = new uint256[](2);
-        hashrates[0] = 100;
-        hashrates[1] = 100;
+        hashrates[0] = ((random % 1e2) % hcLength) + 95;
+        hashrates[1] = (((random % 1e4) / 1e2) % btcLength) + 95;
+
         uint256[] memory hnIds = new uint256[](boxesLength);
         for (uint256 i = 0; i < boxesLength; i++) {
             uint256 randomness = uint256(
