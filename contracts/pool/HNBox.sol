@@ -28,6 +28,8 @@ contract HNBox is AccessControlEnumerable {
     bool public isRaceEqualsClass = true;
     uint256 public raceLength = 3;
     uint256 public classLength = 3;
+    uint256 public itemsLength = 20;
+    uint256 public attrsLength = 5;
 
     mapping(address => uint256) public userBoxesLength;
     mapping(address => uint256) public userBNBBuyAmount;
@@ -52,28 +54,6 @@ contract HNBox is AccessControlEnumerable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
-    }
-
-    /**
-     * @dev Withdraw Token
-     */
-    function withdrawToken(
-        address tokenAddr,
-        address to,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC20 token = IERC20(tokenAddr);
-        token.transfer(to, amount);
-    }
-
-    /**
-     * @dev Withdraw BNB
-     */
-    function withdrawBNB(address to, uint256 amount)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        payable(to).transfer(amount);
     }
 
     /**
@@ -109,11 +89,15 @@ contract HNBox is AccessControlEnumerable {
     function setDatas(
         bool _isRaceEqualsClass,
         uint256 _raceLength,
-        uint256 _classLength
+        uint256 _classLength,
+        uint256 _itemsLength,
+        uint256 _attrsLength
     ) external onlyRole(MANAGER_ROLE) {
         isRaceEqualsClass = _isRaceEqualsClass;
         raceLength = _raceLength;
         classLength = _classLength;
+        itemsLength = _itemsLength;
+        attrsLength = _attrsLength;
     }
 
     /**
@@ -128,35 +112,48 @@ contract HNBox is AccessControlEnumerable {
         uint256 buyAmount = boxesLength * boxBNBPrice;
         payable(receivingAddress).transfer(buyAmount);
 
-        uint256[] memory hashrates = new uint256[](1);
+        uint256[] memory hashrates = new uint256[](2);
         hashrates[0] = 100;
+        hashrates[1] = 100;
         uint256[] memory hnIds = new uint256[](boxesLength);
-        uint256 randomness = uint256(
-            keccak256(
-                abi.encodePacked(
-                    boxBNBPrice,
-                    boxesMaxSupply,
-                    totalBoxesLength,
-                    totalBNBBuyAmount,
-                    userBoxesLength[msg.sender],
-                    userBNBBuyAmount[msg.sender],
-                    users.length(),
-                    msg.sender,
-                    msg.value,
-                    block.timestamp
-                )
-            )
-        );
         for (uint256 i = 0; i < boxesLength; i++) {
+            uint256 randomness = uint256(
+                keccak256(
+                    abi.encodePacked(
+                        boxBNBPrice,
+                        boxesMaxSupply,
+                        totalBoxesLength,
+                        totalBNBBuyAmount,
+                        userBoxesLength[msg.sender],
+                        userBNBBuyAmount[msg.sender],
+                        users.length(),
+                        msg.sender,
+                        msg.value,
+                        block.timestamp,
+                        i
+                    )
+                )
+            );
             uint256 race = ((randomness % 1e2) % raceLength) + 1;
             uint256 class = (((randomness % 1e4) / 1e2) % classLength) + 1;
+            uint256[] memory items = new uint256[](2);
+            items[0] = (((randomness % 1e6) / 1e4) % itemsLength) + 1;
+            items[1] = (((randomness % 1e8) / 1e4) % itemsLength) + 1;
+            uint256[] memory attrs = new uint256[](6);
+            attrs[0] = (((randomness % 1e10) / 1e8) % attrsLength) + 10;
+            attrs[1] = (((randomness % 1e12) / 1e10) % attrsLength) + 10;
+            attrs[2] = (((randomness % 1e14) / 1e12) % attrsLength) + 10;
+            attrs[3] = (((randomness % 1e16) / 1e14) % attrsLength) + 10;
+            attrs[4] = (((randomness % 1e18) / 1e16) % attrsLength) + 10;
+            attrs[5] = (((randomness % 1e20) / 1e18) % attrsLength) + 10;
 
             uint256 hnId = hn.spawnHn(msg.sender, 1, 1, hashrates);
             hn.setData(hnId, "race", race);
             hn.setData(hnId, "class", isRaceEqualsClass ? race : class);
+            hn.setDatas(hnId, "items", items);
+            hn.setDatas(hnId, "attrs", attrs);
 
             hnIds[i] = hnId;
-            randomness /= 1e6;
         }
 
         userBoxesLength[msg.sender] += boxesLength;
