@@ -25,6 +25,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     uint256 public totalUpgradeCount;
     uint256 public totalUpgradeAmount;
 
+    uint256 public hashratesLength = 6;
     uint256 public itemsLength = 20;
 
     mapping(uint256 => uint256) public upgradedLevels;
@@ -91,7 +92,11 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Set Datas
      */
-    function setDatas(uint256 _itemsLength) external onlyRole(MANAGER_ROLE) {
+    function setDatas(uint256 _hashratesLength, uint256 _itemsLength)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        hashratesLength = _hashratesLength;
         itemsLength = _itemsLength;
     }
 
@@ -120,20 +125,20 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             uint256[] memory materialHashrates = hn.getHashrates(
                 materialHnIds[i]
             );
-            hashrates[0] += materialHashrates[0];
-            hashrates[1] += materialHashrates[1];
+            for (uint256 j = 0; j < hashrates.length; j++) {
+                hashrates[j] += materialHashrates[j];
+            }
 
             uint256[] memory materialAttrs = hn.getDatas(
                 materialHnIds[i],
                 "attrs"
             );
-            for (uint256 j = 0; j < 6; j++) {
+            for (uint256 j = 0; j < attrs.length; j++) {
                 attrs[j] += materialAttrs[j];
             }
         }
 
         hn.setLevel(hnId, level + 1);
-        hn.setHashrates(hnId, hashrates);
         hn.setDatas(hnId, "attrs", attrs);
 
         uint256 randomness = uint256(
@@ -153,11 +158,20 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                 )
             )
         );
+
+        for (uint256 j = 0; j < hashrates.length; j++) {
+            hashrates[j] =
+                (hashrates[j] *
+                    (((randomness % 1e2) % hashratesLength) + 100)) /
+                100;
+        }
+        hn.setHashrates(hnId, hashrates);
+
         uint256[] memory newItems = new uint256[](items.length + 1);
         for (uint256 i = 0; i < items.length; i++) {
             newItems[i] = items[i];
         }
-        newItems[items.length] = ((randomness % 1e2) % itemsLength) + 1;
+        newItems[items.length] = (((randomness % 1e4) / 1e2) % itemsLength) + 1;
         hn.setDatas(hnId, "items", newItems);
 
         upgradedLevels[hnId]++;
