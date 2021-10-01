@@ -21,7 +21,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     address public receivingAddress;
-    uint256 public upgradePrice = 10 * 1e18;
+    uint256 public upgradePrice = 1 * 1e18;
     uint256 public totalUpgradeCount;
     uint256 public totalUpgradeAmount;
 
@@ -159,9 +159,9 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             )
         );
 
-        for (uint256 j = 0; j < hashrates.length; j++) {
-            hashrates[j] =
-                (hashrates[j] *
+        for (uint256 i = 0; i < hashrates.length; i++) {
+            hashrates[i] =
+                (hashrates[i] *
                     (((randomness % 1e2) % hashratesLength) + 100)) /
                 100;
         }
