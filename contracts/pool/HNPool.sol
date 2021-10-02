@@ -21,7 +21,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     struct UserInfo {
-        uint256 stake;
+        uint256[] stake;
         uint256[] lastAccTokenPerStake;
         uint256[] storedToken;
         uint256[] harvestedToken;
@@ -29,15 +29,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     mapping(address => UserInfo) public userInfo;
 
-    uint256 public stake;
     bool public openStatus = false;
-    uint256 public lastRewardsTime;
+    uint256[] public stake;
+    uint256[] public lastRewardsTime;
 
     uint256[] public accTokenPerStake;
     uint256[] public tokenReleaseSpeed = [83333333333333333, 3472222222222];
     address[] public tokenAddr;
     uint256[] public releasedToken;
     uint256[] public harvestedToken;
+
     uint256[] public airdropedToken;
     uint256[] public lastAirdropedToken;
     uint256[] public lastAirdropTime;
@@ -129,6 +130,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         for (uint256 i = 0; i < tokenId.length; i++) {
             require(tokenId[i] > 0, "Token Id must > 0");
             require(releaseSeconds[i] > 0, "Release Seconds must > 0");
+
             IERC20 token = IERC20(tokenAddr[tokenId[i]]);
             token.transferFrom(msg.sender, address(this), amount[i]);
             tokenReleaseSpeed[tokenId[i]] = amount[i] / releaseSeconds[i];
@@ -142,34 +144,35 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Deposit
      */
-    function deposit(uint256 amount) external {
+    function deposit(uint256 hnId) external {
         require(openStatus, "This Pool is not Opened");
 
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        if (user.stake > 0) {
-            uint256 pendingET = (user.stake *
-                (accETPerStake - user.lastAccETPerStake)) / 1e18;
-            if (pendingET > 0) {
-                user.storedET += pendingET;
+        for (uint256 i = 0; i < user.stake.length; i++) {
+            if (user.stake[i] > 0) {
+                uint256 pendingToken = (user.stake[i] *
+                    (accTokenPerStake[i] - user.lastAccTokenPerStake[i])) /
+                    1e18;
+                if (pendingToken > 0) {
+                    user.storedToken[i] += pendingToken;
+                }
             }
-            uint256 pendingETH = (user.stake *
-                (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
-            if (pendingETH > 0) {
-                user.storedETH += pendingETH;
-            }
-        }
-        if (amount > 0) {
-            ethstToken.transferFrom(msg.sender, address(this), amount);
-            user.stake += amount;
-            stake += amount;
         }
 
-        user.lastAccETPerStake = accETPerStake;
-        user.lastAccETHPerStake = accETHPerStake;
+        hn.safeTransferFrom(msg.sender, address(this), hnId);
+
+        uint256[] memory hashrates = hn.getHashrates(hnId);
+        for (uint256 i = 0; i < hashrates.length; i++) {
+            user.stake[i] += hashrates[i];
+            stake[i] += hashrates[i];
+        }
+        for (uint256 i = 0; i < user.stake.length; i++) {
+            user.lastAccTokenPerStake[i] = accTokenPerStake[i];
+        }
         users.add(msg.sender);
 
-        emit Deposit(msg.sender, amount);
+        emit Deposit(msg.sender, hnId);
     }
 
     /**
