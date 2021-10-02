@@ -1,299 +1,330 @@
-// //SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.7;
 
-// pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../token/interface/IHN.sol";
+import "../token/interface/IHC.sol";
 
-// import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import "@openzeppelin/contracts/access/Ownable.sol"; 
-// import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-// import "@openzeppelin/contracts/utils/math/Math.sol";
-// import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
-// import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-// import "hardhat/console.sol";
-// import "./MiningNFT.sol";
+/**
+ * @title HN Pool Contract
+ * @author HASHLAND-TEAM
+ * @notice This Contract Stake HN to Harvest HC and Tokens
+ */
+contract HNPool is ERC721Holder, AccessControlEnumerable {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-// contract StakingPool is IERC721Receiver, Ownable, ReentrancyGuard
-// {
-// 	using SafeMath for uint;
-// 	using SafeMath for uint256;
-// 	using SignedSafeMath for int256;
+    IHN public hn;
 
-// 	address public nftAsset;
-// 	address public slotAsset;
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-// 	struct Staker
-// 	{
-// 		uint8 numSlots;
-// 		uint8 numAvailableSlots;
-// 		uint256 power;
-// 		int256 rewardDebt;
-// 		uint256 [] stakedAssets;
-// 	}
+    struct UserInfo {
+        uint256 stake;
+        uint256[] lastAccTokenPerStake;
+        uint256[] storedToken;
+        uint256[] harvestedToken;
+    }
 
-// 	struct Reward
-// 	{
-// 		uint256 rewardBalance;
-// 		uint256 expiredBlock;
-// 		uint256 startBlock;
-// 		uint256 totalBalance;
-// 		uint256 accRewardPerPower;
-// 		uint256 lastRewardBlock;
-// 	}
+    mapping(address => UserInfo) public userInfo;
 
-// 	uint8 private constant DEFAULT_SLOTS = 2;
-// 	uint8 private constant MAX_SLOTS = 4;
-// 	uint256 private constant ACC_REWARD_PRECISION = 1e12;
+    uint256 public stake;
+    bool public openStatus = false;
+    uint256 public lastRewardsTime;
 
-// 	mapping(address=>Staker) 	public users;
-// 	mapping(uint8=>uint256) 		public powerAlloc;
-// 	mapping(address=>Reward) 	public rewards;
+    uint256[] public accTokenPerStake;
+    uint256[] public tokenReleaseSpeed = [83333333333333333, 3472222222222];
+    address[] public tokenAddr;
+    uint256[] public releasedToken;
+    uint256[] public harvestedToken;
+    uint256[] public airdropedToken;
+    uint256[] public lastAirdropedToken;
+    uint256[] public lastAirdropTime;
 
-// 	address[] public rewardList;
+    EnumerableSet.AddressSet private users;
 
-// 	uint256 public totalPower;
+    event Deposit(address indexed user, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
+    event HarvestToken(address indexed user, uint256 amount);
 
-// 	constructor(address nftAddress, address slotAddress)
-// 	{
-// 		nftAsset = nftAddress;
-// 		slotAsset = slotAddress;
-// 		powerAlloc[0] = 0;
-// 		powerAlloc[1] = 100;
-// 		powerAlloc[2] = 450;
-// 		powerAlloc[3] = 2000;
-// 		powerAlloc[4] = 10000;
-// 		powerAlloc[5] = 50000;
-// 	}
+    /**
+     * @param hnAddr Initialize HN Address
+     * @param _tokenAddr Initialize Tokens Address
+     * @param manager Initialize Manager Role
+     */
+    constructor(
+        address hnAddr,
+        address[] calldata _tokenAddr,
+        address manager
+    ) {
+        hn = IHN(hnAddr);
+        tokenAddr = _tokenAddr;
 
-// 	function _nftToPower(uint256 tokenId) internal view returns(uint256)
-// 	{
-// 		uint8 level = MiningNFT(nftAsset).tokenLevel(tokenId);
-// 		require(level > 0 && level < 6, "ELEVEL");
-// 		return powerAlloc[level];
-// 	}
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(MANAGER_ROLE, manager);
+    }
 
-// 	function rewardPerBlock(address token) public view returns(uint256)
-// 	{
-// 		Reward memory reward = rewards[token];
-// 		if(reward.expiredBlock == reward.startBlock)
-// 		{
-// 			return 0;
-// 		}
-// 		return reward.rewardBalance.div(reward.expiredBlock.sub(reward.startBlock));
-// 	}
+    /**
+     * @dev Set Token Info
+     */
+    function setTokenInfo(
+        uint256[] calldata _tokenReleaseSpeed,
+        address[] calldata _tokenAddr
+    ) external onlyRole(MANAGER_ROLE) {
+        require(
+            _tokenReleaseSpeed.length == _tokenAddr.length,
+            "Token Info Length Mismatch"
+        );
+        tokenReleaseSpeed = _tokenReleaseSpeed;
+        tokenAddr = _tokenAddr;
+    }
 
-// 	function _updateReward(address token) internal
-// 	{
-// 		Reward memory reward = rewards[token];
-// 		uint256 startBlock = Math.max(reward.lastRewardBlock, reward.startBlock);
-// 		uint256 endBlock = Math.min(reward.expiredBlock, block.number);
+    /**
+     * @dev Set Open Status
+     */
+    function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
+        openStatus = status;
+    }
 
-// 		if(endBlock > startBlock)
-// 		{
-// 			if(totalPower > 0)
-// 			{
-// 				uint256 blocks = endBlock.sub(startBlock);
-// 				uint256 profit = blocks.mul(rewardPerBlock(token));
-// 				reward.accRewardPerPower = reward.accRewardPerPower.add(profit.mul(ACC_REWARD_PRECISION) / totalPower);
-// 			}
-// 			reward.lastRewardBlock = endBlock;
-// 			rewards[token] = reward;
-// 		}
-// 	}
+    /**
+     * @dev Withdraw Token
+     */
+    function withdrawToken(
+        address _tokenAddr,
+        address to,
+        uint256 amount
+    ) external onlyRole(MANAGER_ROLE) {
+        IERC20 token = IERC20(_tokenAddr);
+        token.transfer(to, amount);
+    }
 
-// 	function _updateRewards() internal
-// 	{
-// 		for(uint i = 0; i < rewardList.length; i ++)
-// 		{
-// 			_updateReward(rewardList[i]);
-// 		}
-// 	}
+    /**
+     * @dev Withdraw NFT
+     */
+    function withdrawNFT(
+        address nftAddr,
+        address to,
+        uint256 tokenId
+    ) external onlyRole(MANAGER_ROLE) {
+        IERC721Enumerable nft = IERC721Enumerable(nftAddr);
+        nft.safeTransferFrom(address(this), to, tokenId);
+    }
 
-// 	function _updateUserDebt(address user, uint256 power, bool addOrSub) internal
-// 	{
-// 		for(uint i = 0; i < rewardList.length; i ++)
-// 		{
-// 			if(addOrSub)
-// 			{
-// 				users[user].rewardDebt = users[user].rewardDebt.add(
-// 					int256(power.mul(rewards[rewardList[i]].accRewardPerPower) / ACC_REWARD_PRECISION)
-// 				);
-// 			}
-// 			else
-// 			{
-// 				users[user].rewardDebt = users[user].rewardDebt.sub(
-// 					int256(power.mul(rewards[rewardList[i]].accRewardPerPower) / ACC_REWARD_PRECISION)
-// 				);
-// 			}
-// 		}	
-// 	}
+    /**
+     * @dev Airdrop Token
+     */
+    function airdropToken(
+        uint256[] calldata tokenId,
+        uint256[] calldata amount,
+        uint256[] calldata releaseSeconds
+    ) external onlyRole(MANAGER_ROLE) {
+        require(
+            tokenId.length == amount.length &&
+                tokenId.length == releaseSeconds.length,
+            "Token Data Length Mismatch"
+        );
 
-// 	function _arrayRemove(address user, uint256 tokenId) internal
-// 	{
-// 		for(uint i = 0; i < users[user].stakedAssets.length; i ++)
-// 		{
-// 			if(tokenId == users[user].stakedAssets[i])
-// 			{
-// 				users[user].stakedAssets[i]	= users[user].stakedAssets[users[user].stakedAssets.length - 1];
-// 				users[user].stakedAssets.pop();
-// 				return;
-// 			}
-// 		}
-// 		require(false, "ENOTEXIST");
-// 	}
+        updatePool();
+        for (uint256 i = 0; i < tokenId.length; i++) {
+            require(tokenId[i] > 0, "Token Id must > 0");
+            require(releaseSeconds[i] > 0, "Release Seconds must > 0");
+            IERC20 token = IERC20(tokenAddr[tokenId[i]]);
+            token.transferFrom(msg.sender, address(this), amount[i]);
+            tokenReleaseSpeed[tokenId[i]] = amount[i] / releaseSeconds[i];
 
-// 	function _checkSlots(address user) internal
-// 	{
-// 		if(users[user].numSlots == 0)
-// 		{
-// 			users[user].numSlots = DEFAULT_SLOTS;
-// 			users[user].numAvailableSlots = DEFAULT_SLOTS;
-// 		}
+            airdropedToken[tokenId[i]] += amount[i];
+            lastAirdropedToken[tokenId[i]] = amount[i];
+            lastAirdropTime[tokenId[i]] = block.timestamp;
+        }
+    }
 
-// 		console.log("user has %s slots, and %s used slots, and %s availableSlots." 
-// 			// , user 
-// 			, uint256(users[user].numSlots)
-// 			, uint256(users[user].stakedAssets.length)
-// 			, uint256(users[user].numAvailableSlots)
-// 		);
-// 		require(users[user].numAvailableSlots + users[user].stakedAssets.length == users[user].numSlots, "ESLOT");
-// 		require(users[user].numSlots <= MAX_SLOTS, "EMAXSLOT");
-// 	}
+    /**
+     * @dev Deposit
+     */
+    function deposit(uint256 amount) external {
+        require(openStatus, "This Pool is not Opened");
 
-// 	function pendingReward(address token, address _user) external view returns (uint256 pending) 
-// 	{
-// 		Reward memory reward = rewards[token];
-// 		Staker memory user   = users[_user];
+        UserInfo storage user = userInfo[msg.sender];
+        updatePool();
+        if (user.stake > 0) {
+            uint256 pendingET = (user.stake *
+                (accETPerStake - user.lastAccETPerStake)) / 1e18;
+            if (pendingET > 0) {
+                user.storedET += pendingET;
+            }
+            uint256 pendingETH = (user.stake *
+                (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
+            if (pendingETH > 0) {
+                user.storedETH += pendingETH;
+            }
+        }
+        if (amount > 0) {
+            ethstToken.transferFrom(msg.sender, address(this), amount);
+            user.stake += amount;
+            stake += amount;
+        }
 
-// 		uint256 accRewardPerPower = reward.accRewardPerPower;
-// 		uint256 startBlock = Math.max(reward.lastRewardBlock, reward.startBlock);
-// 		uint256 endBlock = Math.min(reward.expiredBlock, block.number);
+        user.lastAccETPerStake = accETPerStake;
+        user.lastAccETHPerStake = accETHPerStake;
+        users.add(msg.sender);
 
-// 		if (endBlock > startBlock && totalPower != 0) {
-// 			uint256 blocks = endBlock.sub(startBlock);
-// 			uint256 tokenReward = blocks.mul(rewardPerBlock(token));
-// 			accRewardPerPower = accRewardPerPower.add(tokenReward.mul(ACC_REWARD_PRECISION) / totalPower);
-// 		}
-// 		pending = uint256(int256(user.power.mul(accRewardPerPower) / ACC_REWARD_PRECISION).sub(user.rewardDebt));
-// 	}
+        emit Deposit(msg.sender, amount);
+    }
 
-// 	function addReward(address token, uint256 amount, uint256 numBlocks) public onlyOwner
-// 	{
-// 		require(numBlocks > 0, "EBLOCK");
-// 		require(amount > 0, "EAMOUNT");
+    /**
+     * @dev Withdraw
+     */
+    function withdraw(uint256 amount) external {
+        UserInfo storage user = userInfo[msg.sender];
+        require(user.stake >= amount, "You have not Enough ETHST to Withdraw");
 
-// 		_updateReward(token);
-// 		IERC20(token).transferFrom(msg.sender, address(this), amount);
+        updatePool();
+        uint256 pendingET = (user.stake *
+            (accETPerStake - user.lastAccETPerStake)) / 1e18;
+        if (pendingET > 0) {
+            user.storedET += pendingET;
+        }
+        uint256 pendingETH = (user.stake *
+            (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
+        if (pendingETH > 0) {
+            user.storedETH += pendingETH;
+        }
+        if (amount > 0) {
+            user.stake -= amount;
+            stake -= amount;
+            ethstToken.transfer(msg.sender, amount);
+        }
 
-// 		Reward memory reward = rewards[token];
-// 		if(reward.expiredBlock == 0)
-// 		{
-// 			rewardList.push(token);
-// 		}
+        user.lastAccETPerStake = accETPerStake;
+        user.lastAccETHPerStake = accETHPerStake;
 
-// 		if(reward.expiredBlock > block.number)
-// 		{
-// 			reward.rewardBalance = reward.rewardBalance.mul(reward.expiredBlock.sub(block.number))
-// 				.div(reward.expiredBlock.sub(reward.startBlock));				
-// 		}
+        emit Withdraw(msg.sender, amount);
+    }
 
-// 		reward.rewardBalance = reward.rewardBalance.add(amount);
-// 		reward.startBlock = block.number;
-// 		reward.expiredBlock = block.number.add(numBlocks);
-// 		reward.totalBalance = reward.totalBalance.add(amount);
-// 		rewards[token] = reward;
-// 	}
+    /**
+     * @dev Harvest ET
+     */
+    function harvestET() external {
+        UserInfo storage user = userInfo[msg.sender];
+        updatePool();
+        uint256 pendingET = (user.stake *
+            (accETPerStake - user.lastAccETPerStake)) / 1e18;
+        uint256 amount = user.storedET + pendingET;
+        require(amount > 0, "You have No ET to Harvest");
 
-// 	function increaseSlot(uint256 slotTokenId) public nonReentrant
-// 	{
-// 		require(IERC721(slotAsset).ownerOf(slotTokenId) == msg.sender, "ENOTEXIST");
-// 		IERC721(slotAsset).safeTransferFrom(msg.sender, address(this), slotTokenId);
+        user.storedET = 0;
+        user.lastAccETPerStake = accETPerStake;
+        user.harvestedET += amount;
+        harvestedET += amount;
 
-// 		_checkSlots(msg.sender);
-// 		users[msg.sender].numSlots += 1;
-// 		users[msg.sender].numAvailableSlots += 1;
-// 		_checkSlots(msg.sender);
-// 	}
+        if (isTransferMode == true) {
+            etToken.transfer(msg.sender, amount);
+        } else {
+            etToken.mint(msg.sender, amount);
+        }
 
-// 	function deposit(uint256[] calldata stakingNFTs) public nonReentrant
-// 	{
-// 		_checkSlots(msg.sender);
+        emit HarvestET(msg.sender, amount);
+    }
 
-// 		require(stakingNFTs.length > 0, "EARRAY");
-// 		require(users[msg.sender].numAvailableSlots >= stakingNFTs.length, "ESLOT");
+    /**
+     * @dev Harvest ETH
+     */
+    function harvestETH() external {
+        UserInfo storage user = userInfo[msg.sender];
+        updatePool();
+        uint256 pendingETH = (user.stake *
+            (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
+        uint256 amount = user.storedETH + pendingETH;
+        require(amount > 0, "You have No ETH to Harvest");
 
-// 		users[msg.sender].numAvailableSlots -= uint8(stakingNFTs.length);
+        user.storedETH = 0;
+        user.lastAccETHPerStake = accETHPerStake;
+        user.harvestedETH += amount;
+        harvestedETH += amount;
 
-// 		_updateRewards();
+        ethToken.transfer(msg.sender, amount);
 
-// 		uint256 accPower = 0;
-// 		for(uint i = 0; i < stakingNFTs.length; i ++)
-// 		{
-// 			uint256 tokenId = stakingNFTs[i];
-// 			accPower = accPower.add(_nftToPower(tokenId));
-// 			users[msg.sender].stakedAssets.push(tokenId);
-// 			IERC721(nftAsset).safeTransferFrom(msg.sender, address(this), tokenId);
-// 		}
+        emit HarvestETH(msg.sender, amount);
+    }
 
-// 		_checkSlots(msg.sender);
+    /**
+     * @dev Get ET Total Rewards of a User
+     */
+    function getETTotalRewards(address _user) external view returns (uint256) {
+        UserInfo memory user = userInfo[_user];
+        return user.harvestedET + getETRewards(_user);
+    }
 
-// 		users[msg.sender].power = users[msg.sender].power.add(accPower);
-// 		totalPower = totalPower.add(accPower);
+    /**
+     * @dev Get ETH Total Rewards of a User
+     */
+    function getETHTotalRewards(address _user) external view returns (uint256) {
+        UserInfo memory user = userInfo[_user];
+        return user.harvestedETH + getETHRewards(_user);
+    }
 
-// 		_updateUserDebt(msg.sender, accPower, true);
-// 	}
+    /**
+     * @dev Update Pool
+     */
+    function updatePool() public {
+        if (block.timestamp <= lastRewardsTime) {
+            return;
+        }
 
-// 	function withdraw(uint256[] calldata stakingNFTs) public nonReentrant
-// 	{
-// 		require(stakingNFTs.length > 0, "EARRAY");
-// 		require(users[msg.sender].numSlots - users[msg.sender].numAvailableSlots >= uint8(stakingNFTs.length), "ESLOT");
+        if (block.timestamp > lastRewardsTime && stake > 0) {
+            uint256 etRewards = etReleaseSpeed *
+                (block.timestamp - lastRewardsTime);
+            accETPerStake += (etRewards * 1e18) / stake;
+            releasedET += etRewards;
+            uint256 ethRewards = ethReleaseSpeed *
+                (block.timestamp - lastRewardsTime);
+            accETHPerStake += (ethRewards * 1e18) / stake;
+            releasedETH += ethRewards;
+        }
+        lastRewardsTime = block.timestamp;
 
-// 		users[msg.sender].numAvailableSlots += uint8(stakingNFTs.length);
+        if (isTransferMode == true) {
+            uint256 lastAutoMintTokens = etToken.supplyTokens() /
+                (etToken.releaseRatio() - 1);
+            uint256 newSpeed = (lastAutoMintTokens * poolWeight) / 100 / 86400;
+            if (etReleaseSpeed != newSpeed) etReleaseSpeed = newSpeed;
+        }
+    }
 
-// 		_updateRewards();
+    /**
+     * @dev Get ET Rewards of a User
+     */
+    function getETRewards(address _user) public view returns (uint256) {
+        uint256 accETPerStakeTemp = accETPerStake;
+        if (block.timestamp > lastRewardsTime && stake > 0) {
+            accETPerStakeTemp +=
+                (etReleaseSpeed * (block.timestamp - lastRewardsTime) * 1e18) /
+                stake;
+        }
 
-// 		uint256 accPower = 0;
-// 		for(uint i = 0; i < stakingNFTs.length; i ++)
-// 		{
-// 			uint256 tokenId = stakingNFTs[i];
-// 			accPower = accPower.add(_nftToPower(tokenId));
+        UserInfo memory user = userInfo[_user];
+        return
+            user.storedET +
+            ((user.stake * (accETPerStakeTemp - user.lastAccETPerStake)) /
+                1e18);
+    }
 
-// 			_arrayRemove(msg.sender, tokenId);
-// 			IERC721(nftAsset).safeTransferFrom(address(this), msg.sender, tokenId);
-// 		}
+    /**
+     * @dev Get ETH Rewards of a User
+     */
+    function getETHRewards(address _user) public view returns (uint256) {
+        uint256 accETHPerStakeTemp = accETHPerStake;
+        if (block.timestamp > lastRewardsTime && stake > 0) {
+            accETHPerStakeTemp +=
+                (ethReleaseSpeed * (block.timestamp - lastRewardsTime) * 1e18) /
+                stake;
+        }
 
-// 		_checkSlots(msg.sender);
-
-// 		users[msg.sender].power = users[msg.sender].power.sub(accPower);
-// 		totalPower = totalPower.sub(accPower);
-		
-// 		_updateUserDebt(msg.sender, accPower, false);
-// 	}
-
-// 	function harvestAll(address to) public
-// 	{
-// 		for(uint i = 0; i < rewardList.length; i ++)
-// 		{
-// 			address token = rewardList[i];
-
-// 			_updateReward(token);
-
-// 			Reward memory reward = rewards[token];
-// 			Staker storage user   = users[msg.sender];
-
-// 			int256 accReward = int256(user.power.mul(reward.accRewardPerPower) / ACC_REWARD_PRECISION);
-// 			uint256 _pendingReward = uint256(accReward.sub(user.rewardDebt));
-// 			console.log("pending harvest reward is: %d", _pendingReward);
-// 			user.rewardDebt = accReward;
-
-// 			if(_pendingReward > 0)
-// 			{
-// 				IERC20(token).transfer(to, _pendingReward);
-// 			}
-// 		}
-// 	}
-
-// 	function onERC721Received(address, address, uint256, bytes calldata) public virtual override returns (bytes4)
-// 	{
-// 		return this.onERC721Received.selector;
-// 	}
-// }
+        UserInfo memory user = userInfo[_user];
+        return
+            user.storedETH +
+            ((user.stake * (accETHPerStakeTemp - user.lastAccETHPerStake)) /
+                1e18);
+    }
+}
