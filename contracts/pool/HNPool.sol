@@ -21,28 +21,25 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-    struct UserInfo {
-        uint256[] stake;
-        uint256[] lastAccTokenPerStake;
-        uint256[] storedToken;
-        uint256[] harvestedToken;
-    }
-
-    mapping(address => UserInfo) public userInfo;
-
     bool public openStatus = false;
-    uint256[] public stake;
-    uint256[] public lastRewardsTime;
+    uint256 public lastRewardsTime;
 
-    uint256[] public accTokenPerStake;
-    uint256[] public tokenReleaseSpeed = [83333333333333333, 3472222222222];
     address[] public tokenAddr;
-    uint256[] public releasedToken;
-    uint256[] public harvestedToken;
+    uint256[] public tokenReleaseSpeed = [83333333333333333, 3472222222222];
 
-    uint256[] public airdropedToken;
-    uint256[] public lastAirdropedToken;
-    uint256[] public lastAirdropTime;
+    mapping(uint256 => uint256) public stake;
+    mapping(uint256 => uint256) public accTokenPerStake;
+    mapping(uint256 => uint256) public releasedToken;
+    mapping(uint256 => uint256) public harvestedToken;
+
+    mapping(uint256 => uint256) public airdropedToken;
+    mapping(uint256 => uint256) public lastAirdropedToken;
+    mapping(uint256 => uint256) public lastAirdropTime;
+
+    mapping(address => mapping(uint256 => uint256)) userStake;
+    mapping(address => mapping(uint256 => uint256)) userLastAccTokenPerStake;
+    mapping(address => mapping(uint256 => uint256)) userStoredToken;
+    mapping(address => mapping(uint256 => uint256)) userHarvestedToken;
 
     EnumerableSet.AddressSet private users;
     EnumerableSet.UintSet private hnIds;
@@ -59,7 +56,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     constructor(
         address hnAddr,
-        address[] calldata _tokenAddr,
+        address[] memory _tokenAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
@@ -150,15 +147,14 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     function deposit(uint256 hnId) external {
         require(openStatus, "This Pool is not Opened");
 
-        UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        for (uint256 i = 0; i < user.stake.length; i++) {
-            if (user.stake[i] > 0) {
-                uint256 pendingToken = (user.stake[i] *
-                    (accTokenPerStake[i] - user.lastAccTokenPerStake[i])) /
+        for (uint256 i = 0; i < tokenAddr.length; i++) {
+            if (userStake[msg.sender][i] > 0) {
+                uint256 pendingToken = (userStake[msg.sender][i] *
+                    (accTokenPerStake[i] - userLastAccTokenPerStake[msg.sender][i])) /
                     1e18;
                 if (pendingToken > 0) {
-                    user.storedToken[i] += pendingToken;
+                    userStoredToken[msg.sender][i] += pendingToken;
                 }
             }
         }
@@ -167,13 +163,13 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         uint256[] memory hashrates = hn.getHashrates(hnId);
         for (uint256 i = 0; i < hashrates.length; i++) {
             if (hashrates[i] > 0) {
-                user.stake[i] += hashrates[i];
+                userStake[msg.sender][i] += hashrates[i];
                 stake[i] += hashrates[i];
             }
         }
 
-        for (uint256 i = 0; i < user.stake.length; i++) {
-            user.lastAccTokenPerStake[i] = accTokenPerStake[i];
+        for (uint256 i = 0; i < tokenAddr.length; i++) {
+            userLastAccTokenPerStake[msg.sender][i] = accTokenPerStake[i];
         }
         hnIds.add(hnId);
         ownerHnIds[msg.sender].add(hnId);
@@ -189,27 +185,26 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         require(hnIds.contains(hnId), "This HN does Not Exist");
         require(ownerHnIds[msg.sender].contains(hnId), "This HN is not Own");
 
-        UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        for (uint256 i = 0; i < user.stake.length; i++) {
-            uint256 pendingToken = (user.stake[i] *
-                (accTokenPerStake[i] - user.lastAccTokenPerStake[i])) / 1e18;
+        for (uint256 i = 0; i < tokenAddr.length; i++) {
+            uint256 pendingToken = (userStake[msg.sender][i] *
+                (accTokenPerStake[i] - userLastAccTokenPerStake[msg.sender][i])) / 1e18;
             if (pendingToken > 0) {
-                user.storedToken[i] += pendingToken;
+                userStoredToken[msg.sender][i] += pendingToken;
             }
         }
 
         uint256[] memory hashrates = hn.getHashrates(hnId);
         for (uint256 i = 0; i < hashrates.length; i++) {
             if (hashrates[i] > 0) {
-                user.stake[i] -= hashrates[i];
+                userStake[msg.sender][i] -= hashrates[i];
                 stake[i] -= hashrates[i];
             }
         }
         hn.safeTransferFrom(address(this), msg.sender, hnId);
 
-        for (uint256 i = 0; i < user.stake.length; i++) {
-            user.lastAccTokenPerStake[i] = accTokenPerStake[i];
+        for (uint256 i = 0; i < tokenAddr.length; i++) {
+            userLastAccTokenPerStake[msg.sender][i] = accTokenPerStake[i];
         }
         hnIds.remove(hnId);
         ownerHnIds[msg.sender].remove(hnId);
@@ -221,17 +216,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      * @dev Harvest Token
      */
     function harvestToken(uint256 tokenId) external {
-        UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        uint256 pendingToken = (user.stake[tokenId] *
-            (accTokenPerStake[tokenId] - user.lastAccTokenPerStake[tokenId])) /
+        uint256 pendingToken = (userStake[msg.sender][tokenId] *
+            (accTokenPerStake[tokenId] - userLastAccTokenPerStake[msg.sender][tokenId])) /
             1e18;
-        uint256 amount = user.storedToken[tokenId] + pendingToken;
+        uint256 amount = userStoredToken[msg.sender][tokenId] + pendingToken;
         require(amount > 0, "You have No Token to Harvest");
 
-        user.storedToken[tokenId] = 0;
-        user.lastAccTokenPerStake[tokenId] = accTokenPerStake[tokenId];
-        user.harvestedToken[tokenId] += amount;
+        userStoredToken[msg.sender][tokenId] = 0;
+        userLastAccTokenPerStake[msg.sender][tokenId] = accTokenPerStake[tokenId];
+        userHarvestedToken[msg.sender][tokenId] += amount;
         harvestedToken[tokenId] += amount;
 
         if (tokenId == 0) {
@@ -248,13 +242,12 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Get Token Total Rewards of a User
      */
-    function getTokenTotalRewards(address _user, uint256 tokenId)
+    function getTokenTotalRewards(address user, uint256 tokenId)
         external
         view
         returns (uint256)
     {
-        UserInfo memory user = userInfo[_user];
-        return user.harvestedToken[tokenId] + getTokenRewards(_user, tokenId);
+        return userHarvestedToken[msg.sender][tokenId] + getTokenRewards(user, tokenId);
     }
 
     /**
@@ -265,26 +258,22 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             return;
         }
 
-        if (block.timestamp > lastRewardsTime && stake > 0) {
-            uint256 etRewards = etReleaseSpeed *
-                (block.timestamp - lastRewardsTime);
-            accETPerStake += (etRewards * 1e18) / stake;
-            releasedET += etRewards;
+        for (uint256 i = 0; i < tokenAddr.length; i++) {
+            if (block.timestamp > lastRewardsTime && stake[i] > 0) {
+                uint256 tokenRewards = tokenReleaseSpeed[i] *
+                    (block.timestamp - lastRewardsTime);
+                accTokenPerStake[i] += (tokenRewards * 1e18) / stake[i];
+                releasedToken[i] += tokenRewards;
+            }
         }
-        lastRewardsTime = block.timestamp;
 
-        if (isTransferMode == true) {
-            uint256 lastAutoMintTokens = etToken.supplyTokens() /
-                (etToken.releaseRatio() - 1);
-            uint256 newSpeed = (lastAutoMintTokens * poolWeight) / 100 / 86400;
-            if (etReleaseSpeed != newSpeed) etReleaseSpeed = newSpeed;
-        }
+        lastRewardsTime = block.timestamp;
     }
 
     /**
      * @dev Get Token Rewards of a User
      */
-    function getTokenRewards(address _user, uint256 tokenId)
+    function getTokenRewards(address user, uint256 tokenId)
         public
         view
         returns (uint256)
@@ -298,11 +287,10 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 stake[tokenId];
         }
 
-        UserInfo memory user = userInfo[_user];
         return
-            user.storedToken[tokenId] +
-            ((user.stake[tokenId] *
-                (accTokenPerStakeTemp - user.lastAccTokenPerStake[tokenId])) /
+            userStoredToken[user][tokenId] +
+            ((userStake[user][tokenId] *
+                (accTokenPerStakeTemp - userLastAccTokenPerStake[user][tokenId])) /
                 1e18);
     }
 }
