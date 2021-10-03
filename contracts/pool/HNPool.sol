@@ -15,6 +15,7 @@ import "../token/interface/IHC.sol";
  */
 contract HNPool is ERC721Holder, AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     IHN public hn;
 
@@ -44,6 +45,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     uint256[] public lastAirdropTime;
 
     EnumerableSet.AddressSet private users;
+    EnumerableSet.UintSet private hnIds;
+    mapping(address => EnumerableSet.UintSet) private ownerHnIds;
 
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
@@ -161,15 +164,19 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         hn.safeTransferFrom(msg.sender, address(this), hnId);
-
         uint256[] memory hashrates = hn.getHashrates(hnId);
         for (uint256 i = 0; i < hashrates.length; i++) {
-            user.stake[i] += hashrates[i];
-            stake[i] += hashrates[i];
+            if (hashrates[i] > 0) {
+                user.stake[i] += hashrates[i];
+                stake[i] += hashrates[i];
+            }
         }
+
         for (uint256 i = 0; i < user.stake.length; i++) {
             user.lastAccTokenPerStake[i] = accTokenPerStake[i];
         }
+        hnIds.add(hnId);
+        ownerHnIds[msg.sender].add(hnId);
         users.add(msg.sender);
 
         emit Deposit(msg.sender, hnId);
@@ -178,93 +185,76 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Withdraw
      */
-    function withdraw(uint256 amount) external {
+    function withdraw(uint256 hnId) external {
+        require(hnIds.contains(hnId), "This HN does Not Exist");
+        require(ownerHnIds[msg.sender].contains(hnId), "This HN is not Own");
+
         UserInfo storage user = userInfo[msg.sender];
-        require(user.stake >= amount, "You have not Enough ETHST to Withdraw");
-
         updatePool();
-        uint256 pendingET = (user.stake *
-            (accETPerStake - user.lastAccETPerStake)) / 1e18;
-        if (pendingET > 0) {
-            user.storedET += pendingET;
-        }
-        uint256 pendingETH = (user.stake *
-            (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
-        if (pendingETH > 0) {
-            user.storedETH += pendingETH;
-        }
-        if (amount > 0) {
-            user.stake -= amount;
-            stake -= amount;
-            ethstToken.transfer(msg.sender, amount);
+        for (uint256 i = 0; i < user.stake.length; i++) {
+            uint256 pendingToken = (user.stake[i] *
+                (accTokenPerStake[i] - user.lastAccTokenPerStake[i])) / 1e18;
+            if (pendingToken > 0) {
+                user.storedToken[i] += pendingToken;
+            }
         }
 
-        user.lastAccETPerStake = accETPerStake;
-        user.lastAccETHPerStake = accETHPerStake;
+        uint256[] memory hashrates = hn.getHashrates(hnId);
+        for (uint256 i = 0; i < hashrates.length; i++) {
+            if (hashrates[i] > 0) {
+                user.stake[i] -= hashrates[i];
+                stake[i] -= hashrates[i];
+            }
+        }
+        hn.safeTransferFrom(address(this), msg.sender, hnId);
 
-        emit Withdraw(msg.sender, amount);
+        for (uint256 i = 0; i < user.stake.length; i++) {
+            user.lastAccTokenPerStake[i] = accTokenPerStake[i];
+        }
+        hnIds.remove(hnId);
+        ownerHnIds[msg.sender].remove(hnId);
+
+        emit Withdraw(msg.sender, hnId);
     }
 
     /**
-     * @dev Harvest ET
+     * @dev Harvest Token
      */
-    function harvestET() external {
+    function harvestToken(uint256 tokenId) external {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        uint256 pendingET = (user.stake *
-            (accETPerStake - user.lastAccETPerStake)) / 1e18;
-        uint256 amount = user.storedET + pendingET;
-        require(amount > 0, "You have No ET to Harvest");
+        uint256 pendingToken = (user.stake[tokenId] *
+            (accTokenPerStake[tokenId] - user.lastAccTokenPerStake[tokenId])) /
+            1e18;
+        uint256 amount = user.storedToken[tokenId] + pendingToken;
+        require(amount > 0, "You have No Token to Harvest");
 
-        user.storedET = 0;
-        user.lastAccETPerStake = accETPerStake;
-        user.harvestedET += amount;
-        harvestedET += amount;
+        user.storedToken[tokenId] = 0;
+        user.lastAccTokenPerStake[tokenId] = accTokenPerStake[tokenId];
+        user.harvestedToken[tokenId] += amount;
+        harvestedToken[tokenId] += amount;
 
-        if (isTransferMode == true) {
-            etToken.transfer(msg.sender, amount);
+        if (tokenId == 0) {
+            IHC hc = IHC(tokenAddr[tokenId]);
+            hc.mint(msg.sender, amount);
         } else {
-            etToken.mint(msg.sender, amount);
+            IERC20 token = IERC20(tokenAddr[tokenId]);
+            token.transfer(msg.sender, amount);
         }
 
-        emit HarvestET(msg.sender, amount);
+        emit HarvestToken(msg.sender, amount);
     }
 
     /**
-     * @dev Harvest ETH
+     * @dev Get Token Total Rewards of a User
      */
-    function harvestETH() external {
-        UserInfo storage user = userInfo[msg.sender];
-        updatePool();
-        uint256 pendingETH = (user.stake *
-            (accETHPerStake - user.lastAccETHPerStake)) / 1e18;
-        uint256 amount = user.storedETH + pendingETH;
-        require(amount > 0, "You have No ETH to Harvest");
-
-        user.storedETH = 0;
-        user.lastAccETHPerStake = accETHPerStake;
-        user.harvestedETH += amount;
-        harvestedETH += amount;
-
-        ethToken.transfer(msg.sender, amount);
-
-        emit HarvestETH(msg.sender, amount);
-    }
-
-    /**
-     * @dev Get ET Total Rewards of a User
-     */
-    function getETTotalRewards(address _user) external view returns (uint256) {
+    function getTokenTotalRewards(address _user, uint256 tokenId)
+        external
+        view
+        returns (uint256)
+    {
         UserInfo memory user = userInfo[_user];
-        return user.harvestedET + getETRewards(_user);
-    }
-
-    /**
-     * @dev Get ETH Total Rewards of a User
-     */
-    function getETHTotalRewards(address _user) external view returns (uint256) {
-        UserInfo memory user = userInfo[_user];
-        return user.harvestedETH + getETHRewards(_user);
+        return user.harvestedToken[tokenId] + getTokenRewards(_user, tokenId);
     }
 
     /**
@@ -280,10 +270,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 (block.timestamp - lastRewardsTime);
             accETPerStake += (etRewards * 1e18) / stake;
             releasedET += etRewards;
-            uint256 ethRewards = ethReleaseSpeed *
-                (block.timestamp - lastRewardsTime);
-            accETHPerStake += (ethRewards * 1e18) / stake;
-            releasedETH += ethRewards;
         }
         lastRewardsTime = block.timestamp;
 
@@ -296,38 +282,27 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get ET Rewards of a User
+     * @dev Get Token Rewards of a User
      */
-    function getETRewards(address _user) public view returns (uint256) {
-        uint256 accETPerStakeTemp = accETPerStake;
-        if (block.timestamp > lastRewardsTime && stake > 0) {
-            accETPerStakeTemp +=
-                (etReleaseSpeed * (block.timestamp - lastRewardsTime) * 1e18) /
-                stake;
+    function getTokenRewards(address _user, uint256 tokenId)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 accTokenPerStakeTemp = accTokenPerStake[tokenId];
+        if (block.timestamp > lastRewardsTime && stake[tokenId] > 0) {
+            accTokenPerStakeTemp +=
+                (tokenReleaseSpeed[tokenId] *
+                    (block.timestamp - lastRewardsTime) *
+                    1e18) /
+                stake[tokenId];
         }
 
         UserInfo memory user = userInfo[_user];
         return
-            user.storedET +
-            ((user.stake * (accETPerStakeTemp - user.lastAccETPerStake)) /
-                1e18);
-    }
-
-    /**
-     * @dev Get ETH Rewards of a User
-     */
-    function getETHRewards(address _user) public view returns (uint256) {
-        uint256 accETHPerStakeTemp = accETHPerStake;
-        if (block.timestamp > lastRewardsTime && stake > 0) {
-            accETHPerStakeTemp +=
-                (ethReleaseSpeed * (block.timestamp - lastRewardsTime) * 1e18) /
-                stake;
-        }
-
-        UserInfo memory user = userInfo[_user];
-        return
-            user.storedETH +
-            ((user.stake * (accETHPerStakeTemp - user.lastAccETHPerStake)) /
+            user.storedToken[tokenId] +
+            ((user.stake[tokenId] *
+                (accTokenPerStakeTemp - user.lastAccTokenPerStake[tokenId])) /
                 1e18);
     }
 }
