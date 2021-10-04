@@ -22,7 +22,9 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     bool public openStatus = false;
+    uint256 public maxSlots = 6;
     uint256 public lastRewardsTime;
+    address public receivingAddress;
 
     address[] public tokenAddrs;
     uint256[] public tokenReleaseSpeeds = [83333333333333333, 3472222222222];
@@ -36,6 +38,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     mapping(uint256 => uint256) public lastAirdropedTokens;
     mapping(uint256 => uint256) public lastAirdropTimes;
 
+    mapping(address => uint256) userSlots;
     mapping(address => mapping(uint256 => uint256)) userStakes;
     mapping(address => mapping(uint256 => uint256)) userLastAccTokensPerStake;
     mapping(address => mapping(uint256 => uint256)) userStoredTokens;
@@ -45,26 +48,31 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     EnumerableSet.AddressSet private users;
     mapping(address => EnumerableSet.UintSet) private userHnIds;
 
-    event Deposit(address indexed user, uint256 hnId);
-    event Withdraw(address indexed user, uint256 hnId);
+    event Deposit(address indexed user, uint256[] hnIds);
+    event Withdraw(address indexed user, uint256[] hnIds);
     event HarvestTokens(
         address indexed user,
         uint256[] tokenIds,
         uint256[] amounts
     );
+    event BuySlot(address indexed user, uint256 amount);
 
     /**
      * @param hnAddr Initialize HN Address
      * @param _tokenAddrs Initialize Tokens Address
+     * @param receivingAddr Initialize Receiving Address
      * @param manager Initialize Manager Role
      */
     constructor(
         address hnAddr,
         address[] memory _tokenAddrs,
+        address receivingAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
         tokenAddrs = _tokenAddrs;
+
+        receivingAddress = receivingAddr;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
@@ -90,6 +98,23 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+    }
+
+    /**
+     * @dev Set Max Slots
+     */
+    function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
+        maxSlots = slots;
+    }
+
+    /**
+     * @dev Set Receiving Address
+     */
+    function setReceivingAddress(address receivingAddr)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        receivingAddress = receivingAddr;
     }
 
     /**
@@ -148,7 +173,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Deposit
      */
-    function deposit(uint256 hnId) external {
+    function deposit(uint256[] calldata _hnIds) external {
         require(openStatus, "This Pool is not Opened");
 
         updatePool();
@@ -163,13 +188,22 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
         }
 
-        hn.safeTransferFrom(msg.sender, address(this), hnId);
-        uint256[] memory hashrates = hn.getHashrates(hnId);
-        for (uint256 i = 0; i < hashrates.length; i++) {
-            if (hashrates[i] > 0) {
-                userStakes[msg.sender][i] += hashrates[i];
-                stakes[i] += hashrates[i];
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            require(
+                _hnIds.length <= getUserLeftSlots(msg.sender),
+                "Not Enough Slots"
+            );
+
+            hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
+            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
+            for (uint256 j = 0; j < hashrates.length; j++) {
+                if (hashrates[j] > 0) {
+                    userStakes[msg.sender][j] += hashrates[j];
+                    stakes[j] += hashrates[j];
+                }
             }
+            hnIds.add(_hnIds[i]);
+            userHnIds[msg.sender].add(_hnIds[i]);
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -177,20 +211,15 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
             }
         }
-        hnIds.add(hnId);
-        userHnIds[msg.sender].add(hnId);
         users.add(msg.sender);
 
-        emit Deposit(msg.sender, hnId);
+        emit Deposit(msg.sender, _hnIds);
     }
 
     /**
      * @dev Withdraw
      */
-    function withdraw(uint256 hnId) external {
-        require(hnIds.contains(hnId), "This HN does Not Exist");
-        require(userHnIds[msg.sender].contains(hnId), "This HN is not Own");
-
+    function withdraw(uint256[] calldata _hnIds) external {
         updatePool();
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
             if (userStakes[msg.sender][i] > 0) {
@@ -203,24 +232,32 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
         }
 
-        uint256[] memory hashrates = hn.getHashrates(hnId);
-        for (uint256 i = 0; i < hashrates.length; i++) {
-            if (hashrates[i] > 0) {
-                userStakes[msg.sender][i] -= hashrates[i];
-                stakes[i] -= hashrates[i];
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            require(hnIds.contains(_hnIds[i]), "This HN does Not Exist");
+            require(
+                userHnIds[msg.sender].contains(_hnIds[i]),
+                "This HN is not Own"
+            );
+
+            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
+            for (uint256 j = 0; j < hashrates.length; j++) {
+                if (hashrates[j] > 0) {
+                    userStakes[msg.sender][j] -= hashrates[j];
+                    stakes[j] -= hashrates[j];
+                }
             }
+            hnIds.remove(_hnIds[i]);
+            userHnIds[msg.sender].remove(_hnIds[i]);
+            hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
         }
-        hn.safeTransferFrom(address(this), msg.sender, hnId);
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
             if (userStakes[msg.sender][i] > 0) {
                 userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
             }
         }
-        hnIds.remove(hnId);
-        userHnIds[msg.sender].remove(hnId);
 
-        emit Withdraw(msg.sender, hnId);
+        emit Withdraw(msg.sender, _hnIds);
     }
 
     /**
@@ -257,6 +294,23 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         emit HarvestTokens(msg.sender, tokenIds, amounts);
+    }
+
+    /**
+     * @dev Buy Slot
+     */
+    function buySlot() external {
+        require(
+            getUserSlots(msg.sender) < maxSlots,
+            "Slots has Reached the Limit"
+        );
+
+        uint256 amount = getUserSlotPrice(msg.sender);
+        IHC hc = IHC(tokenAddrs[0]);
+        hc.transferFrom(msg.sender, receivingAddress, amount);
+        userSlots[msg.sender]++;
+
+        emit BuySlot(msg.sender, amount);
     }
 
     /**
@@ -396,5 +450,26 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             ((userStakes[user][tokenId] *
                 (accTokensPerStakeTemp -
                     userLastAccTokensPerStake[user][tokenId])) / 1e18);
+    }
+
+    /**
+     * @dev Get User Slots
+     */
+    function getUserSlots(address user) public view returns (uint256) {
+        return 1 + userSlots[user];
+    }
+
+    /**
+     * @dev Get User Left Slots
+     */
+    function getUserLeftSlots(address user) public view returns (uint256) {
+        return getUserSlots(user) - userHnIds[user].length();
+    }
+
+    /**
+     * @dev Get User Slot Price
+     */
+    function getUserSlotPrice(address user) public view returns (uint256) {
+        return 10**getUserSlots(user);
     }
 }
