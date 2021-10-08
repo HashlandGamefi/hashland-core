@@ -41,7 +41,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
 
     EnumerableSet.AddressSet private users;
 
-    event UpgradeHn(address user, uint256[] hnIds);
+    event UpgradeHns(address user, uint256[] hnIds);
 
     /**
      * @param hcAddr Initialize HC Address
@@ -231,7 +231,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
         totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
 
-        emit UpgradeHn(msg.sender, hnIds);
+        emit UpgradeHns(msg.sender, hnIds);
     }
 
     /**
