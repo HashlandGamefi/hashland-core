@@ -127,6 +127,15 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     }
 
     /**
+     * @dev Transfer Batch
+     */
+    function transferBatch(address to, uint256[] calldata tokenIds) external {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            safeTransferFrom(msg.sender, to, tokenIds[i]);
+        }
+    }
+
+    /**
      * @dev Get Hashrates
      */
     function getHashrates(uint256 hnId)
