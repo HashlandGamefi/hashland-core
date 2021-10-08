@@ -32,7 +32,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     uint256 public hashratesBase = 1000;
     uint256 public hashratesRange = 1000;
 
-    mapping(uint256 => uint256) public upgradedLevels;
     mapping(address => uint256) public userUpgradeCount;
     mapping(address => uint256) public userUpgradeAmount;
 
@@ -169,7 +168,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                             block.timestamp,
                             upgradePrice,
                             totalUpgradeCount,
-                            upgradedLevels[hnId],
                             userUpgradeCount[msg.sender],
                             hnId,
                             materialHnIds,
@@ -193,7 +191,8 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             }
             hn.setHashrates(hnId, hashrates);
 
-            upgradedLevels[hnId]++;
+            hn.setDatas(hnId, "materialHnIds", materialHnIds);
+
             userUpgradeCount[msg.sender]++;
             totalUpgradeCount++;
         }
