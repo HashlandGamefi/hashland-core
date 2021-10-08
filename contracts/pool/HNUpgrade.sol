@@ -32,9 +32,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     uint256 public hashratesBase = 1000;
     uint256 public hashratesRange = 1000;
 
-    uint256 public itemsBase = 1;
-    uint256 public itemsRange = 20;
-
     mapping(uint256 => uint256) public upgradedLevels;
     mapping(address => uint256) public userUpgradeCount;
     mapping(address => uint256) public userUpgradeAmount;
@@ -110,16 +107,12 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
         uint256 _hcBase,
         uint256 _hcRange,
         uint256 _hashratesBase,
-        uint256 _hashratesRange,
-        uint256 _itemsBase,
-        uint256 _itemsRange
+        uint256 _hashratesRange
     ) external onlyRole(MANAGER_ROLE) {
         hcBase = _hcBase;
         hcRange = _hcRange;
         hashratesBase = _hashratesBase;
         hashratesRange = _hashratesRange;
-        itemsBase = _itemsBase;
-        itemsRange = _itemsRange;
     }
 
     /**
@@ -146,8 +139,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             require(hn.level(hnId) == level, "Hn Level Mismatch");
 
             uint256[] memory hashrates = hn.getHashrates(hnId);
-            uint256[] memory attrs = hn.getDatas(hnId, "attrs");
-            uint256[] memory items = hn.getDatas(hnId, "items");
             for (uint256 i = 0; i < materialHnIds.length; i++) {
                 require(
                     hn.level(materialHnIds[i]) == level,
@@ -166,61 +157,43 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                 for (uint256 j = 0; j < hashrates.length; j++) {
                     hashrates[j] += materialHashrates[j];
                 }
-
-                uint256[] memory materialAttrs = hn.getDatas(
-                    materialHnIds[i],
-                    "attrs"
-                );
-                for (uint256 j = 0; j < attrs.length; j++) {
-                    attrs[j] += materialAttrs[j];
-                }
             }
 
             hn.setLevel(hnId, level + 1);
-            hn.setDatas(hnId, "attrs", attrs);
-
-            uint256 randomness = uint256(
-                keccak256(
-                    abi.encodePacked(
-                        upgradePrice,
-                        totalUpgradeCount,
-                        totalUpgradeAmount,
-                        upgradedLevels[hnId],
-                        userUpgradeCount[msg.sender],
-                        userUpgradeAmount[msg.sender],
-                        hnId,
-                        materialHnIds,
-                        users.length(),
-                        msg.sender,
-                        block.timestamp
-                    )
-                )
-            );
 
             for (uint256 i = 0; i < hashrates.length; i++) {
-                uint256 random = uint256(
-                    keccak256(abi.encodePacked(randomness, hashrates, i))
+                uint256 randomness = uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            msg.sender,
+                            block.timestamp,
+                            upgradePrice,
+                            totalUpgradeCount,
+                            totalUpgradeAmount,
+                            upgradedLevels[hnId],
+                            userUpgradeCount[msg.sender],
+                            userUpgradeAmount[msg.sender],
+                            hnId,
+                            materialHnIds,
+                            users.length(),
+                            hashrates[i],
+                            i
+                        )
+                    )
                 );
+
                 if (i == 0 && hashrates[i] == 0) {
-                    hashrates[i] = hcBase + (random % hcRange);
+                    hashrates[i] = hcBase + (randomness % hcRange);
                 } else {
                     hashrates[i] =
                         (hashrates[i] *
                             (hcBase +
-                                level *
-                                hashratesBase +
-                                (random % hashratesRange))) /
+                                (level * hashratesBase) +
+                                (randomness % hashratesRange))) /
                         hcBase;
                 }
             }
             hn.setHashrates(hnId, hashrates);
-
-            uint256[] memory newItems = new uint256[](items.length + 1);
-            for (uint256 i = 0; i < items.length; i++) {
-                newItems[i] = items[i];
-            }
-            newItems[items.length] = itemsBase + (randomness % itemsRange);
-            hn.setDatas(hnId, "items", newItems);
 
             upgradedLevels[hnId]++;
             userUpgradeCount[msg.sender]++;

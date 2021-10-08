@@ -15,9 +15,9 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
 
     mapping(uint256 => string) public name;
     mapping(uint256 => uint256) public ip;
+    mapping(uint256 => uint256) public series;
     mapping(uint256 => uint256) public level;
     mapping(uint256 => uint256) public spawntime;
-    mapping(uint256 => uint256) public seed;
     mapping(uint256 => uint256[]) public hashrates;
 
     mapping(uint256 => mapping(string => uint256)) public data;
@@ -39,27 +39,17 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     function spawnHn(
         address to,
         uint256 _ip,
+        uint256 _series,
         uint256 _level,
         uint256[] calldata _hashrates
     ) external onlyRole(SPAWNER_ROLE) returns (uint256) {
         uint256 newHnId = totalSupply();
 
         ip[newHnId] = _ip;
+        series[newHnId] = _series;
         level[newHnId] = _level;
         hashrates[newHnId] = _hashrates;
         spawntime[newHnId] = block.timestamp;
-        seed[newHnId] = uint256(
-            keccak256(
-                abi.encodePacked(
-                    to,
-                    _ip,
-                    _level,
-                    _hashrates,
-                    newHnId,
-                    block.timestamp
-                )
-            )
-        );
 
         _safeMint(to, newHnId);
 
@@ -74,16 +64,6 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         onlyRole(SETTER_ROLE)
     {
         level[hnId] = _level;
-    }
-
-    /**
-     * @dev Set Seed
-     */
-    function setSeed(uint256 hnId, uint256 _seed)
-        external
-        onlyRole(SETTER_ROLE)
-    {
-        seed[hnId] = _seed;
     }
 
     /**

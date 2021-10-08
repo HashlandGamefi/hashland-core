@@ -25,22 +25,8 @@ contract HNBox is AccessControlEnumerable {
     uint256 public boxesMaxSupply;
     uint256 public totalBoxesLength;
 
-    bool public isRaceEqualsClass = true;
-
     uint256 public btcBase = 10000;
     uint256 public btcRange = 1000;
-
-    uint256 public raceBase = 1;
-    uint256 public raceRange = 3;
-
-    uint256 public classBase = 1;
-    uint256 public classRange = 3;
-
-    uint256 public itemsBase = 1;
-    uint256 public itemsRange = 20;
-
-    uint256 public attrsBase = 10;
-    uint256 public attrsRange = 6;
 
     mapping(uint256 => uint256) public totalTokenBuyAmount;
     mapping(address => uint256) public userBoxesLength;
@@ -103,30 +89,12 @@ contract HNBox is AccessControlEnumerable {
     /**
      * @dev Set Datas
      */
-    function setDatas(
-        bool _isRaceEqualsClass,
-        uint256 _btcBase,
-        uint256 _btcRange,
-        uint256 _raceBase,
-        uint256 _raceRange,
-        uint256 _classBase,
-        uint256 _classRange,
-        uint256 _itemsBase,
-        uint256 _itemsRange,
-        uint256 _attrsBase,
-        uint256 _attrsRange
-    ) external onlyRole(MANAGER_ROLE) {
-        isRaceEqualsClass = _isRaceEqualsClass;
+    function setDatas(uint256 _btcBase, uint256 _btcRange)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
         btcBase = _btcBase;
         btcRange = _btcRange;
-        raceBase = _raceBase;
-        raceRange = _raceRange;
-        classBase = _classBase;
-        classRange = _classRange;
-        itemsBase = _itemsBase;
-        itemsRange = _itemsRange;
-        attrsBase = _attrsBase;
-        attrsRange = _attrsRange;
     }
 
     /**
@@ -236,8 +204,8 @@ contract HNBox is AccessControlEnumerable {
             uint256 randomness = uint256(
                 keccak256(
                     abi.encodePacked(
-                        block.timestamp,
                         to,
+                        block.timestamp,
                         boxesLength,
                         boxTokenPrices,
                         boxesMaxSupply,
@@ -253,27 +221,7 @@ contract HNBox is AccessControlEnumerable {
             hashrates[0] = 0;
             hashrates[1] = btcBase + (randomness % btcRange);
 
-            uint256 race = raceBase + (((randomness % 1e6) / 1e4) % raceRange);
-            uint256 class = classBase +
-                (((randomness % 1e8) / 1e6) % classRange);
-
-            uint256[] memory items = new uint256[](2);
-            items[0] = itemsBase + (((randomness % 1e10) / 1e8) % itemsRange);
-            items[1] = itemsBase + (((randomness % 1e12) / 1e10) % itemsRange);
-
-            uint256[] memory attrs = new uint256[](6);
-            attrs[0] = attrsBase + (((randomness % 1e14) / 1e12) % attrsRange);
-            attrs[1] = attrsBase + (((randomness % 1e16) / 1e14) % attrsRange);
-            attrs[2] = attrsBase + (((randomness % 1e18) / 1e16) % attrsRange);
-            attrs[3] = attrsBase + (((randomness % 1e20) / 1e18) % attrsRange);
-            attrs[4] = attrsBase + (((randomness % 1e22) / 1e20) % attrsRange);
-            attrs[5] = attrsBase + (((randomness % 1e24) / 1e22) % attrsRange);
-
-            uint256 hnId = hn.spawnHn(to, 1, 1, hashrates);
-            hn.setData(hnId, "race", race);
-            hn.setData(hnId, "class", isRaceEqualsClass ? race : class);
-            hn.setDatas(hnId, "items", items);
-            hn.setDatas(hnId, "attrs", attrs);
+            uint256 hnId = hn.spawnHn(to, 1, 1, 1, hashrates);
 
             hnIds[i] = hnId;
         }

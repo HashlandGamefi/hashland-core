@@ -22,13 +22,12 @@ abstract contract IHN is IERC721Enumerable {
     function spawnHn(
         address to,
         uint256 _ip,
+        uint256 _series,
         uint256 _level,
         uint256[] calldata _hashrates
     ) external virtual returns (uint256);
 
     function setLevel(uint256 hnId, uint256 _level) external virtual;
-
-    function setSeed(uint256 hnId, uint256 _seed) external virtual;
 
     function setHashrates(uint256 hnId, uint256[] calldata _hashrates)
         external
