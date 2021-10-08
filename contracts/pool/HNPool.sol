@@ -28,7 +28,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     address public receivingAddress;
 
     address[] public tokenAddrs;
-    uint256[] public tokenReleaseSpeeds = [83333333333333333, 3472222222222];
+    uint256[] public tokenReleaseSpeeds = [12500000000000000, 3472222222222];
 
     mapping(uint256 => uint256) public stakes;
     mapping(uint256 => uint256) public accTokensPerStake;
