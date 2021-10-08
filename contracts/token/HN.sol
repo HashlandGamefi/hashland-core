@@ -149,6 +149,19 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     }
 
     /**
+     * @dev Get Random Number
+     */
+    function getRandomNumber(
+        uint256 hnId,
+        string calldata slot,
+        uint256 base,
+        uint256 range
+    ) external pure returns (uint256) {
+        uint256 randomness = uint256(keccak256(abi.encodePacked(hnId, slot)));
+        return base + (randomness % range);
+    }
+
+    /**
      * @dev IERC165-supportsInterface
      */
     function supportsInterface(bytes4 interfaceId)

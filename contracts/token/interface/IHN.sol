@@ -59,4 +59,11 @@ abstract contract IHN is IERC721Enumerable {
         view
         virtual
         returns (uint256[] memory);
+
+    function getRandomNumber(
+        uint256 hnId,
+        string calldata slot,
+        uint256 base,
+        uint256 range
+    ) external pure virtual returns (uint256);
 }
