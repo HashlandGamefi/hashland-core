@@ -26,12 +26,21 @@ contract HNBox is AccessControlEnumerable {
     uint256 public totalBoxesLength;
 
     bool public isRaceEqualsClass = true;
-    uint256 public hcLength = 6;
-    uint256 public btcLength = 6;
-    uint256 public raceLength = 3;
-    uint256 public classLength = 3;
-    uint256 public itemsLength = 20;
-    uint256 public attrsLength = 6;
+
+    uint256 public btcBase = 10000;
+    uint256 public btcRange = 1000;
+
+    uint256 public raceBase = 1;
+    uint256 public raceRange = 3;
+
+    uint256 public classBase = 1;
+    uint256 public classRange = 3;
+
+    uint256 public itemsBase = 1;
+    uint256 public itemsRange = 20;
+
+    uint256 public attrsBase = 10;
+    uint256 public attrsRange = 6;
 
     mapping(uint256 => uint256) public totalTokenBuyAmount;
     mapping(address => uint256) public userBoxesLength;
@@ -96,20 +105,28 @@ contract HNBox is AccessControlEnumerable {
      */
     function setDatas(
         bool _isRaceEqualsClass,
-        uint256 _hcLength,
-        uint256 _btcLength,
-        uint256 _raceLength,
-        uint256 _classLength,
-        uint256 _itemsLength,
-        uint256 _attrsLength
+        uint256 _btcBase,
+        uint256 _btcRange,
+        uint256 _raceBase,
+        uint256 _raceRange,
+        uint256 _classBase,
+        uint256 _classRange,
+        uint256 _itemsBase,
+        uint256 _itemsRange,
+        uint256 _attrsBase,
+        uint256 _attrsRange
     ) external onlyRole(MANAGER_ROLE) {
         isRaceEqualsClass = _isRaceEqualsClass;
-        hcLength = _hcLength;
-        btcLength = _btcLength;
-        raceLength = _raceLength;
-        classLength = _classLength;
-        itemsLength = _itemsLength;
-        attrsLength = _attrsLength;
+        btcBase = _btcBase;
+        btcRange = _btcRange;
+        raceBase = _raceBase;
+        raceRange = _raceRange;
+        classBase = _classBase;
+        classRange = _classRange;
+        itemsBase = _itemsBase;
+        itemsRange = _itemsRange;
+        attrsBase = _attrsBase;
+        attrsRange = _attrsRange;
     }
 
     /**
@@ -131,7 +148,7 @@ contract HNBox is AccessControlEnumerable {
     function buyBoxes(uint256 boxesLength, uint256 tokenId) external {
         require(tokenId > 0, "Token Id must > 0");
         require(boxesLength > 0, "Boxes Length must > 0");
-        require(boxesLength <= 10, "Boxes Length must <= 10");
+        require(boxesLength <= 100, "Boxes Length must <= 100");
         require(getBoxesLeftSupply() >= boxesLength, "Not Enough Boxes Supply");
 
         uint256 buyAmount = boxesLength * boxTokenPrices[tokenId];
@@ -153,7 +170,7 @@ contract HNBox is AccessControlEnumerable {
     receive() external payable {
         uint256 boxesLength = msg.value / boxTokenPrices[0];
         require(boxesLength > 0, "Boxes Length must > 0");
-        require(boxesLength <= 10, "Boxes Length must <= 10");
+        require(boxesLength <= 100, "Boxes Length must <= 100");
         require(getBoxesLeftSupply() >= boxesLength, "Not Enough Boxes Supply");
 
         uint256 buyAmount = boxesLength * boxTokenPrices[0];
@@ -233,23 +250,24 @@ contract HNBox is AccessControlEnumerable {
             );
 
             uint256[] memory hashrates = new uint256[](2);
-            hashrates[0] = ((randomness % 1e2) % hcLength) + 100;
-            hashrates[1] = (((randomness % 1e4) / 1e2) % btcLength) + 100;
+            hashrates[0] = 0;
+            hashrates[1] = btcBase + (randomness % btcRange);
 
-            uint256 race = (((randomness % 1e6) / 1e4) % raceLength) + 1;
-            uint256 class = (((randomness % 1e8) / 1e6) % classLength) + 1;
+            uint256 race = raceBase + (((randomness % 1e6) / 1e4) % raceRange);
+            uint256 class = classBase +
+                (((randomness % 1e8) / 1e6) % classRange);
 
             uint256[] memory items = new uint256[](2);
-            items[0] = (((randomness % 1e10) / 1e8) % itemsLength) + 1;
-            items[1] = (((randomness % 1e12) / 1e10) % itemsLength) + 1;
+            items[0] = itemsBase + (((randomness % 1e10) / 1e8) % itemsRange);
+            items[1] = itemsBase + (((randomness % 1e12) / 1e10) % itemsRange);
 
             uint256[] memory attrs = new uint256[](6);
-            attrs[0] = (((randomness % 1e14) / 1e12) % attrsLength) + 10;
-            attrs[1] = (((randomness % 1e16) / 1e14) % attrsLength) + 10;
-            attrs[2] = (((randomness % 1e18) / 1e16) % attrsLength) + 10;
-            attrs[3] = (((randomness % 1e20) / 1e18) % attrsLength) + 10;
-            attrs[4] = (((randomness % 1e22) / 1e20) % attrsLength) + 10;
-            attrs[5] = (((randomness % 1e24) / 1e22) % attrsLength) + 10;
+            attrs[0] = attrsBase + (((randomness % 1e14) / 1e12) % attrsRange);
+            attrs[1] = attrsBase + (((randomness % 1e16) / 1e14) % attrsRange);
+            attrs[2] = attrsBase + (((randomness % 1e18) / 1e16) % attrsRange);
+            attrs[3] = attrsBase + (((randomness % 1e20) / 1e18) % attrsRange);
+            attrs[4] = attrsBase + (((randomness % 1e22) / 1e20) % attrsRange);
+            attrs[5] = attrsBase + (((randomness % 1e24) / 1e22) % attrsRange);
 
             uint256 hnId = hn.spawnHn(to, 1, 1, hashrates);
             hn.setData(hnId, "race", race);

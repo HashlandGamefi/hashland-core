@@ -21,7 +21,7 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Create New tokens to an Address
+     * @dev Create New Tokens to an Address
      */
     function mint(address receiver, uint256 tokens)
         external

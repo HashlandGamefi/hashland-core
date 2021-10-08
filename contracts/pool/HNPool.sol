@@ -23,6 +23,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     bool public openStatus = false;
     uint256 public maxSlots = 6;
+    uint256 public slotBasePrice = 4;
     uint256 public lastRewardsTime;
     address public receivingAddress;
 
@@ -105,6 +106,13 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
         maxSlots = slots;
+    }
+
+    /**
+     * @dev Set Slot Base Price
+     */
+    function setSlotBasePrice(uint256 price) external onlyRole(MANAGER_ROLE) {
+        slotBasePrice = price;
     }
 
     /**
@@ -470,6 +478,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      * @dev Get User Slot Price
      */
     function getUserSlotPrice(address user) public view returns (uint256) {
-        return 10**getUserSlots(user);
+        return slotBasePrice**getUserSlots(user) * 1e18;
     }
 }
