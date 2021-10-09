@@ -15,7 +15,7 @@ const BSCSCAN_API_KEY = process.env.BSCSCAN_API_KEY;
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
-    compilers: [{ version: "0.8.7", settings: {} }],
+    compilers: [{ version: "0.8.9", settings: {} }],
   },
   networks: {
     hardhat: {},
