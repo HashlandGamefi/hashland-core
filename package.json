@@ -16,6 +16,10 @@
     "type": "git",
     "url": "git+https://github.com/HashlandGamefi/hashland-core.git"
   },
+  "files": [
+    "artifacts/contracts/**/*.json",
+    "!artifacts/contracts/**/*.dbg.json"
+  ],
   "author": "HASHLAND-TEAM",
   "license": "MIT",
   "bugs": {
