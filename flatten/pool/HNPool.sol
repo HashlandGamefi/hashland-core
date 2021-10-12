@@ -1,4 +1,4 @@
-// Sources flattened with hardhat v2.6.4 https://hardhat.org
+// Sources flattened with hardhat v2.6.5 https://hardhat.org
 
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
 
@@ -1341,7 +1341,7 @@ interface IHC is IERC20 {
 // File contracts/pool/HNPool.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 
 
@@ -1523,6 +1523,10 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function deposit(uint256[] calldata _hnIds) external {
         require(openStatus, "This Pool is not Opened");
+        require(
+            _hnIds.length <= getUserLeftSlots(msg.sender),
+            "Not Enough Slots"
+        );
 
         updatePool();
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -1537,11 +1541,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         for (uint256 i = 0; i < _hnIds.length; i++) {
-            require(
-                _hnIds.length <= getUserLeftSlots(msg.sender),
-                "Not Enough Slots"
-            );
-
             hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
             uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
             for (uint256 j = 0; j < hashrates.length; j++) {

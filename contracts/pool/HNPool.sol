@@ -183,6 +183,10 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function deposit(uint256[] calldata _hnIds) external {
         require(openStatus, "This Pool is not Opened");
+        require(
+            _hnIds.length <= getUserLeftSlots(msg.sender),
+            "Not Enough Slots"
+        );
 
         updatePool();
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -197,11 +201,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         for (uint256 i = 0; i < _hnIds.length; i++) {
-            require(
-                _hnIds.length <= getUserLeftSlots(msg.sender),
-                "Not Enough Slots"
-            );
-
             hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
             uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
             for (uint256 j = 0; j < hashrates.length; j++) {

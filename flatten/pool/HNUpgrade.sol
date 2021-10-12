@@ -1,4 +1,4 @@
-// Sources flattened with hardhat v2.6.4 https://hardhat.org
+// Sources flattened with hardhat v2.6.5 https://hardhat.org
 
 // File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
 
@@ -1326,7 +1326,7 @@ abstract contract IHN is IERC721Enumerable {
 // File contracts/pool/HNUpgrade.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 
 

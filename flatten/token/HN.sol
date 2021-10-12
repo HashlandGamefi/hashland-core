@@ -1,4 +1,4 @@
-// Sources flattened with hardhat v2.6.4 https://hardhat.org
+// Sources flattened with hardhat v2.6.5 https://hardhat.org
 
 // File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.3.2
 
@@ -1963,7 +1963,7 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 // File contracts/token/HN.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 
 /**
