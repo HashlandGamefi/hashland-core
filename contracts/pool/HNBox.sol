@@ -182,10 +182,24 @@ contract HNBox is AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Users
+     * @dev Get Users by Size
      */
-    function getUsers() external view returns (address[] memory) {
-        return users.values();
+    function getUsersBySize(uint256 cursor, uint256 size)
+        external
+        view
+        returns (address[] memory, uint256)
+    {
+        uint256 length = size;
+        if (length > users.length() - cursor) {
+            length = users.length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = users.at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**

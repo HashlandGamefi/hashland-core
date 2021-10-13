@@ -11,9 +11,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 abstract contract IHN is IERC721Enumerable {
     mapping(uint256 => string) public name;
     mapping(uint256 => uint256) public ip;
+    mapping(uint256 => uint256) public series;
     mapping(uint256 => uint256) public level;
     mapping(uint256 => uint256) public spawntime;
-    mapping(uint256 => uint256) public seed;
     mapping(uint256 => uint256[]) public hashrates;
 
     mapping(uint256 => mapping(string => uint256)) public data;
@@ -62,6 +62,12 @@ abstract contract IHN is IERC721Enumerable {
         view
         virtual
         returns (uint256[] memory);
+
+    function tokensOfOwnerBySize(
+        address user,
+        uint256 cursor,
+        uint256 size
+    ) external view virtual returns (uint256[] memory, uint256);
 
     function getRandomNumber(
         uint256 hnId,

@@ -359,10 +359,24 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get HnIds
+     * @dev Get HnIds by Size
      */
-    function getHnIds() external view returns (uint256[] memory) {
-        return hnIds.values();
+    function getHnIdsBySize(uint256 cursor, uint256 size)
+        external
+        view
+        returns (uint256[] memory, uint256)
+    {
+        uint256 length = size;
+        if (length > hnIds.length() - cursor) {
+            length = hnIds.length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = hnIds.at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**
@@ -380,10 +394,24 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Users
+     * @dev Get Users by Size
      */
-    function getUsers() external view returns (address[] memory) {
-        return users.values();
+    function getUsersBySize(uint256 cursor, uint256 size)
+        external
+        view
+        returns (address[] memory, uint256)
+    {
+        uint256 length = size;
+        if (length > users.length() - cursor) {
+            length = users.length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = users.at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**
@@ -405,14 +433,24 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get User HnIds
+     * @dev Get User HnIds by Size
      */
-    function getUserHnIds(address user)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return userHnIds[user].values();
+    function getUserHnIdsBySize(
+        address user,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (uint256[] memory, uint256) {
+        uint256 length = size;
+        if (length > userHnIds[user].length() - cursor) {
+            length = userHnIds[user].length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = userHnIds[user].at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**
