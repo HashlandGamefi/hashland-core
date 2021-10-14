@@ -39,11 +39,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     mapping(uint256 => uint256) public lastAirdropedTokens;
     mapping(uint256 => uint256) public lastAirdropTimes;
 
-    mapping(address => uint256) userSlots;
-    mapping(address => mapping(uint256 => uint256)) userStakes;
-    mapping(address => mapping(uint256 => uint256)) userLastAccTokensPerStake;
-    mapping(address => mapping(uint256 => uint256)) userStoredTokens;
-    mapping(address => mapping(uint256 => uint256)) userHarvestedTokens;
+    mapping(address => uint256) public userSlots;
+    mapping(address => mapping(uint256 => uint256)) public userStakes;
+    mapping(address => mapping(uint256 => uint256)) public userLastAccTokensPerStake;
+    mapping(address => mapping(uint256 => uint256)) public userStoredTokens;
+    mapping(address => mapping(uint256 => uint256)) public userHarvestedTokens;
 
     EnumerableSet.UintSet private hnIds;
     EnumerableSet.AddressSet private users;
@@ -329,7 +329,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         returns (uint256)
     {
         return
-            userHarvestedTokens[msg.sender][tokenId] +
+            userHarvestedTokens[user][tokenId] +
             getTokenRewards(user, tokenId);
     }
 
