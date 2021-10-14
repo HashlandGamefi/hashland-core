@@ -1515,7 +1515,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                     hashrates[i] =
                         (hashrates[i] *
                             (hcBase +
-                                (level * hashratesBase) +
+                                ((i == 0 ? level - 1 : level) * hashratesBase) +
                                 (randomness % hashratesRange))) /
                         hcBase;
                 }
