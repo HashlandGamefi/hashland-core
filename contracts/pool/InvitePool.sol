@@ -10,7 +10,7 @@ import "../pool/interface/IHNPool.sol";
 /**
  * @title Invite Pool Contract
  * @author HASHLAND-TEAM
- * @notice This Contract Harvest HC
+ * @notice In this contract the inviter can harvest HC
  */
 contract InvitePool is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -32,18 +32,19 @@ contract InvitePool is AccessControlEnumerable {
     uint256 public releasedToken;
     uint256 public harvestedToken;
 
-    mapping(address => uint256) public userStake;
-    mapping(address => uint256) public userLastAccTokenPerStake;
-    mapping(address => uint256) public userStoredToken;
-    mapping(address => uint256) public userHarvestedToken;
-    mapping(address => address) public userInviter;
+    mapping(address => uint256) public inviterStake;
+    mapping(address => uint256) public inviterLastAccTokenPerStake;
+    mapping(address => uint256) public inviterStoredToken;
+    mapping(address => uint256) public inviterHarvestedToken;
 
     EnumerableSet.AddressSet private users;
+    mapping(address => address) public userInviter;
+
     EnumerableSet.AddressSet private inviters;
     mapping(address => EnumerableSet.AddressSet) private inviterUsers;
 
     event BindInviter(address indexed user, address indexed inviter);
-    event HarvestToken(address indexed user, uint256 amount);
+    event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
      * @param hnAddr Initialize HN Address
@@ -84,21 +85,21 @@ contract InvitePool is AccessControlEnumerable {
 
         address inviter = userInviter[user];
         if (inviter != address(0)) {
-            if (userStake[inviter] > 0) {
-                uint256 pendingToken = (userStake[inviter] *
-                    (accTokenPerStake - userLastAccTokenPerStake[inviter])) /
+            if (inviterStake[inviter] > 0) {
+                uint256 pendingToken = (inviterStake[inviter] *
+                    (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
                     1e18;
                 if (pendingToken > 0) {
-                    userStoredToken[inviter] += pendingToken;
+                    inviterStoredToken[inviter] += pendingToken;
                 }
             }
 
             if (hashrate > 0) {
-                userStake[inviter] += hashrate;
+                inviterStake[inviter] += hashrate;
                 stake += hashrate;
             }
 
-            userLastAccTokenPerStake[inviter] = accTokenPerStake;
+            inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
     }
 
@@ -113,21 +114,21 @@ contract InvitePool is AccessControlEnumerable {
 
         address inviter = userInviter[user];
         if (inviter != address(0)) {
-            if (userStake[inviter] > 0) {
-                uint256 pendingToken = (userStake[inviter] *
-                    (accTokenPerStake - userLastAccTokenPerStake[inviter])) /
+            if (inviterStake[inviter] > 0) {
+                uint256 pendingToken = (inviterStake[inviter] *
+                    (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
                     1e18;
                 if (pendingToken > 0) {
-                    userStoredToken[inviter] += pendingToken;
+                    inviterStoredToken[inviter] += pendingToken;
                 }
             }
 
             if (hashrate > 0) {
-                userStake[inviter] -= hashrate;
+                inviterStake[inviter] -= hashrate;
                 stake -= hashrate;
             }
 
-            userLastAccTokenPerStake[inviter] = accTokenPerStake;
+            inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
     }
 
@@ -144,24 +145,25 @@ contract InvitePool is AccessControlEnumerable {
         userInviter[msg.sender] = inviter;
 
         updatePool();
-        if (userStake[inviter] > 0) {
-            uint256 pendingToken = (userStake[inviter] *
-                (accTokenPerStake - userLastAccTokenPerStake[inviter])) / 1e18;
+        if (inviterStake[inviter] > 0) {
+            uint256 pendingToken = (inviterStake[inviter] *
+                (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
+                1e18;
             if (pendingToken > 0) {
-                userStoredToken[inviter] += pendingToken;
+                inviterStoredToken[inviter] += pendingToken;
             }
         }
 
         uint256 hashrate = hnPool.userStakes(msg.sender, 0);
         if (hashrate > 0) {
-            userStake[inviter] += hashrate;
+            inviterStake[inviter] += hashrate;
             stake += hashrate;
         }
 
-        userLastAccTokenPerStake[inviter] = accTokenPerStake;
+        inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
 
-        users.add(msg.sender);
         inviters.add(inviter);
+        users.add(msg.sender);
         inviterUsers[inviter].add(msg.sender);
 
         emit BindInviter(msg.sender, inviter);
@@ -173,14 +175,15 @@ contract InvitePool is AccessControlEnumerable {
     function harvestToken() external {
         updatePool();
 
-        uint256 pendingToken = (userStake[msg.sender] *
-            (accTokenPerStake - userLastAccTokenPerStake[msg.sender])) / 1e18;
-        uint256 amount = userStoredToken[msg.sender] + pendingToken;
+        uint256 pendingToken = (inviterStake[msg.sender] *
+            (accTokenPerStake - inviterLastAccTokenPerStake[msg.sender])) /
+            1e18;
+        uint256 amount = inviterStoredToken[msg.sender] + pendingToken;
         require(amount > 0, "You have none token to harvest");
 
-        userStoredToken[msg.sender] = 0;
-        userLastAccTokenPerStake[msg.sender] = accTokenPerStake;
-        userHarvestedToken[msg.sender] += amount;
+        inviterStoredToken[msg.sender] = 0;
+        inviterLastAccTokenPerStake[msg.sender] = accTokenPerStake;
+        inviterHarvestedToken[msg.sender] += amount;
         harvestedToken += amount;
 
         hc.mint(msg.sender, amount);
@@ -189,14 +192,14 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Token Total Rewards of a User
+     * @dev Get Token Total Rewards of a Inviter
      */
-    function getTokenTotalRewards(address user)
+    function getTokenTotalRewards(address inviter)
         external
         view
         returns (uint256)
     {
-        return userHarvestedToken[user] + getTokenRewards(user);
+        return inviterHarvestedToken[inviter] + getTokenRewards(inviter);
     }
 
     /**
@@ -204,13 +207,6 @@ contract InvitePool is AccessControlEnumerable {
      */
     function getUsersLength() external view returns (uint256) {
         return users.length();
-    }
-
-    /**
-     * @dev Get User by Index
-     */
-    function getUserByIndex(uint256 index) external view returns (address) {
-        return users.at(index);
     }
 
     /**
@@ -235,6 +231,66 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
+     * @dev Get Inviters Length
+     */
+    function getInvitersLength() external view returns (uint256) {
+        return inviters.length();
+    }
+
+    /**
+     * @dev Get Inviters by Size
+     */
+    function getInvitersBySize(uint256 cursor, uint256 size)
+        external
+        view
+        returns (address[] memory, uint256)
+    {
+        uint256 length = size;
+        if (length > inviters.length() - cursor) {
+            length = inviters.length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = inviters.at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get Inviter Users Length
+     */
+    function getInviterUsersLength(address inviter)
+        external
+        view
+        returns (uint256)
+    {
+        return inviterUsers[inviter].length();
+    }
+
+    /**
+     * @dev Get Inviter Users by Size
+     */
+    function getInviterUsersBySize(
+        address inviter,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (address[] memory, uint256) {
+        uint256 length = size;
+        if (length > inviterUsers[inviter].length() - cursor) {
+            length = inviterUsers[inviter].length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = inviterUsers[inviter].at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
      * @dev Update Pool
      */
     function updatePool() public {
@@ -253,9 +309,9 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Token Rewards of a User
+     * @dev Get Token Rewards of a Inviter
      */
-    function getTokenRewards(address user) public view returns (uint256) {
+    function getTokenRewards(address inviter) public view returns (uint256) {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
         if (block.timestamp > lastRewardsTime && stake > 0) {
             accTokenPerStakeTemp +=
@@ -266,9 +322,9 @@ contract InvitePool is AccessControlEnumerable {
         }
 
         return
-            userStoredToken[user] +
-            ((userStake[user] *
-                (accTokenPerStakeTemp - userLastAccTokenPerStake[user])) /
+            inviterStoredToken[inviter] +
+            ((inviterStake[inviter] *
+                (accTokenPerStakeTemp - inviterLastAccTokenPerStake[inviter])) /
                 1e18);
     }
 }

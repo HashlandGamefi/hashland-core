@@ -352,13 +352,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get HnId by Index
-     */
-    function getHnIdByIndex(uint256 index) external view returns (uint256) {
-        return hnIds.at(index);
-    }
-
-    /**
      * @dev Get HnIds by Size
      */
     function getHnIdsBySize(uint256 cursor, uint256 size)
@@ -387,13 +380,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get User by Index
-     */
-    function getUserByIndex(uint256 index) external view returns (address) {
-        return users.at(index);
-    }
-
-    /**
      * @dev Get Users by Size
      */
     function getUsersBySize(uint256 cursor, uint256 size)
@@ -419,17 +405,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function getUserHnIdsLength(address user) external view returns (uint256) {
         return userHnIds[user].length();
-    }
-
-    /**
-     * @dev Get User HnId by Index
-     */
-    function getUserHnIdByIndex(address user, uint256 index)
-        external
-        view
-        returns (uint256)
-    {
-        return userHnIds[user].at(index);
     }
 
     /**

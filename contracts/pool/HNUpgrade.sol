@@ -212,13 +212,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get User by Index
-     */
-    function getUserByIndex(uint256 index) external view returns (address) {
-        return users.at(index);
-    }
-
-    /**
      * @dev Get Users by Size
      */
     function getUsersBySize(uint256 cursor, uint256 size)
