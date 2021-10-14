@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../token/interface/IHN.sol";
 import "../token/interface/IHC.sol";
+import "../token/interface/IHN.sol";
+import "./interface/IInvitePool.sol";
 
 /**
  * @title HN Pool Contract
@@ -18,6 +19,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.UintSet;
 
     IHN public hn;
+    IInvitePool public invitePool;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
@@ -41,7 +43,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     mapping(address => uint256) public userSlots;
     mapping(address => mapping(uint256 => uint256)) public userStakes;
-    mapping(address => mapping(uint256 => uint256)) public userLastAccTokensPerStake;
+    mapping(address => mapping(uint256 => uint256))
+        public userLastAccTokensPerStake;
     mapping(address => mapping(uint256 => uint256)) public userStoredTokens;
     mapping(address => mapping(uint256 => uint256)) public userHarvestedTokens;
 
@@ -126,6 +129,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
+     * @dev Set Invite Pool Address
+     */
+    function setInvitePoolAddress(address invitePoolAddr)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        invitePool = IInvitePool(invitePoolAddr);
+    }
+
+    /**
      * @dev Withdraw Token
      */
     function withdrawToken(
@@ -200,6 +213,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
         }
 
+        uint256 hcHashrate;
         for (uint256 i = 0; i < _hnIds.length; i++) {
             hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
             uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
@@ -211,6 +225,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
             hnIds.add(_hnIds[i]);
             userHnIds[msg.sender].add(_hnIds[i]);
+            if (hashrates[0] > 0) hcHashrate += hashrates[0];
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -219,6 +234,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
         }
         users.add(msg.sender);
+
+        invitePool.depositInviter(msg.sender, hcHashrate);
 
         emit Deposit(msg.sender, _hnIds);
     }
@@ -239,6 +256,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
         }
 
+        uint256 hcHashrate;
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does Not Exist");
             require(
@@ -256,6 +274,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             hnIds.remove(_hnIds[i]);
             userHnIds[msg.sender].remove(_hnIds[i]);
             hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
+            if (hashrates[0] > 0) hcHashrate += hashrates[0];
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -263,6 +282,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
             }
         }
+
+        invitePool.withdrawInviter(msg.sender, hcHashrate);
 
         emit Withdraw(msg.sender, _hnIds);
     }
@@ -329,8 +350,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         returns (uint256)
     {
         return
-            userHarvestedTokens[user][tokenId] +
-            getTokenRewards(user, tokenId);
+            userHarvestedTokens[user][tokenId] + getTokenRewards(user, tokenId);
     }
 
     /**

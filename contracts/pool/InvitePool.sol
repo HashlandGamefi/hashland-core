@@ -68,6 +68,16 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
+     * @dev Set Token Release Speed
+     */
+    function setTokenReleaseSpeed(uint256 releaseSpeed)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        tokenReleaseSpeed = releaseSpeed;
+    }
+
+    /**
      * @dev Set Open Status
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
