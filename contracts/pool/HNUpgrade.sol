@@ -191,8 +191,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             }
             hn.setHashrates(hnId, hashrates);
 
-            hn.setDatas(hnId, "materialHnIds", materialHnIds);
-
             userUpgradeCount[msg.sender]++;
             totalUpgradeCount++;
         }

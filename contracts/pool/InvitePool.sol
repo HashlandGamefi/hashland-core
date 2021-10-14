@@ -3,7 +3,6 @@ pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../token/interface/IHN.sol";
 import "../token/interface/IHC.sol";
 import "../pool/interface/IHNPool.sol";
 
@@ -15,7 +14,6 @@ import "../pool/interface/IHNPool.sol";
 contract InvitePool is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    IHN public hn;
     IHC public hc;
     IHNPool public hnPool;
 
@@ -47,18 +45,15 @@ contract InvitePool is AccessControlEnumerable {
     event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
-     * @param hnAddr Initialize HN Address
      * @param hcAddr Initialize HC Address
      * @param hnPoolAddr Initialize HNPool Address
      * @param manager Initialize Manager Role
      */
     constructor(
-        address hnAddr,
         address hcAddr,
         address hnPoolAddr,
         address manager
     ) {
-        hn = IHN(hnAddr);
         hc = IHC(hcAddr);
         hnPool = IHNPool(hnPoolAddr);
 
