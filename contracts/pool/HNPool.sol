@@ -8,11 +8,12 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../token/interface/IHC.sol";
 import "../token/interface/IHN.sol";
 import "./interface/IInvitePool.sol";
+import "./interface/IHNMarket.sol";
 
 /**
  * @title HN Pool Contract
  * @author HASHLAND-TEAM
- * @notice This Contract Stake HN to Harvest HC and Tokens
+ * @notice In this Contract users can stake HN to harvest HC and Tokens
  */
 contract HNPool is ERC721Holder, AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -20,6 +21,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     IHN public hn;
     IInvitePool public invitePool;
+    IHNMarket public hnMarket;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
@@ -92,7 +94,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     ) external onlyRole(MANAGER_ROLE) {
         require(
             _tokenAddrs.length == _tokenReleaseSpeeds.length,
-            "Tokens Info Length Mismatch"
+            "Tokens info length mismatch"
         );
         tokenAddrs = _tokenAddrs;
         tokenReleaseSpeeds = _tokenReleaseSpeeds;
@@ -146,7 +148,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         external
         onlyRole(MANAGER_ROLE)
     {
-        hnMarketAddress = hnMarketAddr;
+        hnMarket = IHNMarket(hnMarketAddr);
     }
 
     /**
@@ -184,13 +186,13 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         require(
             tokenIds.length == amounts.length &&
                 tokenIds.length == releaseSeconds.length,
-            "Tokens Data Length Mismatch"
+            "Tokens data length mismatch"
         );
 
         updatePool();
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(tokenIds[i] > 0, "Token Id must > 0");
-            require(releaseSeconds[i] > 0, "Release Seconds must > 0");
+            require(tokenIds[i] > 0, "Token id must > 0");
+            require(releaseSeconds[i] > 0, "Release seconds must > 0");
 
             IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
             token.transferFrom(msg.sender, address(this), amounts[i]);
@@ -206,10 +208,10 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      * @dev Deposit
      */
     function deposit(uint256[] calldata _hnIds) external {
-        require(openStatus, "This Pool is not Opened");
+        require(openStatus, "This pool is not opened");
         require(
             _hnIds.length <= getUserLeftSlots(msg.sender),
-            "Not Enough Slots"
+            "Not enough slots"
         );
 
         updatePool();
@@ -237,7 +239,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             hnIds.add(_hnIds[i]);
             userHnIds[msg.sender].add(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
-            hn.approve(hnMarketAddress, _hnIds[i]);
+            hn.approve(address(hnMarket), _hnIds[i]);
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -270,10 +272,10 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
         uint256 hcHashrate;
         for (uint256 i = 0; i < _hnIds.length; i++) {
-            require(hnIds.contains(_hnIds[i]), "This HN does Not Exist");
+            require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             require(
                 userHnIds[msg.sender].contains(_hnIds[i]),
-                "This HN is not Own"
+                "This HN is not own"
             );
 
             uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
@@ -285,8 +287,9 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             }
             hnIds.remove(_hnIds[i]);
             userHnIds[msg.sender].remove(_hnIds[i]);
-            hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
+            hnMarket.hnPoolCancel(msg.sender, _hnIds[i]);
+            hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -342,7 +345,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     function buySlot() external {
         require(
             getUserSlots(msg.sender) < maxSlots,
-            "Slots has Reached the Limit"
+            "Slots has reached the limit"
         );
 
         uint256 amount = getUserSlotPrice(msg.sender);

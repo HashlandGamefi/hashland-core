@@ -9,7 +9,7 @@ import "../token/interface/IHN.sol";
 /**
  * @title HN Box Contract
  * @author HASHLAND-TEAM
- * @notice This Contract Draw HN
+ * @notice In this contract users can draw HN
  */
 contract HNBox is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -63,7 +63,7 @@ contract HNBox is AccessControlEnumerable {
     ) external onlyRole(MANAGER_ROLE) {
         require(
             _boxTokenPrices.length == _tokenAddrs.length,
-            "Tokens Info Length Mismatch"
+            "Tokens info length mismatch"
         );
         boxTokenPrices = _boxTokenPrices;
         tokenAddrs = _tokenAddrs;
@@ -104,8 +104,8 @@ contract HNBox is AccessControlEnumerable {
         external
         onlyRole(MANAGER_ROLE)
     {
-        require(boxesLength > 0, "Boxes Length must > 0");
-        require(boxesLength <= 100, "The Boxes Length must <= 100");
+        require(boxesLength > 0, "Boxes length must > 0");
+        require(boxesLength <= 100, "The boxes length must <= 100");
 
         spawnHns(to, boxesLength);
     }
@@ -113,47 +113,27 @@ contract HNBox is AccessControlEnumerable {
     /**
      * @dev Buy Boxes
      */
-    function buyBoxes(uint256 boxesLength, uint256 tokenId) external {
-        require(tokenId > 0, "Token Id must > 0");
-        require(boxesLength > 0, "Boxes Length must > 0");
-        require(boxesLength <= 100, "Boxes Length must <= 100");
-        require(getBoxesLeftSupply() >= boxesLength, "Not Enough Boxes Supply");
+    function buyBoxes(uint256 boxesLength, uint256 tokenId) external payable {
+        require(boxesLength > 0, "Boxes length must > 0");
+        require(boxesLength <= 100, "Boxes length must <= 100");
+        require(getBoxesLeftSupply() >= boxesLength, "Not enough boxes supply");
 
-        uint256 buyAmount = boxesLength * boxTokenPrices[tokenId];
-        IERC20 token = IERC20(tokenAddrs[tokenId]);
-        token.transferFrom(msg.sender, receivingAddress, buyAmount);
-
-        spawnHns(msg.sender, boxesLength);
-
-        userBoxesLength[msg.sender] += boxesLength;
-        userTokenBuyAmount[msg.sender][tokenId] += buyAmount;
-        totalBoxesLength += boxesLength;
-        totalTokenBuyAmount[tokenId] += buyAmount;
-        users.add(msg.sender);
-    }
-
-    /**
-     * @dev Buy Boxes By BNB
-     */
-    receive() external payable {
-        uint256 boxesLength = msg.value / boxTokenPrices[0];
-        require(boxesLength > 0, "Boxes Length must > 0");
-        require(boxesLength <= 100, "Boxes Length must <= 100");
-        require(getBoxesLeftSupply() >= boxesLength, "Not Enough Boxes Supply");
-
-        uint256 buyAmount = boxesLength * boxTokenPrices[0];
-        payable(receivingAddress).transfer(buyAmount);
+        uint256 price = boxesLength * boxTokenPrices[tokenId];
+        if (tokenId == 0) {
+            require(msg.value == price, "Price mismatch");
+            payable(receivingAddress).transfer(price);
+        } else {
+            IERC20 token = IERC20(tokenAddrs[tokenId]);
+            token.transferFrom(msg.sender, receivingAddress, price);
+        }
 
         spawnHns(msg.sender, boxesLength);
 
         userBoxesLength[msg.sender] += boxesLength;
-        userTokenBuyAmount[msg.sender][0] += buyAmount;
+        userTokenBuyAmount[msg.sender][tokenId] += price;
         totalBoxesLength += boxesLength;
-        totalTokenBuyAmount[0] += buyAmount;
+        totalTokenBuyAmount[tokenId] += price;
         users.add(msg.sender);
-
-        uint256 returnAmount = msg.value - buyAmount;
-        if (returnAmount > 0) payable(msg.sender).transfer(returnAmount);
     }
 
     /**
