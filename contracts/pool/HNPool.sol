@@ -28,6 +28,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     uint256 public slotBasePrice = 4;
     uint256 public lastRewardsTime;
     address public receivingAddress;
+    address public hnMarketAddress;
 
     address[] public tokenAddrs;
     uint256[] public tokenReleaseSpeeds = [12500000000000000, 3472222222222];
@@ -139,6 +140,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
+     * @dev Set HN Market Address
+     */
+    function setHNMarketAddress(address hnMarketAddr)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        hnMarketAddress = hnMarketAddr;
+    }
+
+    /**
      * @dev Withdraw Token
      */
     function withdrawToken(
@@ -226,6 +237,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             hnIds.add(_hnIds[i]);
             userHnIds[msg.sender].add(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
+            hn.approve(hnMarketAddress, _hnIds[i]);
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -421,6 +433,17 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
+     * @dev Get User HnId Existence
+     */
+    function getUserHnIdExistence(address user, uint256 hnId)
+        external
+        view
+        returns (bool)
+    {
+        return userHnIds[user].contains(hnId);
+    }
+
+    /**
      * @dev Get User HnIds Length
      */
     function getUserHnIdsLength(address user) external view returns (uint256) {
@@ -496,7 +519,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      * @dev Get User Slots
      */
     function getUserSlots(address user) public view returns (uint256) {
-        return 1 + userSlots[user];
+        return 2 + userSlots[user];
     }
 
     /**
@@ -510,6 +533,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      * @dev Get User Slot Price
      */
     function getUserSlotPrice(address user) public view returns (uint256) {
-        return slotBasePrice**getUserSlots(user) * 1e18;
+        return slotBasePrice**(getUserSlots(user) - 1) * 1e18;
     }
 }

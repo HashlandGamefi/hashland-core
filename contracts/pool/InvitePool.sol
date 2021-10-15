@@ -9,7 +9,7 @@ import "../pool/interface/IHNPool.sol";
 /**
  * @title Invite Pool Contract
  * @author HASHLAND-TEAM
- * @notice In this contract the inviter can harvest HC
+ * @notice In this contract inviters can harvest HC
  */
 contract InvitePool is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;

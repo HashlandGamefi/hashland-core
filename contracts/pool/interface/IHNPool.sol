@@ -10,4 +10,10 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
  */
 abstract contract IHNPool {
     mapping(address => mapping(uint256 => uint256)) public userStakes;
+
+    function getUserHnIdExistence(address user, uint256 hnId)
+        external
+        view
+        virtual
+        returns (bool);
 }
