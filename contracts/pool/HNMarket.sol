@@ -161,7 +161,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
 
         payable(seller).transfer(price);
         if (isInPool) {
-            hn.safeTransferFrom(address(hnPool), msg.sender, hnId);
+            hnPool.hnMarketWithdraw(msg.sender, seller, hnId);
         } else {
             hn.safeTransferFrom(address(this), msg.sender, hnId);
         }

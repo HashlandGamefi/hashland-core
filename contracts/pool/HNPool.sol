@@ -57,6 +57,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     event Deposit(address indexed user, uint256[] hnIds);
     event Withdraw(address indexed user, uint256[] hnIds);
+    event HNMarketWithdraw(
+        address indexed buyer,
+        address indexed seller,
+        uint256 hnId
+    );
     event HarvestTokens(
         address indexed user,
         uint256[] tokenIds,
@@ -239,7 +244,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             hnIds.add(_hnIds[i]);
             userHnIds[msg.sender].add(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
-            hn.approve(address(hnMarket), _hnIds[i]);
         }
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -301,6 +305,59 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         invitePool.withdrawInviter(msg.sender, hcHashrate);
 
         emit Withdraw(msg.sender, _hnIds);
+    }
+
+    /**
+     * @dev HN Market Withdraw
+     */
+    function hnMarketWithdraw(
+        address buyer,
+        address seller,
+        uint256 hnId
+    ) external {
+        require(
+            msg.sender == address(hnMarket),
+            "Only HN Market contract can call"
+        );
+
+        updatePool();
+        for (uint256 i = 0; i < tokenAddrs.length; i++) {
+            if (userStakes[seller][i] > 0) {
+                uint256 pendingToken = (userStakes[seller][i] *
+                    (accTokensPerStake[i] -
+                        userLastAccTokensPerStake[seller][i])) / 1e18;
+                if (pendingToken > 0) {
+                    userStoredTokens[seller][i] += pendingToken;
+                }
+            }
+        }
+
+        uint256 hcHashrate;
+        require(hnIds.contains(hnId), "This HN does not exist");
+        require(userHnIds[seller].contains(hnId), "This HN is not own");
+
+        uint256[] memory hashrates = hn.getHashrates(hnId);
+        for (uint256 j = 0; j < hashrates.length; j++) {
+            if (hashrates[j] > 0) {
+                userStakes[seller][j] -= hashrates[j];
+                stakes[j] -= hashrates[j];
+            }
+        }
+        hnIds.remove(hnId);
+        userHnIds[seller].remove(hnId);
+        if (hashrates[0] > 0) hcHashrate = hashrates[0];
+        hnMarket.hnPoolCancel(seller, hnId);
+        hn.safeTransferFrom(address(this), buyer, hnId);
+
+        for (uint256 i = 0; i < tokenAddrs.length; i++) {
+            if (userStakes[seller][i] > 0) {
+                userLastAccTokensPerStake[seller][i] = accTokensPerStake[i];
+            }
+        }
+
+        invitePool.withdrawInviter(seller, hcHashrate);
+
+        emit HNMarketWithdraw(buyer, seller, hnId);
     }
 
     /**

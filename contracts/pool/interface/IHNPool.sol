@@ -9,6 +9,12 @@ pragma solidity >=0.8.7;
 abstract contract IHNPool {
     mapping(address => mapping(uint256 => uint256)) public userStakes;
 
+    function hnMarketWithdraw(
+        address buyer,
+        address seller,
+        uint256 hnId
+    ) external virtual;
+
     function getUserHnIdExistence(address user, uint256 hnId)
         external
         view
