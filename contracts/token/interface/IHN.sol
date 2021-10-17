@@ -47,9 +47,11 @@ abstract contract IHN is IERC721Enumerable {
 
     function renameHn(uint256 hnId, string calldata _name) external virtual;
 
-    function transferBatch(address to, uint256[] calldata tokenIds)
-        external
-        virtual;
+    function safeTransferFromBatch(
+        address from,
+        address to,
+        uint256[] calldata tokenIds
+    ) external virtual;
 
     function getHashrates(uint256 hnId)
         external

@@ -38,13 +38,23 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     EnumerableSet.UintSet private hnIds;
     mapping(address => EnumerableSet.UintSet) private sellerHnIds;
 
-    event Sell(address indexed seller, uint256 indexed hnId, uint256 price);
-    event Cancel(address indexed seller, uint256 indexed hnId, bool isInPool);
+    event Sell(
+        address indexed seller,
+        uint256[] indexed hnIds,
+        uint256[] prices,
+        bool[] isInPools
+    );
+    event Cancel(
+        address indexed seller,
+        uint256[] indexed hnIds,
+        bool isHnPoolCancel
+    );
     event Buy(
         address indexed buyer,
-        address indexed seller,
-        uint256 indexed hnId,
-        uint256 price
+        address[] indexed sellers,
+        uint256[] indexed hnIds,
+        uint256[] prices,
+        bool[] isInPools
     );
 
     /**
@@ -87,15 +97,19 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev HN Pool Cancel
      */
-    function hnPoolCancel(address seller, uint256 hnId)
+    function hnPoolCancel(address seller, uint256[] calldata _hnIds)
         external
         onlyRole(HNPOOL_ROLE)
     {
-        if (hnIds.contains(hnId) && sellerHnIds[seller].contains(hnId)) {
-            hnIds.remove(hnId);
-            sellerHnIds[seller].remove(hnId);
-
-            emit Cancel(seller, hnId, true);
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            if (
+                hnIds.contains(_hnIds[i]) &&
+                sellerHnIds[seller].contains(_hnIds[i])
+            ) {
+                hnIds.remove(_hnIds[i]);
+                sellerHnIds[seller].remove(_hnIds[i]);
+            }
+            if (i == _hnIds.length - 1) emit Cancel(seller, _hnIds, true);
         }
     }
 
@@ -103,76 +117,87 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      * @dev Sell
      */
     function sell(
-        uint256 hnId,
-        uint256 price,
-        bool isInPool
+        uint256[] calldata _hnIds,
+        uint256[] calldata prices,
+        bool[] calldata isInPools
     ) external {
         require(openStatus, "This pool is not opened");
 
-        if (isInPool) {
-            require(
-                hnPool.getUserHnIdExistence(msg.sender, hnId),
-                "This HN is not own"
-            );
-        } else {
-            hn.safeTransferFrom(msg.sender, address(this), hnId);
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            if (isInPools[i]) {
+                require(
+                    hnPool.getUserHnIdExistence(msg.sender, _hnIds[i]),
+                    "This HN is not own"
+                );
+            } else {
+                hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
+            }
+
+            hnIds.add(_hnIds[i]);
+            sellerHnIds[msg.sender].add(_hnIds[i]);
+            hnPrice[_hnIds[i]] = prices[i];
+            hnSeller[_hnIds[i]] = msg.sender;
+            hnIsInPool[_hnIds[i]] = isInPools[i];
         }
-
-        hnIds.add(hnId);
-        sellerHnIds[msg.sender].add(hnId);
-        hnPrice[hnId] = price;
-        hnSeller[hnId] = msg.sender;
-        hnIsInPool[hnId] = isInPool;
-
         sellers.add(msg.sender);
 
-        emit Sell(msg.sender, hnId, price);
+        emit Sell(msg.sender, _hnIds, prices, isInPools);
     }
 
     /**
      * @dev Cancel
      */
-    function cancel(uint256 hnId) external {
-        require(hnIds.contains(hnId), "This HN does not exist");
-        require(sellerHnIds[msg.sender].contains(hnId), "This HN is not own");
+    function cancel(uint256[] calldata _hnIds) external {
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            require(hnIds.contains(_hnIds[i]), "This HN does not exist");
+            require(
+                sellerHnIds[msg.sender].contains(_hnIds[i]),
+                "This HN is not own"
+            );
 
-        hnIds.remove(hnId);
-        sellerHnIds[msg.sender].remove(hnId);
+            hnIds.remove(_hnIds[i]);
+            sellerHnIds[msg.sender].remove(_hnIds[i]);
 
-        if (!hnIsInPool[hnId])
-            hn.safeTransferFrom(address(this), msg.sender, hnId);
+            if (!hnIsInPool[_hnIds[i]])
+                hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
+        }
 
-        emit Cancel(msg.sender, hnId, false);
+        emit Cancel(msg.sender, _hnIds, false);
     }
 
     /**
      * @dev Buy
      */
-    function buy(uint256 hnId) external payable {
-        require(hnIds.contains(hnId), "This HN does not exist");
-        uint256 price = hnPrice[hnId];
-        require(msg.value == hnPrice[hnId], "Price mismatch");
+    function buy(uint256[] calldata _hnIds) external payable {
+        address[] memory _sellers = new address[](_hnIds.length);
+        uint256[] memory prices = new uint256[](_hnIds.length);
+        bool[] memory isInPools = new bool[](_hnIds.length);
+        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            require(hnIds.contains(_hnIds[i]), "This HN does not exist");
+            prices[i] = hnPrice[_hnIds[i]];
 
-        address seller = hnSeller[hnId];
-        bool isInPool = hnIsInPool[hnId];
+            _sellers[i] = hnSeller[_hnIds[i]];
+            isInPools[i] = hnIsInPool[_hnIds[i]];
 
-        hnIds.remove(hnId);
-        sellerHnIds[seller].remove(hnId);
+            hnIds.remove(_hnIds[i]);
+            sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
-        payable(seller).transfer(price);
-        if (isInPool) {
-            hnPool.hnMarketWithdraw(msg.sender, seller, hnId);
-        } else {
-            hn.safeTransferFrom(address(this), msg.sender, hnId);
+            payable(_sellers[i]).transfer(prices[i]);
+            if (isInPools[i]) {
+                hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
+            } else {
+                hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
+            }
+
+            buyers.add(msg.sender);
+            sellerTotolSellAmount[_sellers[i]] += prices[i];
+            sellerTotolSellCount[_sellers[i]]++;
+            buyerTotolBuyAmount[msg.sender] += prices[i];
+            buyerTotolBuyCount[msg.sender]++;
         }
 
-        buyers.add(msg.sender);
-        sellerTotolSellAmount[seller] += price;
-        sellerTotolSellCount[seller]++;
-        buyerTotolBuyAmount[msg.sender] += price;
-        buyerTotolBuyCount[msg.sender]++;
-
-        emit Buy(msg.sender, seller, hnId, price);
+        emit Buy(msg.sender, _sellers, _hnIds, prices, isInPools);
     }
 
     /**
@@ -300,5 +325,21 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         }
 
         return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get Total Price
+     */
+    function getTotalPrice(uint256[] calldata _hnIds)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 totalPrice;
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            totalPrice += hnPrice[_hnIds[i]];
+        }
+
+        return totalPrice;
     }
 }

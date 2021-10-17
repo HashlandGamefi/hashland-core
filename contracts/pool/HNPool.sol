@@ -292,7 +292,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             hnIds.remove(_hnIds[i]);
             userHnIds[msg.sender].remove(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
-            hnMarket.hnPoolCancel(msg.sender, _hnIds[i]);
             hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
         }
 
@@ -303,6 +302,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         invitePool.withdrawInviter(msg.sender, hcHashrate);
+        hnMarket.hnPoolCancel(msg.sender, _hnIds);
 
         emit Withdraw(msg.sender, _hnIds);
     }
@@ -346,7 +346,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         hnIds.remove(hnId);
         userHnIds[seller].remove(hnId);
         if (hashrates[0] > 0) hcHashrate = hashrates[0];
-        hnMarket.hnPoolCancel(seller, hnId);
         hn.safeTransferFrom(address(this), buyer, hnId);
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -356,6 +355,9 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         invitePool.withdrawInviter(seller, hcHashrate);
+        uint256[] memory _hnId = new uint256[](1);
+        _hnId[0] = hnId;
+        hnMarket.hnPoolCancel(seller, _hnId);
 
         emit HNMarketWithdraw(buyer, seller, hnId);
     }
