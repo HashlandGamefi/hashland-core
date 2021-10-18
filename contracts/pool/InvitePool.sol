@@ -21,11 +21,9 @@ contract InvitePool is AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public lastRewardsTime;
 
     uint256 public stake;
     uint256 public accTokenPerStake;
-    uint256 public releasedToken;
     uint256 public harvestedToken;
 
     mapping(address => uint256) public inviterStake;
@@ -287,17 +285,9 @@ contract InvitePool is AccessControlEnumerable {
      * @dev Update Pool
      */
     function updatePool() public {
-        if (block.timestamp <= lastRewardsTime) {
-            return;
+        if (stake > 0) {
+            accTokenPerStake += (hc.mint(address(this)) * 1e18) / stake;
         }
-
-        if (block.timestamp > lastRewardsTime && stake > 0) {
-            uint256 tokenRewards = hc.getPoolHCReward(address(this));
-            accTokenPerStake += (tokenRewards * 1e18) / stake;
-            releasedToken += tokenRewards;
-        }
-
-        lastRewardsTime = block.timestamp;
     }
 
     /**
@@ -305,7 +295,7 @@ contract InvitePool is AccessControlEnumerable {
      */
     function getTokenRewards(address inviter) public view returns (uint256) {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
-        if (block.timestamp > lastRewardsTime && stake > 0) {
+        if (stake > 0) {
             accTokenPerStakeTemp +=
                 (hc.getPoolHCReward(address(this)) * 1e18) /
                 stake;

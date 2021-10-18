@@ -25,6 +25,7 @@ contract HC is ERC20, AccessControlEnumerable {
 
     mapping(address => uint256) poolWeight;
     mapping(address => uint256) poolLastRewardBlock;
+    mapping(address => uint256) poolReleasedHC;
 
     EnumerableSet.AddressSet private pools;
 
@@ -104,19 +105,29 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
+     * @dev Get Next Reduction Left Blocks
+     */
+    function getNextReductionLeftBlocks() external view returns (uint256) {
+        return
+            blockPerQuarter - ((block.number - startBlock) % blockPerQuarter);
+    }
+
+    /**
      * @dev Mint HC to a pool
      */
-    function mint(address poolAddr) public {
-        if (pools.contains(poolAddr)) {
-            if (
-                poolLastRewardBlock[poolAddr] > 0 &&
-                block.number > poolLastRewardBlock[poolAddr]
-            ) {
-                _mint(poolAddr, getPoolHCReward(poolAddr));
-            }
+    function mint(address poolAddr) public returns (uint256) {
+        uint256 amount;
+        if (
+            pools.contains(poolAddr) &&
+            block.number > poolLastRewardBlock[poolAddr]
+        ) {
+            amount = getPoolHCReward(poolAddr);
+            _mint(poolAddr, amount);
+            poolReleasedHC[poolAddr] += amount;
 
             poolLastRewardBlock[poolAddr] = block.number;
         }
+        return amount;
     }
 
     /**
