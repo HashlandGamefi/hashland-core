@@ -23,9 +23,9 @@ contract HC is ERC20, AccessControlEnumerable {
 
     uint256 public startBlock;
 
-    mapping(address => uint256) poolWeight;
-    mapping(address => uint256) poolLastRewardBlock;
-    mapping(address => uint256) poolReleasedHC;
+    mapping(address => uint256) public poolWeight;
+    mapping(address => uint256) public poolLastRewardBlock;
+    mapping(address => uint256) public poolReleasedHC;
 
     EnumerableSet.AddressSet private pools;
 
@@ -151,7 +151,9 @@ contract HC is ERC20, AccessControlEnumerable {
      * @dev Get HC Per Block
      */
     function getHCPerBlock() public view returns (uint256) {
-        return initHCPerBlock * (reduceRatio / 100)**getReduceCount();
+        return
+            (initHCPerBlock * reduceRatio**getReduceCount()) /
+            100**getReduceCount();
     }
 
     /**
