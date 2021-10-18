@@ -3,7 +3,7 @@ import hre, { ethers } from "hardhat";
 async function main() {
   const constructorArgs: any[] = [
     "0x13A4d213DCd17A42EDabd18bFfc2E5146fC58a61",
-    "0x80cc0729C6EE32611dBEa4eC4507Bbb76654B5D2",
+    2000000,
     "0x105A80A5Da83997c32818716846BB609C5Ffe35d",
     "0x105A80A5Da83997c32818716846BB609C5Ffe35d",
   ];
