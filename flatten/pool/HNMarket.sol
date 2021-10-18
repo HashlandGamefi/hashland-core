@@ -1,93 +1,8 @@
 // Sources flattened with hardhat v2.6.5 https://hardhat.org
 
-// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
-
-// SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `recipient`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address recipient, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `sender` to `recipient` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
 // File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -1075,21 +990,6 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 }
 
 
-// File contracts/token/interface/IHC.sol
-
-
-pragma solidity >=0.8.7;
-
-/**
- * @title HC Interface
- * @author HASHLAND-TEAM
- * @notice Interface of the HC
- */
-interface IHC is IERC20 {
-    function mint(address receiver, uint256 tokens) external;
-}
-
-
 // File @openzeppelin/contracts/token/ERC721/IERC721.sol@v4.3.2
 
 
@@ -1346,39 +1246,34 @@ abstract contract IHN is IERC721Enumerable {
 }
 
 
-// File contracts/pool/interface/IInvitePool.sol
+// File contracts/pool/interface/IHNPool.sol
 
 
 pragma solidity >=0.8.7;
 
 /**
- * @title Invite Pool Interface
+ * @title HN Pool Interface
  * @author HASHLAND-TEAM
- * @notice Interface of the Invite Pool
+ * @notice Interface of the HN Pool
  */
-interface IInvitePool {
-    function depositInviter(address user, uint256 hashrate) external;
+abstract contract IHNPool {
+    mapping(address => mapping(uint256 => uint256)) public userStakes;
 
-    function withdrawInviter(address user, uint256 hashrate) external;
+    function hnMarketWithdraw(
+        address buyer,
+        address seller,
+        uint256 hnId
+    ) external virtual;
+
+    function getUserHnIdExistence(address user, uint256 hnId)
+        external
+        view
+        virtual
+        returns (bool);
 }
 
 
-// File contracts/pool/interface/IHNMarket.sol
-
-
-pragma solidity >=0.8.7;
-
-/**
- * @title HN Market Interface
- * @author HASHLAND-TEAM
- * @notice Interface of the HN Market
- */
-interface IHNMarket {
-    function hnPoolCancel(address seller, uint256[] calldata _hnIds) external;
-}
-
-
-// File contracts/pool/HNPool.sol
+// File contracts/pool/HNMarket.sol
 
 
 pragma solidity >=0.8.9;
@@ -1387,165 +1282,72 @@ pragma solidity >=0.8.9;
 
 
 
-
-
-
 /**
- * @title HN Pool Contract
+ * @title HN Market Contract
  * @author HASHLAND-TEAM
- * @notice In this Contract users can stake HN to harvest HC and Tokens
+ * @notice In this contract users can trade HN
  */
-contract HNPool is ERC721Holder, AccessControlEnumerable {
+contract HNMarket is ERC721Holder, AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
     IHN public hn;
-    IInvitePool public invitePool;
-    IHNMarket public hnMarket;
+    IHNPool public hnPool;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public maxSlots = 6;
-    uint256 public slotBasePrice = 4;
-    uint256 public lastRewardsTime;
-    address public receivingAddress;
-    address public hnMarketAddress;
 
-    address[] public tokenAddrs;
-    uint256[] public tokenReleaseSpeeds = [12500000000000000, 3472222222222];
+    mapping(uint256 => uint256) public hnPrice;
+    mapping(uint256 => address) public hnSeller;
+    mapping(uint256 => bool) public hnIsInPool;
 
-    mapping(uint256 => uint256) public stakes;
-    mapping(uint256 => uint256) public accTokensPerStake;
-    mapping(uint256 => uint256) public releasedTokens;
-    mapping(uint256 => uint256) public harvestedTokens;
+    mapping(address => uint256) public sellerTotolSellAmount;
+    mapping(address => uint256) public sellerTotolSellCount;
+    mapping(address => uint256) public buyerTotolBuyAmount;
+    mapping(address => uint256) public buyerTotolBuyCount;
 
-    mapping(uint256 => uint256) public airdropedTokens;
-    mapping(uint256 => uint256) public lastAirdropedTokens;
-    mapping(uint256 => uint256) public lastAirdropTimes;
-
-    mapping(address => uint256) public userSlots;
-    mapping(address => mapping(uint256 => uint256)) public userStakes;
-    mapping(address => mapping(uint256 => uint256))
-        public userLastAccTokensPerStake;
-    mapping(address => mapping(uint256 => uint256)) public userStoredTokens;
-    mapping(address => mapping(uint256 => uint256)) public userHarvestedTokens;
-
+    EnumerableSet.AddressSet private sellers;
+    EnumerableSet.AddressSet private buyers;
     EnumerableSet.UintSet private hnIds;
-    EnumerableSet.AddressSet private users;
-    mapping(address => EnumerableSet.UintSet) private userHnIds;
+    mapping(address => EnumerableSet.UintSet) private sellerHnIds;
 
-    event Deposit(address indexed user, uint256[] hnIds);
-    event Withdraw(address indexed user, uint256[] hnIds);
-    event HNMarketWithdraw(
-        address indexed buyer,
+    event Sell(
         address indexed seller,
-        uint256 hnId
+        uint256[] indexed hnIds,
+        uint256[] prices,
+        bool[] isInPools
     );
-    event HarvestTokens(
-        address indexed user,
-        uint256[] tokenIds,
-        uint256[] amounts
+    event Cancel(
+        address indexed seller,
+        uint256[] indexed hnIds,
+        bool isHnPoolCancel
     );
-    event BuySlot(address indexed user, uint256 amount);
+    event Buy(
+        address indexed buyer,
+        address[] indexed sellers,
+        uint256[] indexed hnIds,
+        uint256[] prices,
+        bool[] isInPools
+    );
 
     /**
      * @param hnAddr Initialize HN Address
-     * @param _tokenAddrs Initialize Tokens Address
-     * @param receivingAddr Initialize Receiving Address
+     * @param hnPoolAddr Initialize HNPool Address
      * @param manager Initialize Manager Role
      */
     constructor(
         address hnAddr,
-        address[] memory _tokenAddrs,
-        address receivingAddr,
+        address hnPoolAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
-        tokenAddrs = _tokenAddrs;
-
-        receivingAddress = receivingAddr;
+        hnPool = IHNPool(hnPoolAddr);
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
-    }
-
-    /**
-     * @dev Set Tokens Info
-     */
-    function setTokensInfo(
-        address[] calldata _tokenAddrs,
-        uint256[] calldata _tokenReleaseSpeeds
-    ) external onlyRole(MANAGER_ROLE) {
-        require(
-            _tokenAddrs.length == _tokenReleaseSpeeds.length,
-            "Tokens info length mismatch"
-        );
-        tokenAddrs = _tokenAddrs;
-        tokenReleaseSpeeds = _tokenReleaseSpeeds;
-    }
-
-    /**
-     * @dev Set Open Status
-     */
-    function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
-        openStatus = status;
-    }
-
-    /**
-     * @dev Set Max Slots
-     */
-    function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
-        maxSlots = slots;
-    }
-
-    /**
-     * @dev Set Slot Base Price
-     */
-    function setSlotBasePrice(uint256 price) external onlyRole(MANAGER_ROLE) {
-        slotBasePrice = price;
-    }
-
-    /**
-     * @dev Set Receiving Address
-     */
-    function setReceivingAddress(address receivingAddr)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        receivingAddress = receivingAddr;
-    }
-
-    /**
-     * @dev Set Invite Pool Address
-     */
-    function setInvitePoolAddress(address invitePoolAddr)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        invitePool = IInvitePool(invitePoolAddr);
-    }
-
-    /**
-     * @dev Set HN Market Address
-     */
-    function setHNMarketAddress(address hnMarketAddr)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        hnMarket = IHNMarket(hnMarketAddr);
-    }
-
-    /**
-     * @dev Withdraw Token
-     */
-    function withdrawToken(
-        address _tokenAddrs,
-        address to,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC20 token = IERC20(_tokenAddrs);
-        token.transfer(to, amount);
+        _setupRole(HNPOOL_ROLE, hnPoolAddr);
     }
 
     /**
@@ -1561,261 +1363,174 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Airdrop Tokens
+     * @dev Set Open Status
      */
-    function airdropTokens(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts,
-        uint256[] calldata releaseSeconds
-    ) external onlyRole(MANAGER_ROLE) {
-        require(
-            tokenIds.length == amounts.length &&
-                tokenIds.length == releaseSeconds.length,
-            "Tokens data length mismatch"
-        );
-
-        updatePool();
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(tokenIds[i] > 0, "Token id must > 0");
-            require(releaseSeconds[i] > 0, "Release seconds must > 0");
-
-            IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-            token.transferFrom(msg.sender, address(this), amounts[i]);
-            tokenReleaseSpeeds[tokenIds[i]] = amounts[i] / releaseSeconds[i];
-
-            airdropedTokens[tokenIds[i]] += amounts[i];
-            lastAirdropedTokens[tokenIds[i]] = amounts[i];
-            lastAirdropTimes[tokenIds[i]] = block.timestamp;
-        }
+    function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
+        openStatus = status;
     }
 
     /**
-     * @dev Deposit
+     * @dev HN Pool Cancel
      */
-    function deposit(uint256[] calldata _hnIds) external {
-        require(openStatus, "This pool is not opened");
-        require(
-            _hnIds.length <= getUserLeftSlots(msg.sender),
-            "Not enough slots"
-        );
-
-        updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                uint256 pendingToken = (userStakes[msg.sender][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[msg.sender][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[msg.sender][i] += pendingToken;
-                }
-            }
-        }
-
-        uint256 hcHashrate;
+    function hnPoolCancel(address seller, uint256[] calldata _hnIds)
+        external
+        onlyRole(HNPOOL_ROLE)
+    {
         for (uint256 i = 0; i < _hnIds.length; i++) {
-            hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
-            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
-            for (uint256 j = 0; j < hashrates.length; j++) {
-                if (hashrates[j] > 0) {
-                    userStakes[msg.sender][j] += hashrates[j];
-                    stakes[j] += hashrates[j];
-                }
+            if (
+                hnIds.contains(_hnIds[i]) &&
+                sellerHnIds[seller].contains(_hnIds[i])
+            ) {
+                hnIds.remove(_hnIds[i]);
+                sellerHnIds[seller].remove(_hnIds[i]);
             }
-            hnIds.add(_hnIds[i]);
-            userHnIds[msg.sender].add(_hnIds[i]);
-            if (hashrates[0] > 0) hcHashrate += hashrates[0];
+            if (i == _hnIds.length - 1) emit Cancel(seller, _hnIds, true);
         }
-
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
-            }
-        }
-        users.add(msg.sender);
-
-        invitePool.depositInviter(msg.sender, hcHashrate);
-
-        emit Deposit(msg.sender, _hnIds);
     }
 
     /**
-     * @dev Withdraw
+     * @dev Sell
      */
-    function withdraw(uint256[] calldata _hnIds) external {
-        updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                uint256 pendingToken = (userStakes[msg.sender][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[msg.sender][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[msg.sender][i] += pendingToken;
-                }
-            }
-        }
+    function sell(
+        uint256[] calldata _hnIds,
+        uint256[] calldata prices,
+        bool[] calldata isInPools
+    ) external {
+        require(openStatus, "This pool is not opened");
 
-        uint256 hcHashrate;
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            if (isInPools[i]) {
+                require(
+                    hnPool.getUserHnIdExistence(msg.sender, _hnIds[i]),
+                    "This HN is not own"
+                );
+            } else {
+                hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
+            }
+
+            hnIds.add(_hnIds[i]);
+            sellerHnIds[msg.sender].add(_hnIds[i]);
+            hnPrice[_hnIds[i]] = prices[i];
+            hnSeller[_hnIds[i]] = msg.sender;
+            hnIsInPool[_hnIds[i]] = isInPools[i];
+        }
+        sellers.add(msg.sender);
+
+        emit Sell(msg.sender, _hnIds, prices, isInPools);
+    }
+
+    /**
+     * @dev Cancel
+     */
+    function cancel(uint256[] calldata _hnIds) external {
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             require(
-                userHnIds[msg.sender].contains(_hnIds[i]),
+                sellerHnIds[msg.sender].contains(_hnIds[i]),
                 "This HN is not own"
             );
 
-            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
-            for (uint256 j = 0; j < hashrates.length; j++) {
-                if (hashrates[j] > 0) {
-                    userStakes[msg.sender][j] -= hashrates[j];
-                    stakes[j] -= hashrates[j];
-                }
-            }
             hnIds.remove(_hnIds[i]);
-            userHnIds[msg.sender].remove(_hnIds[i]);
-            if (hashrates[0] > 0) hcHashrate += hashrates[0];
-            hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
+            sellerHnIds[msg.sender].remove(_hnIds[i]);
+
+            if (!hnIsInPool[_hnIds[i]])
+                hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
         }
 
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
-            }
-        }
-
-        invitePool.withdrawInviter(msg.sender, hcHashrate);
-        hnMarket.hnPoolCancel(msg.sender, _hnIds);
-
-        emit Withdraw(msg.sender, _hnIds);
+        emit Cancel(msg.sender, _hnIds, false);
     }
 
     /**
-     * @dev HN Market Withdraw
+     * @dev Buy
      */
-    function hnMarketWithdraw(
-        address buyer,
-        address seller,
-        uint256 hnId
-    ) external {
-        require(
-            msg.sender == address(hnMarket),
-            "Only HN Market contract can call"
-        );
+    function buy(uint256[] calldata _hnIds) external payable {
+        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
 
-        updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[seller][i] > 0) {
-                uint256 pendingToken = (userStakes[seller][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[seller][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[seller][i] += pendingToken;
-                }
+        address[] memory _sellers = new address[](_hnIds.length);
+        uint256[] memory prices = new uint256[](_hnIds.length);
+        bool[] memory isInPools = new bool[](_hnIds.length);
+
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            require(hnIds.contains(_hnIds[i]), "This HN does not exist");
+            prices[i] = hnPrice[_hnIds[i]];
+
+            _sellers[i] = hnSeller[_hnIds[i]];
+            isInPools[i] = hnIsInPool[_hnIds[i]];
+
+            hnIds.remove(_hnIds[i]);
+            sellerHnIds[_sellers[i]].remove(_hnIds[i]);
+
+            payable(_sellers[i]).transfer(prices[i]);
+            if (isInPools[i]) {
+                hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
+            } else {
+                hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
             }
+
+            sellerTotolSellAmount[_sellers[i]] += prices[i];
+            sellerTotolSellCount[_sellers[i]]++;
+            buyerTotolBuyAmount[msg.sender] += prices[i];
+            buyerTotolBuyCount[msg.sender]++;
         }
+        buyers.add(msg.sender);
 
-        uint256 hcHashrate;
-        require(hnIds.contains(hnId), "This HN does not exist");
-        require(userHnIds[seller].contains(hnId), "This HN is not own");
-
-        uint256[] memory hashrates = hn.getHashrates(hnId);
-        for (uint256 j = 0; j < hashrates.length; j++) {
-            if (hashrates[j] > 0) {
-                userStakes[seller][j] -= hashrates[j];
-                stakes[j] -= hashrates[j];
-            }
-        }
-        hnIds.remove(hnId);
-        userHnIds[seller].remove(hnId);
-        if (hashrates[0] > 0) hcHashrate = hashrates[0];
-        hn.safeTransferFrom(address(this), buyer, hnId);
-
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[seller][i] > 0) {
-                userLastAccTokensPerStake[seller][i] = accTokensPerStake[i];
-            }
-        }
-
-        invitePool.withdrawInviter(seller, hcHashrate);
-        uint256[] memory _hnId = new uint256[](1);
-        _hnId[0] = hnId;
-        hnMarket.hnPoolCancel(seller, _hnId);
-
-        emit HNMarketWithdraw(buyer, seller, hnId);
+        emit Buy(msg.sender, _sellers, _hnIds, prices, isInPools);
     }
 
     /**
-     * @dev Harvest Tokens
+     * @dev Get Sellers Length
      */
-    function harvestTokens(uint256[] calldata tokenIds) external {
-        updatePool();
-
-        uint256[] memory amounts = new uint256[](tokenIds.length);
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 pendingToken = (userStakes[msg.sender][tokenIds[i]] *
-                (accTokensPerStake[tokenIds[i]] -
-                    userLastAccTokensPerStake[msg.sender][tokenIds[i]])) / 1e18;
-            amounts[i] =
-                userStoredTokens[msg.sender][tokenIds[i]] +
-                pendingToken;
-
-            if (amounts[i] > 0) {
-                userStoredTokens[msg.sender][tokenIds[i]] = 0;
-                userLastAccTokensPerStake[msg.sender][
-                    tokenIds[i]
-                ] = accTokensPerStake[tokenIds[i]];
-                userHarvestedTokens[msg.sender][tokenIds[i]] += amounts[i];
-                harvestedTokens[tokenIds[i]] += amounts[i];
-
-                if (tokenIds[i] == 0) {
-                    IHC hc = IHC(tokenAddrs[tokenIds[i]]);
-                    hc.mint(msg.sender, amounts[i]);
-                } else {
-                    IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-                    token.transfer(msg.sender, amounts[i]);
-                }
-            }
-        }
-
-        emit HarvestTokens(msg.sender, tokenIds, amounts);
+    function getSellersLength() external view returns (uint256) {
+        return sellers.length();
     }
 
     /**
-     * @dev Buy Slot
+     * @dev Get Sellers by Size
      */
-    function buySlot() external {
-        require(
-            getUserSlots(msg.sender) < maxSlots,
-            "Slots has reached the limit"
-        );
-
-        uint256 amount = getUserSlotPrice(msg.sender);
-        IHC hc = IHC(tokenAddrs[0]);
-        hc.transferFrom(msg.sender, receivingAddress, amount);
-        userSlots[msg.sender]++;
-
-        emit BuySlot(msg.sender, amount);
-    }
-
-    /**
-     * @dev Get Token Total Rewards of a User
-     */
-    function getTokenTotalRewards(address user, uint256 tokenId)
+    function getSellersBySize(uint256 cursor, uint256 size)
         external
         view
-        returns (uint256)
+        returns (address[] memory, uint256)
     {
-        return
-            userHarvestedTokens[user][tokenId] + getTokenRewards(user, tokenId);
+        uint256 length = size;
+        if (length > sellers.length() - cursor) {
+            length = sellers.length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = sellers.at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**
-     * @dev Get Tokens Info
+     * @dev Get Buyers Length
      */
-    function getTokensInfo()
+    function getBuyersLength() external view returns (uint256) {
+        return buyers.length();
+    }
+
+    /**
+     * @dev Get Buyers by Size
+     */
+    function getBuyersBySize(uint256 cursor, uint256 size)
         external
         view
-        returns (address[] memory, uint256[] memory)
+        returns (address[] memory, uint256)
     {
-        return (tokenAddrs, tokenReleaseSpeeds);
+        uint256 length = size;
+        if (length > buyers.length() - cursor) {
+            length = buyers.length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = buyers.at(cursor + i);
+        }
+
+        return (values, cursor + length);
     }
 
     /**
@@ -1847,134 +1562,61 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Users Length
+     * @dev Get Seller HnId Existence
      */
-    function getUsersLength() external view returns (uint256) {
-        return users.length();
-    }
-
-    /**
-     * @dev Get Users by Size
-     */
-    function getUsersBySize(uint256 cursor, uint256 size)
-        external
-        view
-        returns (address[] memory, uint256)
-    {
-        uint256 length = size;
-        if (length > users.length() - cursor) {
-            length = users.length() - cursor;
-        }
-
-        address[] memory values = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
-            values[i] = users.at(cursor + i);
-        }
-
-        return (values, cursor + length);
-    }
-
-    /**
-     * @dev Get User HnId Existence
-     */
-    function getUserHnIdExistence(address user, uint256 hnId)
+    function getSellerHnIdExistence(address seller, uint256 hnId)
         external
         view
         returns (bool)
     {
-        return userHnIds[user].contains(hnId);
+        return sellerHnIds[seller].contains(hnId);
     }
 
     /**
-     * @dev Get User HnIds Length
+     * @dev Get Seller HnIds Length
      */
-    function getUserHnIdsLength(address user) external view returns (uint256) {
-        return userHnIds[user].length();
+    function getSellerHnIdsLength(address seller)
+        external
+        view
+        returns (uint256)
+    {
+        return sellerHnIds[seller].length();
     }
 
     /**
-     * @dev Get User HnIds by Size
+     * @dev Get Seller HnIds by Size
      */
-    function getUserHnIdsBySize(
-        address user,
+    function getSellerHnIdsBySize(
+        address seller,
         uint256 cursor,
         uint256 size
     ) external view returns (uint256[] memory, uint256) {
         uint256 length = size;
-        if (length > userHnIds[user].length() - cursor) {
-            length = userHnIds[user].length() - cursor;
+        if (length > sellerHnIds[seller].length() - cursor) {
+            length = sellerHnIds[seller].length() - cursor;
         }
 
         uint256[] memory values = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
-            values[i] = userHnIds[user].at(cursor + i);
+            values[i] = sellerHnIds[seller].at(cursor + i);
         }
 
         return (values, cursor + length);
     }
 
     /**
-     * @dev Update Pool
+     * @dev Get Total Price
      */
-    function updatePool() public {
-        if (block.timestamp <= lastRewardsTime) {
-            return;
-        }
-
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (block.timestamp > lastRewardsTime && stakes[i] > 0) {
-                uint256 tokenRewards = tokenReleaseSpeeds[i] *
-                    (block.timestamp - lastRewardsTime);
-                accTokensPerStake[i] += (tokenRewards * 1e18) / stakes[i];
-                releasedTokens[i] += tokenRewards;
-            }
-        }
-
-        lastRewardsTime = block.timestamp;
-    }
-
-    /**
-     * @dev Get Token Rewards of a User
-     */
-    function getTokenRewards(address user, uint256 tokenId)
+    function getTotalPrice(uint256[] calldata _hnIds)
         public
         view
         returns (uint256)
     {
-        uint256 accTokensPerStakeTemp = accTokensPerStake[tokenId];
-        if (block.timestamp > lastRewardsTime && stakes[tokenId] > 0) {
-            accTokensPerStakeTemp +=
-                (tokenReleaseSpeeds[tokenId] *
-                    (block.timestamp - lastRewardsTime) *
-                    1e18) /
-                stakes[tokenId];
+        uint256 totalPrice;
+        for (uint256 i = 0; i < _hnIds.length; i++) {
+            totalPrice += hnPrice[_hnIds[i]];
         }
 
-        return
-            userStoredTokens[user][tokenId] +
-            ((userStakes[user][tokenId] *
-                (accTokensPerStakeTemp -
-                    userLastAccTokensPerStake[user][tokenId])) / 1e18);
-    }
-
-    /**
-     * @dev Get User Slots
-     */
-    function getUserSlots(address user) public view returns (uint256) {
-        return 2 + userSlots[user];
-    }
-
-    /**
-     * @dev Get User Left Slots
-     */
-    function getUserLeftSlots(address user) public view returns (uint256) {
-        return getUserSlots(user) - userHnIds[user].length();
-    }
-
-    /**
-     * @dev Get User Slot Price
-     */
-    function getUserSlotPrice(address user) public view returns (uint256) {
-        return slotBasePrice**(getUserSlots(user) - 1) * 1e18;
+        return totalPrice;
     }
 }

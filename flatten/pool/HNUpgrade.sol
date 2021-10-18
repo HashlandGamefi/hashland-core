@@ -1298,9 +1298,11 @@ abstract contract IHN is IERC721Enumerable {
 
     function renameHn(uint256 hnId, string calldata _name) external virtual;
 
-    function transferBatch(address to, uint256[] calldata tokenIds)
-        external
-        virtual;
+    function safeTransferFromBatch(
+        address from,
+        address to,
+        uint256[] calldata tokenIds
+    ) external virtual;
 
     function getHashrates(uint256 hnId)
         external
@@ -1341,7 +1343,7 @@ pragma solidity >=0.8.9;
 /**
  * @title HN Upgrade Contract
  * @author HASHLAND-TEAM
- * @notice This Contract Upgrade HN
+ * @notice In this contract users can upgrade HN
  */
 contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -1449,11 +1451,11 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
      * @dev Upgrade
      */
     function upgrade(uint256[] calldata hnIds) external {
-        require(hnIds.length > 0, "HnIds Length must > 0");
-        require(hnIds.length <= 100, "HnIds Length must <= 100");
-        require(hnIds.length % 4 == 0, "HnIds Length % 4 must == 0");
+        require(hnIds.length > 0, "HnIds length must > 0");
+        require(hnIds.length <= 100, "HnIds length must <= 100");
+        require(hnIds.length % 4 == 0, "HnIds length % 4 must == 0");
         uint256 level = hn.level(hnIds[0]);
-        require(level < maxLevel, "Hn Level must < Max Level");
+        require(level < maxLevel, "Hn level must < max Level");
 
         uint256 upgradePrice = getUpgradePrice(hnIds);
         hc.transferFrom(msg.sender, receivingAddress, upgradePrice);
@@ -1465,14 +1467,14 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             materialHnIds[1] = hnIds[index + 2];
             materialHnIds[2] = hnIds[index + 3];
 
-            require(hn.ownerOf(hnId) == msg.sender, "This Hn is not Own");
-            require(hn.level(hnId) == level, "Hn Level Mismatch");
+            require(hn.ownerOf(hnId) == msg.sender, "This Hn is not own");
+            require(hn.level(hnId) == level, "Hn level mismatch");
 
             uint256[] memory hashrates = hn.getHashrates(hnId);
             for (uint256 i = 0; i < materialHnIds.length; i++) {
                 require(
                     hn.level(materialHnIds[i]) == level,
-                    "Material Level Mismatch"
+                    "Material level mismatch"
                 );
 
                 hn.safeTransferFrom(
@@ -1522,8 +1524,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             }
             hn.setHashrates(hnId, hashrates);
 
-            hn.setDatas(hnId, "materialHnIds", materialHnIds);
-
             userUpgradeCount[msg.sender]++;
             totalUpgradeCount++;
         }
@@ -1540,13 +1540,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
      */
     function getUsersLength() external view returns (uint256) {
         return users.length();
-    }
-
-    /**
-     * @dev Get User by Index
-     */
-    function getUserByIndex(uint256 index) external view returns (address) {
-        return users.at(index);
     }
 
     /**

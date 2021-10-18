@@ -192,12 +192,12 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
                 hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
             }
 
-            buyers.add(msg.sender);
             sellerTotolSellAmount[_sellers[i]] += prices[i];
             sellerTotolSellCount[_sellers[i]]++;
             buyerTotolBuyAmount[msg.sender] += prices[i];
             buyerTotolBuyCount[msg.sender]++;
         }
+        buyers.add(msg.sender);
 
         emit Buy(msg.sender, _sellers, _hnIds, prices, isInPools);
     }

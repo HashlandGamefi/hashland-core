@@ -1,152 +1,8 @@
 // Sources flattened with hardhat v2.6.5 https://hardhat.org
 
-// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
-
-// SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `recipient`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address recipient, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `sender` to `recipient` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-// File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.3.2
-
-
-
-pragma solidity ^0.8.0;
-
-/**
- * @title ERC721 token receiver interface
- * @dev Interface for any contract that wants to support safeTransfers
- * from ERC721 asset contracts.
- */
-interface IERC721Receiver {
-    /**
-     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
-     * by `operator` from `from`, this function is called.
-     *
-     * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted.
-     *
-     * The selector can be obtained in Solidity with `IERC721.onERC721Received.selector`.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
-}
-
-
-// File @openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol@v4.3.2
-
-
-
-pragma solidity ^0.8.0;
-
-/**
- * @dev Implementation of the {IERC721Receiver} interface.
- *
- * Accepts all token transfers.
- * Make sure the contract is able to use its token with {IERC721-safeTransferFrom}, {IERC721-approve} or {IERC721-setApprovalForAll}.
- */
-contract ERC721Holder is IERC721Receiver {
-    /**
-     * @dev See {IERC721Receiver-onERC721Received}.
-     *
-     * Always returns `IERC721Receiver.onERC721Received.selector`.
-     */
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC721Received.selector;
-    }
-}
-
-
 // File @openzeppelin/contracts/access/IAccessControl.sol@v4.3.2
 
-
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -1075,6 +931,91 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 }
 
 
+// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
+
+
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
 // File contracts/token/interface/IHC.sol
 
 
@@ -1090,295 +1031,34 @@ interface IHC is IERC20 {
 }
 
 
-// File @openzeppelin/contracts/token/ERC721/IERC721.sol@v4.3.2
-
-
-
-pragma solidity ^0.8.0;
-
-/**
- * @dev Required interface of an ERC721 compliant contract.
- */
-interface IERC721 is IERC165 {
-    /**
-     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
-    /**
-     * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
-     */
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-
-    /**
-     * @dev Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
-     */
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-
-    /**
-     * @dev Returns the number of tokens in ``owner``'s account.
-     */
-    function balanceOf(address owner) external view returns (uint256 balance);
-
-    /**
-     * @dev Returns the owner of the `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-
-    /**
-     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
-     * are aware of the ERC721 protocol to prevent tokens from being forever locked.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must exist and be owned by `from`.
-     * - If the caller is not `from`, it must be have been allowed to move this token by either {approve} or {setApprovalForAll}.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
-     *
-     * Emits a {Transfer} event.
-     */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-
-    /**
-     * @dev Transfers `tokenId` token from `from` to `to`.
-     *
-     * WARNING: Usage of this method is discouraged, use {safeTransferFrom} whenever possible.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must be owned by `from`.
-     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-
-    /**
-     * @dev Gives permission to `to` to transfer `tokenId` token to another account.
-     * The approval is cleared when the token is transferred.
-     *
-     * Only a single account can be approved at a time, so approving the zero address clears previous approvals.
-     *
-     * Requirements:
-     *
-     * - The caller must own the token or be an approved operator.
-     * - `tokenId` must exist.
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address to, uint256 tokenId) external;
-
-    /**
-     * @dev Returns the account approved for `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function getApproved(uint256 tokenId) external view returns (address operator);
-
-    /**
-     * @dev Approve or remove `operator` as an operator for the caller.
-     * Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller.
-     *
-     * Requirements:
-     *
-     * - The `operator` cannot be the caller.
-     *
-     * Emits an {ApprovalForAll} event.
-     */
-    function setApprovalForAll(address operator, bool _approved) external;
-
-    /**
-     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
-     *
-     * See {setApprovalForAll}
-     */
-    function isApprovedForAll(address owner, address operator) external view returns (bool);
-
-    /**
-     * @dev Safely transfers `tokenId` token from `from` to `to`.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must exist and be owned by `from`.
-     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
-     *
-     * Emits a {Transfer} event.
-     */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external;
-}
-
-
-// File @openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol@v4.3.2
-
-
-
-pragma solidity ^0.8.0;
-
-/**
- * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
- * @dev See https://eips.ethereum.org/EIPS/eip-721
- */
-interface IERC721Enumerable is IERC721 {
-    /**
-     * @dev Returns the total amount of tokens stored by the contract.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
-     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
-     */
-    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
-
-    /**
-     * @dev Returns a token ID at a given `index` of all the tokens stored by the contract.
-     * Use along with {totalSupply} to enumerate all tokens.
-     */
-    function tokenByIndex(uint256 index) external view returns (uint256);
-}
-
-
-// File contracts/token/interface/IHN.sol
+// File contracts/pool/interface/IHNPool.sol
 
 
 pragma solidity >=0.8.7;
 
 /**
- * @title HN Interface
+ * @title HN Pool Interface
  * @author HASHLAND-TEAM
- * @notice Interface of the HN
+ * @notice Interface of the HN Pool
  */
-abstract contract IHN is IERC721Enumerable {
-    mapping(uint256 => string) public name;
-    mapping(uint256 => uint256) public ip;
-    mapping(uint256 => uint256) public series;
-    mapping(uint256 => uint256) public level;
-    mapping(uint256 => uint256) public spawntime;
-    mapping(uint256 => uint256[]) public hashrates;
+abstract contract IHNPool {
+    mapping(address => mapping(uint256 => uint256)) public userStakes;
 
-    mapping(uint256 => mapping(string => uint256)) public data;
-    mapping(uint256 => mapping(string => uint256[])) public datas;
-
-    function spawnHn(
-        address to,
-        uint256 _ip,
-        uint256 _series,
-        uint256 _level,
-        uint256[] calldata _hashrates
-    ) external virtual returns (uint256);
-
-    function setLevel(uint256 hnId, uint256 _level) external virtual;
-
-    function setHashrates(uint256 hnId, uint256[] calldata _hashrates)
-        external
-        virtual;
-
-    function setData(
-        uint256 hnId,
-        string calldata slot,
-        uint256 _data
+    function hnMarketWithdraw(
+        address buyer,
+        address seller,
+        uint256 hnId
     ) external virtual;
 
-    function setDatas(
-        uint256 hnId,
-        string calldata slot,
-        uint256[] calldata _datas
-    ) external virtual;
-
-    function renameHn(uint256 hnId, string calldata _name) external virtual;
-
-    function safeTransferFromBatch(
-        address from,
-        address to,
-        uint256[] calldata tokenIds
-    ) external virtual;
-
-    function getHashrates(uint256 hnId)
+    function getUserHnIdExistence(address user, uint256 hnId)
         external
         view
         virtual
-        returns (uint256[] memory);
-
-    function getDatas(uint256 hnId, string calldata slot)
-        external
-        view
-        virtual
-        returns (uint256[] memory);
-
-    function tokensOfOwnerBySize(
-        address user,
-        uint256 cursor,
-        uint256 size
-    ) external view virtual returns (uint256[] memory, uint256);
-
-    function getRandomNumber(
-        uint256 hnId,
-        string calldata slot,
-        uint256 base,
-        uint256 range
-    ) external pure virtual returns (uint256);
+        returns (bool);
 }
 
 
-// File contracts/pool/interface/IInvitePool.sol
-
-
-pragma solidity >=0.8.7;
-
-/**
- * @title Invite Pool Interface
- * @author HASHLAND-TEAM
- * @notice Interface of the Invite Pool
- */
-interface IInvitePool {
-    function depositInviter(address user, uint256 hashrate) external;
-
-    function withdrawInviter(address user, uint256 hashrate) external;
-}
-
-
-// File contracts/pool/interface/IHNMarket.sol
-
-
-pragma solidity >=0.8.7;
-
-/**
- * @title HN Market Interface
- * @author HASHLAND-TEAM
- * @notice Interface of the HN Market
- */
-interface IHNMarket {
-    function hnPoolCancel(address seller, uint256[] calldata _hnIds) external;
-}
-
-
-// File contracts/pool/HNPool.sol
+// File contracts/pool/InvitePool.sol
 
 
 pragma solidity >=0.8.9;
@@ -1386,103 +1066,70 @@ pragma solidity >=0.8.9;
 
 
 
-
-
-
-
 /**
- * @title HN Pool Contract
+ * @title Invite Pool Contract
  * @author HASHLAND-TEAM
- * @notice In this Contract users can stake HN to harvest HC and Tokens
+ * @notice In this contract users can bind inviters and inviters can harvest HC
  */
-contract HNPool is ERC721Holder, AccessControlEnumerable {
+contract InvitePool is AccessControlEnumerable {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.UintSet;
 
-    IHN public hn;
-    IInvitePool public invitePool;
-    IHNMarket public hnMarket;
+    IHC public hc;
+    IHNPool public hnPool;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public maxSlots = 6;
-    uint256 public slotBasePrice = 4;
     uint256 public lastRewardsTime;
-    address public receivingAddress;
-    address public hnMarketAddress;
 
-    address[] public tokenAddrs;
-    uint256[] public tokenReleaseSpeeds = [12500000000000000, 3472222222222];
+    uint256 public tokenReleaseSpeed = 4166666666666666;
 
-    mapping(uint256 => uint256) public stakes;
-    mapping(uint256 => uint256) public accTokensPerStake;
-    mapping(uint256 => uint256) public releasedTokens;
-    mapping(uint256 => uint256) public harvestedTokens;
+    uint256 public stake;
+    uint256 public accTokenPerStake;
+    uint256 public releasedToken;
+    uint256 public harvestedToken;
 
-    mapping(uint256 => uint256) public airdropedTokens;
-    mapping(uint256 => uint256) public lastAirdropedTokens;
-    mapping(uint256 => uint256) public lastAirdropTimes;
+    mapping(address => uint256) public inviterStake;
+    mapping(address => uint256) public inviterLastAccTokenPerStake;
+    mapping(address => uint256) public inviterStoredToken;
+    mapping(address => uint256) public inviterHarvestedToken;
 
-    mapping(address => uint256) public userSlots;
-    mapping(address => mapping(uint256 => uint256)) public userStakes;
-    mapping(address => mapping(uint256 => uint256))
-        public userLastAccTokensPerStake;
-    mapping(address => mapping(uint256 => uint256)) public userStoredTokens;
-    mapping(address => mapping(uint256 => uint256)) public userHarvestedTokens;
-
-    EnumerableSet.UintSet private hnIds;
     EnumerableSet.AddressSet private users;
-    mapping(address => EnumerableSet.UintSet) private userHnIds;
+    mapping(address => address) public userInviter;
 
-    event Deposit(address indexed user, uint256[] hnIds);
-    event Withdraw(address indexed user, uint256[] hnIds);
-    event HNMarketWithdraw(
-        address indexed buyer,
-        address indexed seller,
-        uint256 hnId
-    );
-    event HarvestTokens(
-        address indexed user,
-        uint256[] tokenIds,
-        uint256[] amounts
-    );
-    event BuySlot(address indexed user, uint256 amount);
+    EnumerableSet.AddressSet private inviters;
+    mapping(address => EnumerableSet.AddressSet) private inviterUsers;
+
+    event BindInviter(address indexed user, address indexed inviter);
+    event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
-     * @param hnAddr Initialize HN Address
-     * @param _tokenAddrs Initialize Tokens Address
-     * @param receivingAddr Initialize Receiving Address
+     * @param hcAddr Initialize HC Address
+     * @param hnPoolAddr Initialize HNPool Address
      * @param manager Initialize Manager Role
      */
     constructor(
-        address hnAddr,
-        address[] memory _tokenAddrs,
-        address receivingAddr,
+        address hcAddr,
+        address hnPoolAddr,
         address manager
     ) {
-        hn = IHN(hnAddr);
-        tokenAddrs = _tokenAddrs;
-
-        receivingAddress = receivingAddr;
+        hc = IHC(hcAddr);
+        hnPool = IHNPool(hnPoolAddr);
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
+        _setupRole(HNPOOL_ROLE, hnPoolAddr);
     }
 
     /**
-     * @dev Set Tokens Info
+     * @dev Set Token Release Speed
      */
-    function setTokensInfo(
-        address[] calldata _tokenAddrs,
-        uint256[] calldata _tokenReleaseSpeeds
-    ) external onlyRole(MANAGER_ROLE) {
-        require(
-            _tokenAddrs.length == _tokenReleaseSpeeds.length,
-            "Tokens info length mismatch"
-        );
-        tokenAddrs = _tokenAddrs;
-        tokenReleaseSpeeds = _tokenReleaseSpeeds;
+    function setTokenReleaseSpeed(uint256 releaseSpeed)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        tokenReleaseSpeed = releaseSpeed;
     }
 
     /**
@@ -1493,357 +1140,131 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Set Max Slots
+     * @dev Deposit Inviter
      */
-    function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
-        maxSlots = slots;
-    }
-
-    /**
-     * @dev Set Slot Base Price
-     */
-    function setSlotBasePrice(uint256 price) external onlyRole(MANAGER_ROLE) {
-        slotBasePrice = price;
-    }
-
-    /**
-     * @dev Set Receiving Address
-     */
-    function setReceivingAddress(address receivingAddr)
+    function depositInviter(address user, uint256 hashrate)
         external
-        onlyRole(MANAGER_ROLE)
+        onlyRole(HNPOOL_ROLE)
     {
-        receivingAddress = receivingAddr;
-    }
-
-    /**
-     * @dev Set Invite Pool Address
-     */
-    function setInvitePoolAddress(address invitePoolAddr)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        invitePool = IInvitePool(invitePoolAddr);
-    }
-
-    /**
-     * @dev Set HN Market Address
-     */
-    function setHNMarketAddress(address hnMarketAddr)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        hnMarket = IHNMarket(hnMarketAddr);
-    }
-
-    /**
-     * @dev Withdraw Token
-     */
-    function withdrawToken(
-        address _tokenAddrs,
-        address to,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC20 token = IERC20(_tokenAddrs);
-        token.transfer(to, amount);
-    }
-
-    /**
-     * @dev Withdraw NFT
-     */
-    function withdrawNFT(
-        address nftAddr,
-        address to,
-        uint256 tokenId
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC721Enumerable nft = IERC721Enumerable(nftAddr);
-        nft.safeTransferFrom(address(this), to, tokenId);
-    }
-
-    /**
-     * @dev Airdrop Tokens
-     */
-    function airdropTokens(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts,
-        uint256[] calldata releaseSeconds
-    ) external onlyRole(MANAGER_ROLE) {
-        require(
-            tokenIds.length == amounts.length &&
-                tokenIds.length == releaseSeconds.length,
-            "Tokens data length mismatch"
-        );
-
         updatePool();
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(tokenIds[i] > 0, "Token id must > 0");
-            require(releaseSeconds[i] > 0, "Release seconds must > 0");
 
-            IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-            token.transferFrom(msg.sender, address(this), amounts[i]);
-            tokenReleaseSpeeds[tokenIds[i]] = amounts[i] / releaseSeconds[i];
+        address inviter = userInviter[user];
+        if (inviter != address(0)) {
+            if (inviterStake[inviter] > 0) {
+                uint256 pendingToken = (inviterStake[inviter] *
+                    (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
+                    1e18;
+                if (pendingToken > 0) {
+                    inviterStoredToken[inviter] += pendingToken;
+                }
+            }
 
-            airdropedTokens[tokenIds[i]] += amounts[i];
-            lastAirdropedTokens[tokenIds[i]] = amounts[i];
-            lastAirdropTimes[tokenIds[i]] = block.timestamp;
+            if (hashrate > 0) {
+                inviterStake[inviter] += hashrate;
+                stake += hashrate;
+            }
+
+            inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
     }
 
     /**
-     * @dev Deposit
+     * @dev Withdraw Inviter
      */
-    function deposit(uint256[] calldata _hnIds) external {
+    function withdrawInviter(address user, uint256 hashrate)
+        external
+        onlyRole(HNPOOL_ROLE)
+    {
+        updatePool();
+
+        address inviter = userInviter[user];
+        if (inviter != address(0)) {
+            if (inviterStake[inviter] > 0) {
+                uint256 pendingToken = (inviterStake[inviter] *
+                    (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
+                    1e18;
+                if (pendingToken > 0) {
+                    inviterStoredToken[inviter] += pendingToken;
+                }
+            }
+
+            if (hashrate > 0) {
+                inviterStake[inviter] -= hashrate;
+                stake -= hashrate;
+            }
+
+            inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
+        }
+    }
+
+    /**
+     * @dev Bind Inviter
+     */
+    function bindInviter(address inviter) external {
         require(openStatus, "This pool is not opened");
         require(
-            _hnIds.length <= getUserLeftSlots(msg.sender),
-            "Not enough slots"
+            userInviter[msg.sender] == address(0),
+            "You have already bound the inviter"
         );
 
+        userInviter[msg.sender] = inviter;
+
         updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                uint256 pendingToken = (userStakes[msg.sender][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[msg.sender][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[msg.sender][i] += pendingToken;
-                }
+        if (inviterStake[inviter] > 0) {
+            uint256 pendingToken = (inviterStake[inviter] *
+                (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
+                1e18;
+            if (pendingToken > 0) {
+                inviterStoredToken[inviter] += pendingToken;
             }
         }
 
-        uint256 hcHashrate;
-        for (uint256 i = 0; i < _hnIds.length; i++) {
-            hn.safeTransferFrom(msg.sender, address(this), _hnIds[i]);
-            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
-            for (uint256 j = 0; j < hashrates.length; j++) {
-                if (hashrates[j] > 0) {
-                    userStakes[msg.sender][j] += hashrates[j];
-                    stakes[j] += hashrates[j];
-                }
-            }
-            hnIds.add(_hnIds[i]);
-            userHnIds[msg.sender].add(_hnIds[i]);
-            if (hashrates[0] > 0) hcHashrate += hashrates[0];
+        uint256 hashrate = hnPool.userStakes(msg.sender, 0);
+        if (hashrate > 0) {
+            inviterStake[inviter] += hashrate;
+            stake += hashrate;
         }
 
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
-            }
-        }
+        inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
+
+        inviters.add(inviter);
         users.add(msg.sender);
+        inviterUsers[inviter].add(msg.sender);
 
-        invitePool.depositInviter(msg.sender, hcHashrate);
-
-        emit Deposit(msg.sender, _hnIds);
+        emit BindInviter(msg.sender, inviter);
     }
 
     /**
-     * @dev Withdraw
+     * @dev Harvest Token
      */
-    function withdraw(uint256[] calldata _hnIds) external {
-        updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                uint256 pendingToken = (userStakes[msg.sender][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[msg.sender][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[msg.sender][i] += pendingToken;
-                }
-            }
-        }
-
-        uint256 hcHashrate;
-        for (uint256 i = 0; i < _hnIds.length; i++) {
-            require(hnIds.contains(_hnIds[i]), "This HN does not exist");
-            require(
-                userHnIds[msg.sender].contains(_hnIds[i]),
-                "This HN is not own"
-            );
-
-            uint256[] memory hashrates = hn.getHashrates(_hnIds[i]);
-            for (uint256 j = 0; j < hashrates.length; j++) {
-                if (hashrates[j] > 0) {
-                    userStakes[msg.sender][j] -= hashrates[j];
-                    stakes[j] -= hashrates[j];
-                }
-            }
-            hnIds.remove(_hnIds[i]);
-            userHnIds[msg.sender].remove(_hnIds[i]);
-            if (hashrates[0] > 0) hcHashrate += hashrates[0];
-            hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
-        }
-
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[msg.sender][i] > 0) {
-                userLastAccTokensPerStake[msg.sender][i] = accTokensPerStake[i];
-            }
-        }
-
-        invitePool.withdrawInviter(msg.sender, hcHashrate);
-        hnMarket.hnPoolCancel(msg.sender, _hnIds);
-
-        emit Withdraw(msg.sender, _hnIds);
-    }
-
-    /**
-     * @dev HN Market Withdraw
-     */
-    function hnMarketWithdraw(
-        address buyer,
-        address seller,
-        uint256 hnId
-    ) external {
-        require(
-            msg.sender == address(hnMarket),
-            "Only HN Market contract can call"
-        );
-
-        updatePool();
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[seller][i] > 0) {
-                uint256 pendingToken = (userStakes[seller][i] *
-                    (accTokensPerStake[i] -
-                        userLastAccTokensPerStake[seller][i])) / 1e18;
-                if (pendingToken > 0) {
-                    userStoredTokens[seller][i] += pendingToken;
-                }
-            }
-        }
-
-        uint256 hcHashrate;
-        require(hnIds.contains(hnId), "This HN does not exist");
-        require(userHnIds[seller].contains(hnId), "This HN is not own");
-
-        uint256[] memory hashrates = hn.getHashrates(hnId);
-        for (uint256 j = 0; j < hashrates.length; j++) {
-            if (hashrates[j] > 0) {
-                userStakes[seller][j] -= hashrates[j];
-                stakes[j] -= hashrates[j];
-            }
-        }
-        hnIds.remove(hnId);
-        userHnIds[seller].remove(hnId);
-        if (hashrates[0] > 0) hcHashrate = hashrates[0];
-        hn.safeTransferFrom(address(this), buyer, hnId);
-
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (userStakes[seller][i] > 0) {
-                userLastAccTokensPerStake[seller][i] = accTokensPerStake[i];
-            }
-        }
-
-        invitePool.withdrawInviter(seller, hcHashrate);
-        uint256[] memory _hnId = new uint256[](1);
-        _hnId[0] = hnId;
-        hnMarket.hnPoolCancel(seller, _hnId);
-
-        emit HNMarketWithdraw(buyer, seller, hnId);
-    }
-
-    /**
-     * @dev Harvest Tokens
-     */
-    function harvestTokens(uint256[] calldata tokenIds) external {
+    function harvestToken() external {
         updatePool();
 
-        uint256[] memory amounts = new uint256[](tokenIds.length);
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 pendingToken = (userStakes[msg.sender][tokenIds[i]] *
-                (accTokensPerStake[tokenIds[i]] -
-                    userLastAccTokensPerStake[msg.sender][tokenIds[i]])) / 1e18;
-            amounts[i] =
-                userStoredTokens[msg.sender][tokenIds[i]] +
-                pendingToken;
+        uint256 pendingToken = (inviterStake[msg.sender] *
+            (accTokenPerStake - inviterLastAccTokenPerStake[msg.sender])) /
+            1e18;
+        uint256 amount = inviterStoredToken[msg.sender] + pendingToken;
+        require(amount > 0, "You have none token to harvest");
 
-            if (amounts[i] > 0) {
-                userStoredTokens[msg.sender][tokenIds[i]] = 0;
-                userLastAccTokensPerStake[msg.sender][
-                    tokenIds[i]
-                ] = accTokensPerStake[tokenIds[i]];
-                userHarvestedTokens[msg.sender][tokenIds[i]] += amounts[i];
-                harvestedTokens[tokenIds[i]] += amounts[i];
+        inviterStoredToken[msg.sender] = 0;
+        inviterLastAccTokenPerStake[msg.sender] = accTokenPerStake;
+        inviterHarvestedToken[msg.sender] += amount;
+        harvestedToken += amount;
 
-                if (tokenIds[i] == 0) {
-                    IHC hc = IHC(tokenAddrs[tokenIds[i]]);
-                    hc.mint(msg.sender, amounts[i]);
-                } else {
-                    IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-                    token.transfer(msg.sender, amounts[i]);
-                }
-            }
-        }
+        hc.mint(msg.sender, amount);
 
-        emit HarvestTokens(msg.sender, tokenIds, amounts);
+        emit HarvestToken(msg.sender, amount);
     }
 
     /**
-     * @dev Buy Slot
+     * @dev Get Token Total Rewards of a Inviter
      */
-    function buySlot() external {
-        require(
-            getUserSlots(msg.sender) < maxSlots,
-            "Slots has reached the limit"
-        );
-
-        uint256 amount = getUserSlotPrice(msg.sender);
-        IHC hc = IHC(tokenAddrs[0]);
-        hc.transferFrom(msg.sender, receivingAddress, amount);
-        userSlots[msg.sender]++;
-
-        emit BuySlot(msg.sender, amount);
-    }
-
-    /**
-     * @dev Get Token Total Rewards of a User
-     */
-    function getTokenTotalRewards(address user, uint256 tokenId)
+    function getTokenTotalRewards(address inviter)
         external
         view
         returns (uint256)
     {
-        return
-            userHarvestedTokens[user][tokenId] + getTokenRewards(user, tokenId);
-    }
-
-    /**
-     * @dev Get Tokens Info
-     */
-    function getTokensInfo()
-        external
-        view
-        returns (address[] memory, uint256[] memory)
-    {
-        return (tokenAddrs, tokenReleaseSpeeds);
-    }
-
-    /**
-     * @dev Get HnIds Length
-     */
-    function getHnIdsLength() external view returns (uint256) {
-        return hnIds.length();
-    }
-
-    /**
-     * @dev Get HnIds by Size
-     */
-    function getHnIdsBySize(uint256 cursor, uint256 size)
-        external
-        view
-        returns (uint256[] memory, uint256)
-    {
-        uint256 length = size;
-        if (length > hnIds.length() - cursor) {
-            length = hnIds.length() - cursor;
-        }
-
-        uint256[] memory values = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
-            values[i] = hnIds.at(cursor + i);
-        }
-
-        return (values, cursor + length);
+        return inviterHarvestedToken[inviter] + getTokenRewards(inviter);
     }
 
     /**
@@ -1875,39 +1296,60 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get User HnId Existence
+     * @dev Get Inviters Length
      */
-    function getUserHnIdExistence(address user, uint256 hnId)
+    function getInvitersLength() external view returns (uint256) {
+        return inviters.length();
+    }
+
+    /**
+     * @dev Get Inviters by Size
+     */
+    function getInvitersBySize(uint256 cursor, uint256 size)
         external
         view
-        returns (bool)
+        returns (address[] memory, uint256)
     {
-        return userHnIds[user].contains(hnId);
-    }
-
-    /**
-     * @dev Get User HnIds Length
-     */
-    function getUserHnIdsLength(address user) external view returns (uint256) {
-        return userHnIds[user].length();
-    }
-
-    /**
-     * @dev Get User HnIds by Size
-     */
-    function getUserHnIdsBySize(
-        address user,
-        uint256 cursor,
-        uint256 size
-    ) external view returns (uint256[] memory, uint256) {
         uint256 length = size;
-        if (length > userHnIds[user].length() - cursor) {
-            length = userHnIds[user].length() - cursor;
+        if (length > inviters.length() - cursor) {
+            length = inviters.length() - cursor;
         }
 
-        uint256[] memory values = new uint256[](length);
+        address[] memory values = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            values[i] = userHnIds[user].at(cursor + i);
+            values[i] = inviters.at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get Inviter Users Length
+     */
+    function getInviterUsersLength(address inviter)
+        external
+        view
+        returns (uint256)
+    {
+        return inviterUsers[inviter].length();
+    }
+
+    /**
+     * @dev Get Inviter Users by Size
+     */
+    function getInviterUsersBySize(
+        address inviter,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (address[] memory, uint256) {
+        uint256 length = size;
+        if (length > inviterUsers[inviter].length() - cursor) {
+            length = inviterUsers[inviter].length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = inviterUsers[inviter].at(cursor + i);
         }
 
         return (values, cursor + length);
@@ -1921,60 +1363,33 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             return;
         }
 
-        for (uint256 i = 0; i < tokenAddrs.length; i++) {
-            if (block.timestamp > lastRewardsTime && stakes[i] > 0) {
-                uint256 tokenRewards = tokenReleaseSpeeds[i] *
-                    (block.timestamp - lastRewardsTime);
-                accTokensPerStake[i] += (tokenRewards * 1e18) / stakes[i];
-                releasedTokens[i] += tokenRewards;
-            }
+        if (block.timestamp > lastRewardsTime && stake > 0) {
+            uint256 tokenRewards = tokenReleaseSpeed *
+                (block.timestamp - lastRewardsTime);
+            accTokenPerStake += (tokenRewards * 1e18) / stake;
+            releasedToken += tokenRewards;
         }
 
         lastRewardsTime = block.timestamp;
     }
 
     /**
-     * @dev Get Token Rewards of a User
+     * @dev Get Token Rewards of a Inviter
      */
-    function getTokenRewards(address user, uint256 tokenId)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 accTokensPerStakeTemp = accTokensPerStake[tokenId];
-        if (block.timestamp > lastRewardsTime && stakes[tokenId] > 0) {
-            accTokensPerStakeTemp +=
-                (tokenReleaseSpeeds[tokenId] *
+    function getTokenRewards(address inviter) public view returns (uint256) {
+        uint256 accTokenPerStakeTemp = accTokenPerStake;
+        if (block.timestamp > lastRewardsTime && stake > 0) {
+            accTokenPerStakeTemp +=
+                (tokenReleaseSpeed *
                     (block.timestamp - lastRewardsTime) *
                     1e18) /
-                stakes[tokenId];
+                stake;
         }
 
         return
-            userStoredTokens[user][tokenId] +
-            ((userStakes[user][tokenId] *
-                (accTokensPerStakeTemp -
-                    userLastAccTokensPerStake[user][tokenId])) / 1e18);
-    }
-
-    /**
-     * @dev Get User Slots
-     */
-    function getUserSlots(address user) public view returns (uint256) {
-        return 2 + userSlots[user];
-    }
-
-    /**
-     * @dev Get User Left Slots
-     */
-    function getUserLeftSlots(address user) public view returns (uint256) {
-        return getUserSlots(user) - userHnIds[user].length();
-    }
-
-    /**
-     * @dev Get User Slot Price
-     */
-    function getUserSlotPrice(address user) public view returns (uint256) {
-        return slotBasePrice**(getUserSlots(user) - 1) * 1e18;
+            inviterStoredToken[inviter] +
+            ((inviterStake[inviter] *
+                (accTokenPerStakeTemp - inviterLastAccTokenPerStake[inviter])) /
+                1e18);
     }
 }

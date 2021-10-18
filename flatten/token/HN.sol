@@ -2064,16 +2064,20 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
      * @dev Rename Hn
      */
     function renameHn(uint256 hnId, string calldata _name) external {
-        require(ownerOf(hnId) == msg.sender, "This Hn is not Own");
+        require(ownerOf(hnId) == msg.sender, "This Hn is not own");
         name[hnId] = _name;
     }
 
     /**
-     * @dev Transfer Batch
+     * @dev Safe Transfer From Batch
      */
-    function transferBatch(address to, uint256[] calldata tokenIds) external {
+    function safeTransferFromBatch(
+        address from,
+        address to,
+        uint256[] calldata tokenIds
+    ) external {
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            safeTransferFrom(msg.sender, to, tokenIds[i]);
+            safeTransferFrom(from, to, tokenIds[i]);
         }
     }
 
