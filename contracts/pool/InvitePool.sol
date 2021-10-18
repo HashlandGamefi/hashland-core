@@ -23,8 +23,6 @@ contract InvitePool is AccessControlEnumerable {
     bool public openStatus = false;
     uint256 public lastRewardsTime;
 
-    uint256 public tokenReleaseSpeed = 4166666666666666;
-
     uint256 public stake;
     uint256 public accTokenPerStake;
     uint256 public releasedToken;
@@ -60,16 +58,6 @@ contract InvitePool is AccessControlEnumerable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
         _setupRole(HNPOOL_ROLE, hnPoolAddr);
-    }
-
-    /**
-     * @dev Set Token Release Speed
-     */
-    function setTokenReleaseSpeed(uint256 releaseSpeed)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        tokenReleaseSpeed = releaseSpeed;
     }
 
     /**
@@ -191,7 +179,7 @@ contract InvitePool is AccessControlEnumerable {
         inviterHarvestedToken[msg.sender] += amount;
         harvestedToken += amount;
 
-        hc.mint(msg.sender, amount);
+        hc.transfer(msg.sender, amount);
 
         emit HarvestToken(msg.sender, amount);
     }
@@ -304,8 +292,7 @@ contract InvitePool is AccessControlEnumerable {
         }
 
         if (block.timestamp > lastRewardsTime && stake > 0) {
-            uint256 tokenRewards = tokenReleaseSpeed *
-                (block.timestamp - lastRewardsTime);
+            uint256 tokenRewards = hc.getPoolHCReward(address(this));
             accTokenPerStake += (tokenRewards * 1e18) / stake;
             releasedToken += tokenRewards;
         }
@@ -320,9 +307,7 @@ contract InvitePool is AccessControlEnumerable {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
         if (block.timestamp > lastRewardsTime && stake > 0) {
             accTokenPerStakeTemp +=
-                (tokenReleaseSpeed *
-                    (block.timestamp - lastRewardsTime) *
-                    1e18) /
+                (hc.getPoolHCReward(address(this)) * 1e18) /
                 stake;
         }
 

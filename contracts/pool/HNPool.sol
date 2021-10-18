@@ -33,7 +33,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     address public hnMarketAddress;
 
     address[] public tokenAddrs;
-    uint256[] public tokenReleaseSpeeds = [12500000000000000, 3472222222222];
+    uint256[] public tokenReleaseSpeeds = [0, 3472222222222];
 
     mapping(uint256 => uint256) public stakes;
     mapping(uint256 => uint256) public accTokensPerStake;
@@ -385,13 +385,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 userHarvestedTokens[msg.sender][tokenIds[i]] += amounts[i];
                 harvestedTokens[tokenIds[i]] += amounts[i];
 
-                if (tokenIds[i] == 0) {
-                    IHC hc = IHC(tokenAddrs[tokenIds[i]]);
-                    hc.mint(msg.sender, amounts[i]);
-                } else {
-                    IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-                    token.transfer(msg.sender, amounts[i]);
-                }
+                IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
+                token.transfer(msg.sender, amounts[i]);
             }
         }
 
