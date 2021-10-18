@@ -73,6 +73,7 @@ contract HC is ERC20, AccessControlEnumerable {
 
         for (uint256 i = 0; i < poolAddrs.length; i++) {
             pools.remove(poolAddrs[i]);
+            poolWeight[poolAddrs[i]] = 0;
         }
     }
 
