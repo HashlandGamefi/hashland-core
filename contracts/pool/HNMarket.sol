@@ -169,10 +169,12 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      * @dev Buy
      */
     function buy(uint256[] calldata _hnIds) external payable {
+        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
+
         address[] memory _sellers = new address[](_hnIds.length);
         uint256[] memory prices = new uint256[](_hnIds.length);
         bool[] memory isInPools = new bool[](_hnIds.length);
-        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
+
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             prices[i] = hnPrice[_hnIds[i]];
