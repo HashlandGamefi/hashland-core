@@ -15,17 +15,24 @@ contract HC is ERC20, AccessControlEnumerable {
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-    uint256 public constant initHCPerDay = 7200 * 1e18;
     uint256 public constant blockPerDay = 28800;
     uint256 public constant blockPerQuarter = (blockPerDay * 365) / 4;
+    uint256 public constant initHCPerDay = 7200 * 1e18;
     uint256 public constant initHCPerBlock = initHCPerDay / blockPerDay;
     uint256 public constant reduceRatio = 90;
 
     uint256 public startBlock;
+    uint256 public lastRewardBlock;
+
+    uint256 public weight;
+    uint256 public accHCPerWeight;
+    uint256 public releasedHC;
+    uint256 public harvestedHC;
 
     mapping(address => uint256) public poolWeight;
-    mapping(address => uint256) public poolLastRewardBlock;
-    mapping(address => uint256) public poolReleasedHC;
+    mapping(address => uint256) public poolLastAccHCPerWeight;
+    mapping(address => uint256) public poolStoredHC;
+    mapping(address => uint256) public poolHarvestedHC;
 
     EnumerableSet.AddressSet private pools;
 
@@ -45,42 +52,101 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Add pools
+     * @dev Add Weight
      */
-    function addPool(address[] calldata poolAddrs, uint256[] calldata weights)
+    function addWeight(address poolAddr, uint256 _weight)
         external
         onlyRole(MANAGER_ROLE)
     {
-        mintAll();
+        updatePool();
 
-        require(poolAddrs.length == weights.length, "Data length mismatch");
-
-        for (uint256 i = 0; i < poolAddrs.length; i++) {
-            pools.add(poolAddrs[i]);
-            poolWeight[poolAddrs[i]] = weights[i];
-            poolLastRewardBlock[poolAddrs[i]] = block.number;
+        if (poolWeight[poolAddr] > 0) {
+            uint256 pendingHC = (poolWeight[poolAddr] *
+                (accHCPerWeight - poolLastAccHCPerWeight[poolAddr])) / 1e18;
+            if (pendingHC > 0) {
+                poolStoredHC[poolAddr] += pendingHC;
+            }
         }
+
+        if (_weight > 0) {
+            poolWeight[poolAddr] += _weight;
+            weight += _weight;
+        }
+
+        poolLastAccHCPerWeight[poolAddr] = accHCPerWeight;
+        if (poolWeight[poolAddr] > 0) pools.add(poolAddr);
     }
 
     /**
-     * @dev Remove pools
+     * @dev Sub Weight
      */
-    function removePool(address[] calldata poolAddrs)
+    function subWeight(address poolAddr, uint256 _weight)
         external
         onlyRole(MANAGER_ROLE)
     {
-        mintAll();
+        require(poolWeight[poolAddr] >= _weight, "Not enough weight");
 
-        for (uint256 i = 0; i < poolAddrs.length; i++) {
-            pools.remove(poolAddrs[i]);
-            poolWeight[poolAddrs[i]] = 0;
+        updatePool();
+
+        uint256 pendingHC = (poolWeight[poolAddr] *
+            (accHCPerWeight - poolLastAccHCPerWeight[poolAddr])) / 1e18;
+        if (pendingHC > 0) {
+            poolStoredHC[poolAddr] += pendingHC;
         }
+
+        if (_weight > 0) {
+            poolWeight[poolAddr] -= _weight;
+            weight -= _weight;
+        }
+
+        poolLastAccHCPerWeight[poolAddr] = accHCPerWeight;
+        if (poolWeight[poolAddr] == 0) pools.remove(poolAddr);
+    }
+
+    /**
+     * @dev Harvest HC
+     */
+    function harvestHC() external returns (uint256) {
+        updatePool();
+        uint256 pendingHC = (poolWeight[msg.sender] *
+            (accHCPerWeight - poolLastAccHCPerWeight[msg.sender])) / 1e18;
+        uint256 amount = poolStoredHC[msg.sender] + pendingHC;
+
+        if (amount > 0) {
+            poolStoredHC[msg.sender] = 0;
+            poolLastAccHCPerWeight[msg.sender] = accHCPerWeight;
+            poolHarvestedHC[msg.sender] += amount;
+            harvestedHC += amount;
+
+            _mint(msg.sender, amount);
+        }
+
+        return amount;
+    }
+
+    /**
+     * @dev Get HC Total Rewards of a Pool
+     */
+    function getHCTotalRewards(address poolAddr)
+        external
+        view
+        returns (uint256)
+    {
+        return poolHarvestedHC[poolAddr] + getHCRewards(poolAddr);
+    }
+
+    /**
+     * @dev Get Next Reduction Left Blocks
+     */
+    function getNextReductionLeftBlocks() external view returns (uint256) {
+        return
+            blockPerQuarter - ((block.number - startBlock) % blockPerQuarter);
     }
 
     /**
      * @dev Get Pools Length
      */
-    function getUsersLength() external view returns (uint256) {
+    function getPoolsLength() external view returns (uint256) {
         return pools.length();
     }
 
@@ -106,38 +172,21 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Next Reduction Left Blocks
+     * @dev Update Pool
      */
-    function getNextReductionLeftBlocks() external view returns (uint256) {
-        return
-            blockPerQuarter - ((block.number - startBlock) % blockPerQuarter);
-    }
-
-    /**
-     * @dev Mint HC to a pool
-     */
-    function mint(address poolAddr) public returns (uint256) {
-        uint256 amount;
-        if (
-            pools.contains(poolAddr) &&
-            block.number > poolLastRewardBlock[poolAddr]
-        ) {
-            amount = getPoolHCReward(poolAddr);
-            _mint(poolAddr, amount);
-            poolReleasedHC[poolAddr] += amount;
-
-            poolLastRewardBlock[poolAddr] = block.number;
+    function updatePool() public {
+        if (block.number <= lastRewardBlock) {
+            return;
         }
-        return amount;
-    }
 
-    /**
-     * @dev Mint HC to all pools
-     */
-    function mintAll() public {
-        for (uint256 i = 0; i < pools.length(); i++) {
-            mint(pools.at(i));
+        if (block.number > lastRewardBlock && weight > 0) {
+            uint256 hcRewards = getHCPerBlock() *
+                (block.number - lastRewardBlock);
+            accHCPerWeight += (hcRewards * 1e18) / weight;
+            releasedHC += hcRewards;
         }
+
+        lastRewardBlock = block.number;
     }
 
     /**
@@ -157,30 +206,20 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get Total Weight
+     * @dev Get HC Rewards of a Pool
      */
-    function getTotalWeight() public view returns (uint256) {
-        uint256 totalWeight;
-        for (uint256 i = 0; i < pools.length(); i++) {
-            totalWeight += poolWeight[pools.at(i)];
+    function getHCRewards(address poolAddr) public view returns (uint256) {
+        uint256 accHCPerWeightTemp = accHCPerWeight;
+        if (weight > 0) {
+            accHCPerWeightTemp +=
+                (getHCPerBlock() * (block.timestamp - lastRewardBlock) * 1e18) /
+                weight;
         }
 
-        return totalWeight;
-    }
-
-    /**
-     * @dev Get Pool HC Per Block
-     */
-    function getPoolHCPerBlock(address poolAddr) public view returns (uint256) {
-        return (getHCPerBlock() * poolWeight[poolAddr]) / getTotalWeight();
-    }
-
-    /**
-     * @dev Get Pool HC Reward
-     */
-    function getPoolHCReward(address poolAddr) public view returns (uint256) {
         return
-            getPoolHCPerBlock(poolAddr) *
-            (block.number - poolLastRewardBlock[poolAddr]);
+            poolStoredHC[poolAddr] +
+            ((poolWeight[poolAddr] *
+                (accHCPerWeightTemp - poolLastAccHCPerWeight[poolAddr])) /
+                1e18);
     }
 }
