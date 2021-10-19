@@ -24,6 +24,7 @@ contract InvitePool is AccessControlEnumerable {
 
     uint256 public stake;
     uint256 public accTokenPerStake;
+    uint256 public releasedToken;
     uint256 public harvestedToken;
 
     mapping(address => uint256) public inviterStake;
@@ -286,7 +287,9 @@ contract InvitePool is AccessControlEnumerable {
      */
     function updatePool() public {
         if (stake > 0) {
-            accTokenPerStake += (hc.mint(address(this)) * 1e18) / stake;
+            uint256 amount = hc.harvestToken();
+            accTokenPerStake += (amount * 1e18) / stake;
+            releasedToken += amount;
         }
     }
 
@@ -297,7 +300,7 @@ contract InvitePool is AccessControlEnumerable {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
         if (stake > 0) {
             accTokenPerStakeTemp +=
-                (hc.getPoolHCReward(address(this)) * 1e18) /
+                (hc.getTokenRewards(address(this)) * 1e18) /
                 stake;
         }
 

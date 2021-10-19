@@ -540,16 +540,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (i == 0) {
                 if (stakes[i] > 0) {
                     IHC hc = IHC(tokenAddrs[i]);
-                    accTokensPerStake[i] +=
-                        (hc.mint(address(this)) * 1e18) /
-                        stakes[i];
+                    uint256 amount = hc.harvestToken();
+                    accTokensPerStake[i] += (amount * 1e18) / stakes[i];
+                    releasedTokens[i] += amount;
                 }
             } else {
                 if (block.number > lastRewardBlock && stakes[i] > 0) {
-                    uint256 tokenRewards = tokensPerBlock[i] *
+                    uint256 amount = tokensPerBlock[i] *
                         (block.number - lastRewardBlock);
-                    accTokensPerStake[i] += (tokenRewards * 1e18) / stakes[i];
-                    releasedTokens[i] += tokenRewards;
+                    accTokensPerStake[i] += (amount * 1e18) / stakes[i];
+                    releasedTokens[i] += amount;
                 }
             }
         }
@@ -570,7 +570,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (stakes[tokenId] > 0) {
                 IHC hc = IHC(tokenAddrs[0]);
                 accTokenPerStakeTemp +=
-                    (hc.getPoolHCReward(address(this)) * 1e18) /
+                    (hc.getTokenRewards(address(this)) * 1e18) /
                     stakes[tokenId];
             }
         } else {

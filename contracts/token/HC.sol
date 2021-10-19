@@ -17,22 +17,22 @@ contract HC is ERC20, AccessControlEnumerable {
 
     uint256 public constant blockPerDay = 28800;
     uint256 public constant blockPerQuarter = (blockPerDay * 365) / 4;
-    uint256 public constant initHCPerDay = 7200 * 1e18;
-    uint256 public constant initHCPerBlock = initHCPerDay / blockPerDay;
+    uint256 public constant initTokenPerDay = 7200 * 1e18;
+    uint256 public constant initTokenPerBlock = initTokenPerDay / blockPerDay;
     uint256 public constant reduceRatio = 90;
 
     uint256 public startBlock;
     uint256 public lastRewardBlock;
 
     uint256 public weight;
-    uint256 public accHCPerWeight;
-    uint256 public releasedHC;
-    uint256 public harvestedHC;
+    uint256 public accTokenPerWeight;
+    uint256 public releasedToken;
+    uint256 public harvestedToken;
 
     mapping(address => uint256) public poolWeight;
-    mapping(address => uint256) public poolLastAccHCPerWeight;
-    mapping(address => uint256) public poolStoredHC;
-    mapping(address => uint256) public poolHarvestedHC;
+    mapping(address => uint256) public poolLastAccTokenPerWeight;
+    mapping(address => uint256) public poolStoredToken;
+    mapping(address => uint256) public poolHarvestedToken;
 
     EnumerableSet.AddressSet private pools;
 
@@ -61,10 +61,11 @@ contract HC is ERC20, AccessControlEnumerable {
         updatePool();
 
         if (poolWeight[poolAddr] > 0) {
-            uint256 pendingHC = (poolWeight[poolAddr] *
-                (accHCPerWeight - poolLastAccHCPerWeight[poolAddr])) / 1e18;
-            if (pendingHC > 0) {
-                poolStoredHC[poolAddr] += pendingHC;
+            uint256 pendingToken = (poolWeight[poolAddr] *
+                (accTokenPerWeight - poolLastAccTokenPerWeight[poolAddr])) /
+                1e18;
+            if (pendingToken > 0) {
+                poolStoredToken[poolAddr] += pendingToken;
             }
         }
 
@@ -73,7 +74,7 @@ contract HC is ERC20, AccessControlEnumerable {
             weight += _weight;
         }
 
-        poolLastAccHCPerWeight[poolAddr] = accHCPerWeight;
+        poolLastAccTokenPerWeight[poolAddr] = accTokenPerWeight;
         if (poolWeight[poolAddr] > 0) pools.add(poolAddr);
     }
 
@@ -88,10 +89,10 @@ contract HC is ERC20, AccessControlEnumerable {
 
         updatePool();
 
-        uint256 pendingHC = (poolWeight[poolAddr] *
-            (accHCPerWeight - poolLastAccHCPerWeight[poolAddr])) / 1e18;
-        if (pendingHC > 0) {
-            poolStoredHC[poolAddr] += pendingHC;
+        uint256 pendingToken = (poolWeight[poolAddr] *
+            (accTokenPerWeight - poolLastAccTokenPerWeight[poolAddr])) / 1e18;
+        if (pendingToken > 0) {
+            poolStoredToken[poolAddr] += pendingToken;
         }
 
         if (_weight > 0) {
@@ -99,24 +100,24 @@ contract HC is ERC20, AccessControlEnumerable {
             weight -= _weight;
         }
 
-        poolLastAccHCPerWeight[poolAddr] = accHCPerWeight;
+        poolLastAccTokenPerWeight[poolAddr] = accTokenPerWeight;
         if (poolWeight[poolAddr] == 0) pools.remove(poolAddr);
     }
 
     /**
-     * @dev Harvest HC
+     * @dev Harvest Token
      */
-    function harvestHC() external returns (uint256) {
+    function harvestToken() external returns (uint256) {
         updatePool();
-        uint256 pendingHC = (poolWeight[msg.sender] *
-            (accHCPerWeight - poolLastAccHCPerWeight[msg.sender])) / 1e18;
-        uint256 amount = poolStoredHC[msg.sender] + pendingHC;
+        uint256 pendingToken = (poolWeight[msg.sender] *
+            (accTokenPerWeight - poolLastAccTokenPerWeight[msg.sender])) / 1e18;
+        uint256 amount = poolStoredToken[msg.sender] + pendingToken;
 
         if (amount > 0) {
-            poolStoredHC[msg.sender] = 0;
-            poolLastAccHCPerWeight[msg.sender] = accHCPerWeight;
-            poolHarvestedHC[msg.sender] += amount;
-            harvestedHC += amount;
+            poolStoredToken[msg.sender] = 0;
+            poolLastAccTokenPerWeight[msg.sender] = accTokenPerWeight;
+            poolHarvestedToken[msg.sender] += amount;
+            harvestedToken += amount;
 
             _mint(msg.sender, amount);
         }
@@ -125,14 +126,14 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get HC Total Rewards of a Pool
+     * @dev Get Token Total Rewards of a Pool
      */
-    function getHCTotalRewards(address poolAddr)
+    function getTokenTotalRewards(address poolAddr)
         external
         view
         returns (uint256)
     {
-        return poolHarvestedHC[poolAddr] + getHCRewards(poolAddr);
+        return poolHarvestedToken[poolAddr] + getTokenRewards(poolAddr);
     }
 
     /**
@@ -141,6 +142,17 @@ contract HC is ERC20, AccessControlEnumerable {
     function getNextReductionLeftBlocks() external view returns (uint256) {
         return
             blockPerQuarter - ((block.number - startBlock) % blockPerQuarter);
+    }
+
+    /**
+     * @dev Get Pool Token Per Block
+     */
+    function getPoolTokenPerBlock(address poolAddr)
+        external
+        view
+        returns (uint256)
+    {
+        return (getTokenPerBlock() * poolWeight[poolAddr]) / weight;
     }
 
     /**
@@ -180,10 +192,10 @@ contract HC is ERC20, AccessControlEnumerable {
         }
 
         if (block.number > lastRewardBlock && weight > 0) {
-            uint256 hcRewards = getHCPerBlock() *
+            uint256 amount = getTokenPerBlock() *
                 (block.number - lastRewardBlock);
-            accHCPerWeight += (hcRewards * 1e18) / weight;
-            releasedHC += hcRewards;
+            accTokenPerWeight += (amount * 1e18) / weight;
+            releasedToken += amount;
         }
 
         lastRewardBlock = block.number;
@@ -197,29 +209,31 @@ contract HC is ERC20, AccessControlEnumerable {
     }
 
     /**
-     * @dev Get HC Per Block
+     * @dev Get Token Per Block
      */
-    function getHCPerBlock() public view returns (uint256) {
+    function getTokenPerBlock() public view returns (uint256) {
         return
-            (initHCPerBlock * reduceRatio**getReduceCount()) /
+            (initTokenPerBlock * reduceRatio**getReduceCount()) /
             100**getReduceCount();
     }
 
     /**
-     * @dev Get HC Rewards of a Pool
+     * @dev Get Token Rewards of a Pool
      */
-    function getHCRewards(address poolAddr) public view returns (uint256) {
-        uint256 accHCPerWeightTemp = accHCPerWeight;
+    function getTokenRewards(address poolAddr) public view returns (uint256) {
+        uint256 accTokenPerWeightTemp = accTokenPerWeight;
         if (weight > 0) {
-            accHCPerWeightTemp +=
-                (getHCPerBlock() * (block.timestamp - lastRewardBlock) * 1e18) /
+            accTokenPerWeightTemp +=
+                (getTokenPerBlock() *
+                    (block.timestamp - lastRewardBlock) *
+                    1e18) /
                 weight;
         }
 
         return
-            poolStoredHC[poolAddr] +
+            poolStoredToken[poolAddr] +
             ((poolWeight[poolAddr] *
-                (accHCPerWeightTemp - poolLastAccHCPerWeight[poolAddr])) /
+                (accTokenPerWeightTemp - poolLastAccTokenPerWeight[poolAddr])) /
                 1e18);
     }
 }

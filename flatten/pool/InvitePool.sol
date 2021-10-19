@@ -1,4 +1,4 @@
-// Sources flattened with hardhat v2.6.5 https://hardhat.org
+// Sources flattened with hardhat v2.6.6 https://hardhat.org
 
 // File @openzeppelin/contracts/access/IAccessControl.sol@v4.3.2
 
@@ -1027,7 +1027,9 @@ pragma solidity >=0.8.7;
  * @notice Interface of the HC
  */
 interface IHC is IERC20 {
-    function mint(address receiver, uint256 tokens) external;
+    function harvestToken() external returns (uint256);
+
+    function getTokenRewards(address poolAddr) external view returns (uint256);
 }
 
 
@@ -1081,9 +1083,6 @@ contract InvitePool is AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public lastRewardsTime;
-
-    uint256 public tokenReleaseSpeed = 4166666666666666;
 
     uint256 public stake;
     uint256 public accTokenPerStake;
@@ -1120,16 +1119,6 @@ contract InvitePool is AccessControlEnumerable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
         _setupRole(HNPOOL_ROLE, hnPoolAddr);
-    }
-
-    /**
-     * @dev Set Token Release Speed
-     */
-    function setTokenReleaseSpeed(uint256 releaseSpeed)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        tokenReleaseSpeed = releaseSpeed;
     }
 
     /**
@@ -1251,7 +1240,7 @@ contract InvitePool is AccessControlEnumerable {
         inviterHarvestedToken[msg.sender] += amount;
         harvestedToken += amount;
 
-        hc.mint(msg.sender, amount);
+        hc.transfer(msg.sender, amount);
 
         emit HarvestToken(msg.sender, amount);
     }
@@ -1359,18 +1348,11 @@ contract InvitePool is AccessControlEnumerable {
      * @dev Update Pool
      */
     function updatePool() public {
-        if (block.timestamp <= lastRewardsTime) {
-            return;
+        if (stake > 0) {
+            uint256 amount = hc.harvestToken();
+            accTokenPerStake += (amount * 1e18) / stake;
+            releasedToken += amount;
         }
-
-        if (block.timestamp > lastRewardsTime && stake > 0) {
-            uint256 tokenRewards = tokenReleaseSpeed *
-                (block.timestamp - lastRewardsTime);
-            accTokenPerStake += (tokenRewards * 1e18) / stake;
-            releasedToken += tokenRewards;
-        }
-
-        lastRewardsTime = block.timestamp;
     }
 
     /**
@@ -1378,11 +1360,9 @@ contract InvitePool is AccessControlEnumerable {
      */
     function getTokenRewards(address inviter) public view returns (uint256) {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
-        if (block.timestamp > lastRewardsTime && stake > 0) {
+        if (stake > 0) {
             accTokenPerStakeTemp +=
-                (tokenReleaseSpeed *
-                    (block.timestamp - lastRewardsTime) *
-                    1e18) /
+                (hc.getTokenRewards(address(this)) * 1e18) /
                 stake;
         }
 

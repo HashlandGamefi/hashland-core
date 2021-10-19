@@ -30,7 +30,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     uint256 public hcRange = 1000;
 
     uint256 public hashratesBase = 1000;
-    uint256 public hashratesRange = 1000;
+    uint256 public hashratesRange = 250;
 
     mapping(address => uint256) public userUpgradeCount;
     mapping(address => uint256) public userUpgradeAmount;
@@ -138,6 +138,8 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             require(hn.level(hnId) == level, "Hn level mismatch");
 
             uint256[] memory hashrates = hn.getHashrates(hnId);
+            uint256 class = hn.getRandomNumber(hnId, "class", 1, 3);
+            uint256 sameClassCount;
             for (uint256 i = 0; i < materialHnIds.length; i++) {
                 require(
                     hn.level(materialHnIds[i]) == level,
@@ -156,6 +158,14 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                 for (uint256 j = 0; j < hashrates.length; j++) {
                     hashrates[j] += materialHashrates[j];
                 }
+
+                uint256 materialClass = hn.getRandomNumber(
+                    materialHnIds[i],
+                    "class",
+                    1,
+                    3
+                );
+                if (class == materialClass) sameClassCount++;
             }
 
             hn.setLevel(hnId, level + 1);
@@ -185,6 +195,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                         (hashrates[i] *
                             (hcBase +
                                 ((i == 0 ? level - 1 : level) * hashratesBase) +
+                                (sameClassCount * hashratesRange) +
                                 (randomness % hashratesRange))) /
                         hcBase;
                 }

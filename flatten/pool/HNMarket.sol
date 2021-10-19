@@ -1,4 +1,4 @@
-// Sources flattened with hardhat v2.6.5 https://hardhat.org
+// Sources flattened with hardhat v2.6.6 https://hardhat.org
 
 // File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.3.2
 
