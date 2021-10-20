@@ -138,7 +138,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
             require(hn.level(hnId) == level, "Hn level mismatch");
 
             uint256[] memory hashrates = hn.getHashrates(hnId);
-            uint256 class = hn.getRandomNumber(hnId, "class", 1, 3);
+            uint256 class = hn.getRandomNumber(hnId, "class", 1, 4);
             uint256 sameClassCount;
             for (uint256 i = 0; i < materialHnIds.length; i++) {
                 require(
@@ -163,7 +163,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                     materialHnIds[i],
                     "class",
                     1,
-                    3
+                    4
                 );
                 if (class == materialClass) sameClassCount++;
             }
