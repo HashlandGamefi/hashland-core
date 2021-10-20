@@ -1,6 +1,6 @@
 {
   "name": "hashland-core",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -39,7 +39,7 @@
     "chai-as-promised": "^7.1.1",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.4.7",
+    "ethers": "^5.5.0",
     "hardhat": "^2.6.6",
     "solc": "^0.8.9",
     "solidity-coverage": "^0.7.17",
