@@ -1579,7 +1579,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         updatePool();
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] > 0, "Token id must > 0");
-            require(releaseBlocks[i] > 0, "Release seconds must > 0");
+            require(releaseBlocks[i] > 0, "Release blocks must > 0");
 
             IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
             token.transferFrom(msg.sender, address(this), amounts[i]);
