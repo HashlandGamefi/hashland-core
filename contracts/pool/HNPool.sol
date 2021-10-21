@@ -30,7 +30,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     uint256 public slotBasePrice = 4;
     uint256 public lastRewardBlock;
     address public receivingAddress;
-    address public hnMarketAddress;
 
     address[] public tokenAddrs;
     uint256[] public tokensPerBlock = [0, 10416666666666];
