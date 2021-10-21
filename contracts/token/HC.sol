@@ -46,7 +46,7 @@ contract HC is ERC20, AccessControlEnumerable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
 
-        _mint(manager, 1e6 * 1e18);
+        _mint(manager, 210e4 * 1e18);
 
         startBlock = _startBlock;
     }

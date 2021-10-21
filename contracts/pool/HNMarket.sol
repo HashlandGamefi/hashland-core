@@ -23,15 +23,20 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
+    uint256 public feeRatio = 500;
+    address public receivingAddress;
+    uint256 public totalSellAmount;
+    uint256 public totalFeeAmount;
+    uint256 public totalSellCount;
 
     mapping(uint256 => uint256) public hnPrice;
     mapping(uint256 => address) public hnSeller;
     mapping(uint256 => bool) public hnIsInPool;
 
-    mapping(address => uint256) public sellerTotolSellAmount;
-    mapping(address => uint256) public sellerTotolSellCount;
-    mapping(address => uint256) public buyerTotolBuyAmount;
-    mapping(address => uint256) public buyerTotolBuyCount;
+    mapping(address => uint256) public sellerTotalSellAmount;
+    mapping(address => uint256) public sellerTotalSellCount;
+    mapping(address => uint256) public buyerTotalBuyAmount;
+    mapping(address => uint256) public buyerTotalBuyCount;
 
     EnumerableSet.AddressSet private sellers;
     EnumerableSet.AddressSet private buyers;
@@ -60,15 +65,19 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @param hnAddr Initialize HN Address
      * @param hnPoolAddr Initialize HNPool Address
+     * @param receivingAddr Initialize Receiving Address
      * @param manager Initialize Manager Role
      */
     constructor(
         address hnAddr,
         address hnPoolAddr,
+        address receivingAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
         hnPool = IHNPool(hnPoolAddr);
+
+        receivingAddress = receivingAddr;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
@@ -92,6 +101,23 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+    }
+
+    /**
+     * @dev Set Fee Ratio
+     */
+    function setFeeRatio(uint256 ratio) external onlyRole(MANAGER_ROLE) {
+        feeRatio = ratio;
+    }
+
+    /**
+     * @dev Set Receiving Address
+     */
+    function setReceivingAddress(address receivingAddr)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        receivingAddress = receivingAddr;
     }
 
     /**
@@ -178,6 +204,8 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             prices[i] = hnPrice[_hnIds[i]];
+            uint256 feeAmount = (prices[i] * feeRatio) / 1e4;
+            uint256 sellAmount = prices[i] - feeAmount;
 
             _sellers[i] = hnSeller[_hnIds[i]];
             isInPools[i] = hnIsInPool[_hnIds[i]];
@@ -185,17 +213,23 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
             hnIds.remove(_hnIds[i]);
             sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
-            payable(_sellers[i]).transfer(prices[i]);
+            payable(_sellers[i]).transfer(sellAmount);
+            payable(receivingAddress).transfer(feeAmount);
             if (isInPools[i]) {
                 hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
             } else {
                 hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
             }
 
-            sellerTotolSellAmount[_sellers[i]] += prices[i];
-            sellerTotolSellCount[_sellers[i]]++;
-            buyerTotolBuyAmount[msg.sender] += prices[i];
-            buyerTotolBuyCount[msg.sender]++;
+            sellerTotalSellAmount[_sellers[i]] += sellAmount;
+            sellerTotalSellCount[_sellers[i]]++;
+
+            buyerTotalBuyAmount[msg.sender] += sellAmount;
+            buyerTotalBuyCount[msg.sender]++;
+
+            totalSellAmount += sellAmount;
+            totalFeeAmount += feeAmount;
+            totalSellCount++;
         }
         buyers.add(msg.sender);
 
