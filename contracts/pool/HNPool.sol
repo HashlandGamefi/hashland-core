@@ -25,12 +25,13 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-    bool public openStatus = false;
-    uint256 public multiplier = 100;
+    address public receivingAddress;
     uint256 public maxSlots = 6;
     uint256 public slotBasePrice = 4;
+
+    bool public openStatus = false;
+    uint256 public multiplier = 100;
     uint256 public lastRewardBlock;
-    address public receivingAddress;
 
     address[] public tokenAddrs;
     uint256[] public tokensPerBlock = [0, 10416666666666];
@@ -205,6 +206,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         );
 
         updatePool();
+
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] > 0, "Token id must > 0");
             require(releaseBlocks[i] > 0, "Release blocks must > 0");
@@ -230,6 +232,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         );
 
         updatePool();
+
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
             if (userStakes[msg.sender][i] > 0) {
                 uint256 pendingToken = (userStakes[msg.sender][i] *
@@ -273,6 +276,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function withdraw(uint256[] calldata _hnIds) external {
         updatePool();
+
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
             if (userStakes[msg.sender][i] > 0) {
                 uint256 pendingToken = (userStakes[msg.sender][i] *
@@ -331,6 +335,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         );
 
         updatePool();
+
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
             if (userStakes[seller][i] > 0) {
                 uint256 pendingToken = (userStakes[seller][i] *
@@ -556,9 +561,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
                 }
             } else {
                 if (block.number > lastRewardBlock && stakes[i] > 0) {
-                    uint256 amount = (tokensPerBlock[i] *
-                        (block.number - lastRewardBlock) *
-                        multiplier) / 100;
+                    uint256 amount = tokensPerBlock[i] *
+                        (block.number - lastRewardBlock);
                     accTokensPerStake[i] += (amount * 1e18) / stakes[i];
                     releasedTokens[i] += amount;
                 }
@@ -588,9 +592,9 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         } else {
             if (block.number > lastRewardBlock && stakes[tokenId] > 0) {
                 accTokenPerStakeTemp +=
-                    (((tokensPerBlock[tokenId] *
+                    (tokensPerBlock[tokenId] *
                         (block.number - lastRewardBlock) *
-                        multiplier) / 100) * 1e18) /
+                        1e18) /
                     stakes[tokenId];
             }
         }

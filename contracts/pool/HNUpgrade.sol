@@ -23,6 +23,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     address public receivingAddress;
     uint256 public maxLevel = 5;
     uint256 public upgradeBasePrice = 4;
+
     uint256 public totalUpgradeCount;
     uint256 public totalUpgradeAmount;
 

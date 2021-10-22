@@ -25,8 +25,9 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public feeRatio = 500;
     address public receivingAddress;
+    uint256 public feeRatio = 500;
+
     uint256 public totalSellAmount;
     uint256 public totalFeeAmount;
     uint256 public totalSellCount;
@@ -152,6 +153,10 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         uint256[] calldata prices,
         bool[] calldata isInPools
     ) external {
+        require(
+            _hnIds.length == prices.length && _hnIds.length == isInPools.length,
+            "Data length mismatch"
+        );
         require(openStatus, "This pool is not opened");
 
         for (uint256 i = 0; i < _hnIds.length; i++) {

@@ -160,6 +160,7 @@ contract InvitePool is AccessControlEnumerable {
         userInviter[msg.sender] = inviter;
 
         updatePool();
+
         if (inviterStake[inviter] > 0) {
             uint256 pendingToken = (inviterStake[inviter] *
                 (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /

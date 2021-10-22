@@ -85,7 +85,7 @@ contract HC is ERC20, AccessControlEnumerable {
         external
         onlyRole(MANAGER_ROLE)
     {
-        require(poolWeight[poolAddr] >= _weight, "Not enough weight");
+        require(poolWeight[poolAddr] >= _weight, "Not enough weight to sub");
 
         updatePool();
 
@@ -109,6 +109,7 @@ contract HC is ERC20, AccessControlEnumerable {
      */
     function harvestToken() external returns (uint256) {
         updatePool();
+
         uint256 pendingToken = (poolWeight[msg.sender] *
             (accTokenPerWeight - poolLastAccTokenPerWeight[msg.sender])) / 1e18;
         uint256 amount = poolStoredToken[msg.sender] + pendingToken;
@@ -224,9 +225,7 @@ contract HC is ERC20, AccessControlEnumerable {
         uint256 accTokenPerWeightTemp = accTokenPerWeight;
         if (weight > 0) {
             accTokenPerWeightTemp +=
-                (getTokenPerBlock() *
-                    (block.number - lastRewardBlock) *
-                    1e18) /
+                (getTokenPerBlock() * (block.number - lastRewardBlock) * 1e18) /
                 weight;
         }
 
