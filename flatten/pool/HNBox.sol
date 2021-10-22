@@ -1293,8 +1293,11 @@ contract HNBox is AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     address public receivingAddress;
-    uint256[] public boxTokenPrices = [0.25 * 1e18];
-    address[] public tokenAddrs = [0x0000000000000000000000000000000000000000];
+    uint256[] public boxTokenPrices = [100 * 1e18, 100 * 1e18];
+    address[] public tokenAddrs = [
+        0x0000000000000000000000000000000000000000,
+        0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56
+    ];
 
     uint256 public boxesMaxSupply;
     uint256 public totalBoxesLength;

@@ -1,8 +1,93 @@
 // Sources flattened with hardhat v2.6.6 https://hardhat.org
 
-// File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.3.2
+// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
 
 // SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+// File @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol@v4.3.2
+
+
 
 pragma solidity ^0.8.0;
 
@@ -1282,6 +1367,7 @@ pragma solidity >=0.8.9;
 
 
 
+
 /**
  * @title HN Market Contract
  * @author HASHLAND-TEAM
@@ -1293,20 +1379,26 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
 
     IHN public hn;
     IHNPool public hnPool;
+    IERC20 public busd;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
+    uint256 public feeRatio = 500;
+    address public receivingAddress;
+    uint256 public totalSellAmount;
+    uint256 public totalFeeAmount;
+    uint256 public totalSellCount;
 
     mapping(uint256 => uint256) public hnPrice;
     mapping(uint256 => address) public hnSeller;
     mapping(uint256 => bool) public hnIsInPool;
 
-    mapping(address => uint256) public sellerTotolSellAmount;
-    mapping(address => uint256) public sellerTotolSellCount;
-    mapping(address => uint256) public buyerTotolBuyAmount;
-    mapping(address => uint256) public buyerTotolBuyCount;
+    mapping(address => uint256) public sellerTotalSellAmount;
+    mapping(address => uint256) public sellerTotalSellCount;
+    mapping(address => uint256) public buyerTotalBuyAmount;
+    mapping(address => uint256) public buyerTotalBuyCount;
 
     EnumerableSet.AddressSet private sellers;
     EnumerableSet.AddressSet private buyers;
@@ -1335,15 +1427,22 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @param hnAddr Initialize HN Address
      * @param hnPoolAddr Initialize HNPool Address
+     * @param busdAddr Initialize BUSD Address
+     * @param receivingAddr Initialize Receiving Address
      * @param manager Initialize Manager Role
      */
     constructor(
         address hnAddr,
         address hnPoolAddr,
+        address busdAddr,
+        address receivingAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
         hnPool = IHNPool(hnPoolAddr);
+        busd = IERC20(busdAddr);
+
+        receivingAddress = receivingAddr;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
@@ -1367,6 +1466,23 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+    }
+
+    /**
+     * @dev Set Fee Ratio
+     */
+    function setFeeRatio(uint256 ratio) external onlyRole(MANAGER_ROLE) {
+        feeRatio = ratio;
+    }
+
+    /**
+     * @dev Set Receiving Address
+     */
+    function setReceivingAddress(address receivingAddr)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        receivingAddress = receivingAddr;
     }
 
     /**
@@ -1444,8 +1560,6 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      * @dev Buy
      */
     function buy(uint256[] calldata _hnIds) external payable {
-        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
-
         address[] memory _sellers = new address[](_hnIds.length);
         uint256[] memory prices = new uint256[](_hnIds.length);
         bool[] memory isInPools = new bool[](_hnIds.length);
@@ -1453,6 +1567,8 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             prices[i] = hnPrice[_hnIds[i]];
+            uint256 feeAmount = (prices[i] * feeRatio) / 1e4;
+            uint256 sellAmount = prices[i] - feeAmount;
 
             _sellers[i] = hnSeller[_hnIds[i]];
             isInPools[i] = hnIsInPool[_hnIds[i]];
@@ -1460,17 +1576,23 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
             hnIds.remove(_hnIds[i]);
             sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
-            payable(_sellers[i]).transfer(prices[i]);
+            busd.transferFrom(msg.sender, _sellers[i], sellAmount);
+            busd.transferFrom(msg.sender, receivingAddress, feeAmount);
             if (isInPools[i]) {
                 hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
             } else {
                 hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
             }
 
-            sellerTotolSellAmount[_sellers[i]] += prices[i];
-            sellerTotolSellCount[_sellers[i]]++;
-            buyerTotolBuyAmount[msg.sender] += prices[i];
-            buyerTotolBuyCount[msg.sender]++;
+            sellerTotalSellAmount[_sellers[i]] += sellAmount;
+            sellerTotalSellCount[_sellers[i]]++;
+
+            buyerTotalBuyAmount[msg.sender] += sellAmount;
+            buyerTotalBuyCount[msg.sender]++;
+
+            totalSellAmount += sellAmount;
+            totalFeeAmount += feeAmount;
+            totalSellCount++;
         }
         buyers.add(msg.sender);
 
@@ -1602,21 +1724,5 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         }
 
         return (values, cursor + length);
-    }
-
-    /**
-     * @dev Get Total Price
-     */
-    function getTotalPrice(uint256[] calldata _hnIds)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 totalPrice;
-        for (uint256 i = 0; i < _hnIds.length; i++) {
-            totalPrice += hnPrice[_hnIds[i]];
-        }
-
-        return totalPrice;
     }
 }

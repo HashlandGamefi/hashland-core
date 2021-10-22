@@ -17,7 +17,7 @@ contract HC is ERC20, AccessControlEnumerable {
 
     uint256 public constant blockPerDay = 28800;
     uint256 public constant blockPerQuarter = (blockPerDay * 365) / 4;
-    uint256 public constant initTokenPerDay = 7200 * 1e18;
+    uint256 public constant initTokenPerDay = 6480 * 1e18;
     uint256 public constant initTokenPerBlock = initTokenPerDay / blockPerDay;
     uint256 public constant reduceRatio = 90;
 
@@ -225,7 +225,7 @@ contract HC is ERC20, AccessControlEnumerable {
         if (weight > 0) {
             accTokenPerWeightTemp +=
                 (getTokenPerBlock() *
-                    (block.timestamp - lastRewardBlock) *
+                    (block.number - lastRewardBlock) *
                     1e18) /
                 weight;
         }

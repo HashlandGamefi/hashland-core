@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -18,6 +19,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
 
     IHN public hn;
     IHNPool public hnPool;
+    IERC20 public busd;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
@@ -65,17 +67,20 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @param hnAddr Initialize HN Address
      * @param hnPoolAddr Initialize HNPool Address
+     * @param busdAddr Initialize BUSD Address
      * @param receivingAddr Initialize Receiving Address
      * @param manager Initialize Manager Role
      */
     constructor(
         address hnAddr,
         address hnPoolAddr,
+        address busdAddr,
         address receivingAddr,
         address manager
     ) {
         hn = IHN(hnAddr);
         hnPool = IHNPool(hnPoolAddr);
+        busd = IERC20(busdAddr);
 
         receivingAddress = receivingAddr;
 
@@ -195,8 +200,6 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
      * @dev Buy
      */
     function buy(uint256[] calldata _hnIds) external payable {
-        require(msg.value == getTotalPrice(_hnIds), "Price mismatch");
-
         address[] memory _sellers = new address[](_hnIds.length);
         uint256[] memory prices = new uint256[](_hnIds.length);
         bool[] memory isInPools = new bool[](_hnIds.length);
@@ -213,8 +216,8 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
             hnIds.remove(_hnIds[i]);
             sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
-            payable(_sellers[i]).transfer(sellAmount);
-            payable(receivingAddress).transfer(feeAmount);
+            busd.transferFrom(msg.sender, _sellers[i], sellAmount);
+            busd.transferFrom(msg.sender, receivingAddress, feeAmount);
             if (isInPools[i]) {
                 hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
             } else {
@@ -361,21 +364,5 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         }
 
         return (values, cursor + length);
-    }
-
-    /**
-     * @dev Get Total Price
-     */
-    function getTotalPrice(uint256[] calldata _hnIds)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 totalPrice;
-        for (uint256 i = 0; i < _hnIds.length; i++) {
-            totalPrice += hnPrice[_hnIds[i]];
-        }
-
-        return totalPrice;
     }
 }
