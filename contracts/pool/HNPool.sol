@@ -26,6 +26,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     bool public openStatus = false;
+    uint256 public multiplier = 100;
     uint256 public maxSlots = 6;
     uint256 public slotBasePrice = 4;
     uint256 public lastRewardBlock;
@@ -109,6 +110,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+    }
+
+    /**
+     * @dev Set Multiplier
+     */
+    function setMultiplier(uint256 _multiplier)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        multiplier = _multiplier;
     }
 
     /**
@@ -539,14 +550,15 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (i == 0) {
                 if (stakes[i] > 0) {
                     IHC hc = IHC(tokenAddrs[i]);
-                    uint256 amount = hc.harvestToken();
+                    uint256 amount = (hc.harvestToken() * multiplier) / 100;
                     accTokensPerStake[i] += (amount * 1e18) / stakes[i];
                     releasedTokens[i] += amount;
                 }
             } else {
                 if (block.number > lastRewardBlock && stakes[i] > 0) {
-                    uint256 amount = tokensPerBlock[i] *
-                        (block.number - lastRewardBlock);
+                    uint256 amount = (tokensPerBlock[i] *
+                        (block.number - lastRewardBlock) *
+                        multiplier) / 100;
                     accTokensPerStake[i] += (amount * 1e18) / stakes[i];
                     releasedTokens[i] += amount;
                 }
@@ -569,15 +581,16 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (stakes[tokenId] > 0) {
                 IHC hc = IHC(tokenAddrs[0]);
                 accTokenPerStakeTemp +=
-                    (hc.getTokenRewards(address(this)) * 1e18) /
+                    (((hc.getTokenRewards(address(this)) * multiplier) / 100) *
+                        1e18) /
                     stakes[tokenId];
             }
         } else {
             if (block.number > lastRewardBlock && stakes[tokenId] > 0) {
                 accTokenPerStakeTemp +=
-                    (tokensPerBlock[tokenId] *
+                    (((tokensPerBlock[tokenId] *
                         (block.number - lastRewardBlock) *
-                        1e18) /
+                        multiplier) / 100) * 1e18) /
                     stakes[tokenId];
             }
         }
