@@ -58,6 +58,8 @@ contract HC is ERC20, AccessControlEnumerable {
         external
         onlyRole(MANAGER_ROLE)
     {
+        require(block.number >= startBlock, "Block number must >= start block");
+
         updatePool();
 
         if (poolWeight[poolAddr] > 0) {

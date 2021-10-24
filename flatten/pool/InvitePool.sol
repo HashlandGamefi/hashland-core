@@ -1083,6 +1083,7 @@ contract InvitePool is AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
+    uint256 public multiplier = 100;
 
     uint256 public stake;
     uint256 public accTokenPerStake;
@@ -1122,10 +1123,32 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
+     * @dev Withdraw Token
+     */
+    function withdrawToken(
+        address _tokenAddrs,
+        address to,
+        uint256 amount
+    ) external onlyRole(MANAGER_ROLE) {
+        IERC20 token = IERC20(_tokenAddrs);
+        token.transfer(to, amount);
+    }
+
+    /**
      * @dev Set Open Status
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+    }
+
+    /**
+     * @dev Set Multiplier
+     */
+    function setMultiplier(uint256 _multiplier)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        multiplier = _multiplier;
     }
 
     /**
@@ -1199,6 +1222,7 @@ contract InvitePool is AccessControlEnumerable {
         userInviter[msg.sender] = inviter;
 
         updatePool();
+
         if (inviterStake[inviter] > 0) {
             uint256 pendingToken = (inviterStake[inviter] *
                 (accTokenPerStake - inviterLastAccTokenPerStake[inviter])) /
@@ -1349,7 +1373,7 @@ contract InvitePool is AccessControlEnumerable {
      */
     function updatePool() public {
         if (stake > 0) {
-            uint256 amount = hc.harvestToken();
+            uint256 amount = (hc.harvestToken() * multiplier) / 100;
             accTokenPerStake += (amount * 1e18) / stake;
             releasedToken += amount;
         }
@@ -1362,7 +1386,8 @@ contract InvitePool is AccessControlEnumerable {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
         if (stake > 0) {
             accTokenPerStakeTemp +=
-                (hc.getTokenRewards(address(this)) * 1e18) /
+                (((hc.getTokenRewards(address(this)) * multiplier) / 100) *
+                    1e18) /
                 stake;
         }
 
