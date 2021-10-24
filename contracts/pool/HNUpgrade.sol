@@ -176,7 +176,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
                     keccak256(
                         abi.encodePacked(
                             msg.sender,
-                            block.timestamp,
+                            block.number,
                             upgradePrice,
                             totalUpgradeCount,
                             userUpgradeCount[msg.sender],

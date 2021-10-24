@@ -195,7 +195,7 @@ contract HNBox is AccessControlEnumerable {
                 keccak256(
                     abi.encodePacked(
                         to,
-                        block.timestamp,
+                        block.number,
                         boxesLength,
                         boxTokenPrices,
                         boxesMaxSupply,
