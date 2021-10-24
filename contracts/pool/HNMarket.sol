@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../token/interface/IHN.sol";
 import "../pool/interface/IHNPool.sol";
 
@@ -152,7 +153,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         uint256[] calldata _hnIds,
         uint256[] calldata prices,
         bool[] calldata isInPools
-    ) external {
+    ) external nonReentrant {
         require(
             _hnIds.length == prices.length && _hnIds.length == isInPools.length,
             "Data length mismatch"
@@ -183,7 +184,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Cancel
      */
-    function cancel(uint256[] calldata _hnIds) external {
+    function cancel(uint256[] calldata _hnIds) external nonReentrant {
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             require(
@@ -204,7 +205,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Buy
      */
-    function buy(uint256[] calldata _hnIds) external payable {
+    function buy(uint256[] calldata _hnIds) external nonReentrant {
         address[] memory _sellers = new address[](_hnIds.length);
         uint256[] memory prices = new uint256[](_hnIds.length);
         bool[] memory isInPools = new bool[](_hnIds.length);

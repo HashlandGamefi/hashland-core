@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../token/interface/IHN.sol";
 
 /**
@@ -118,7 +119,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Upgrade
      */
-    function upgrade(uint256[] calldata hnIds) external {
+    function upgrade(uint256[] calldata hnIds) external nonReentrant {
         require(hnIds.length > 0, "HnIds length must > 0");
         require(hnIds.length <= 100, "HnIds length must <= 100");
         require(hnIds.length % 4 == 0, "HnIds length % 4 must == 0");

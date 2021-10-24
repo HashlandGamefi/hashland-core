@@ -3,6 +3,7 @@ pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../token/interface/IHC.sol";
 
 /**
@@ -86,7 +87,7 @@ contract HCLPPool is AccessControlEnumerable {
     /**
      * @dev Deposit
      */
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amount) external nonReentrant {
         require(openStatus, "This pool is not opened");
 
         updatePool();
@@ -115,7 +116,7 @@ contract HCLPPool is AccessControlEnumerable {
     /**
      * @dev Withdraw
      */
-    function withdraw(uint256 amount) external {
+    function withdraw(uint256 amount) external nonReentrant {
         require(
             userStake[msg.sender] >= amount,
             "Not enough HC LP to withdraw"
@@ -143,7 +144,7 @@ contract HCLPPool is AccessControlEnumerable {
     /**
      * @dev Harvest Token
      */
-    function harvestToken() external {
+    function harvestToken() external nonReentrant {
         updatePool();
 
         uint256 pendingToken = (userStake[msg.sender] *

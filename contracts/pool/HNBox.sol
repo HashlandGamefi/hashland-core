@@ -4,6 +4,7 @@ pragma solidity >=0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../token/interface/IHN.sol";
 
 /**
@@ -116,7 +117,11 @@ contract HNBox is AccessControlEnumerable {
     /**
      * @dev Buy Boxes
      */
-    function buyBoxes(uint256 boxesLength, uint256 tokenId) external payable {
+    function buyBoxes(uint256 boxesLength, uint256 tokenId)
+        external
+        payable
+        nonReentrant
+    {
         require(boxesLength > 0, "Boxes length must > 0");
         require(boxesLength <= 100, "Boxes length must <= 100");
         require(getBoxesLeftSupply() >= boxesLength, "Not enough boxes supply");
