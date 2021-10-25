@@ -12,7 +12,7 @@ import "../pool/interface/IHNPool.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can bind inviters and inviters can harvest HC
  */
-contract InvitePool is AccessControlEnumerable {
+contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHC public hc;

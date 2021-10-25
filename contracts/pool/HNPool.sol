@@ -15,7 +15,7 @@ import "./interface/IHNMarket.sol";
  * @author HASHLAND-TEAM
  * @notice In this Contract users can stake HN to harvest HC and Tokens
  */
-contract HNPool is ERC721Holder, AccessControlEnumerable {
+contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 

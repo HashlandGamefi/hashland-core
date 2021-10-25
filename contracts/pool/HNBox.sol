@@ -12,7 +12,7 @@ import "../token/interface/IHN.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can draw HN
  */
-contract HNBox is AccessControlEnumerable {
+contract HNBox is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHN public hn;

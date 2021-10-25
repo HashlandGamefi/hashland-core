@@ -14,7 +14,7 @@ import "../pool/interface/IHNPool.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can trade HN
  */
-contract HNMarket is ERC721Holder, AccessControlEnumerable {
+contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 

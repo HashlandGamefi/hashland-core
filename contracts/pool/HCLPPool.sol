@@ -11,7 +11,7 @@ import "../token/interface/IHC.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can stake HC LP to harvest HC
  */
-contract HCLPPool is AccessControlEnumerable {
+contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHC public hc;

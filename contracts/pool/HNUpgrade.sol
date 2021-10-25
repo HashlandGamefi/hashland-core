@@ -13,7 +13,7 @@ import "../token/interface/IHN.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can upgrade HN
  */
-contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
+contract HNUpgrade is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IERC20 public hc;
