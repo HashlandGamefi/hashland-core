@@ -1319,7 +1319,6 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.7;
-
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1428,19 +1427,12 @@ abstract contract IHNPool {
 
 
 pragma solidity >=0.8.9;
-
-
-
-
-
-
-
 /**
  * @title HN Market Contract
  * @author HASHLAND-TEAM
  * @notice In this contract users can trade HN
  */
-contract HNMarket is ERC721Holder, AccessControlEnumerable {
+contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 

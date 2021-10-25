@@ -1145,7 +1145,6 @@ interface IERC20 {
 
 
 pragma solidity >=0.8.7;
-
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1336,7 +1335,6 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.7;
-
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1450,20 +1448,12 @@ interface IHNMarket {
 
 
 pragma solidity >=0.8.9;
-
-
-
-
-
-
-
-
 /**
  * @title HN Pool Contract
  * @author HASHLAND-TEAM
  * @notice In this Contract users can stake HN to harvest HC and Tokens
  */
-contract HNPool is ERC721Holder, AccessControlEnumerable {
+contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 

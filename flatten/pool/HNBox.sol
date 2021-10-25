@@ -1260,7 +1260,6 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.7;
-
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1342,17 +1341,12 @@ abstract contract IHN is IERC721Enumerable {
 
 
 pragma solidity >=0.8.9;
-
-
-
-
-
 /**
  * @title HN Box Contract
  * @author HASHLAND-TEAM
  * @notice In this contract users can draw HN
  */
-contract HNBox is AccessControlEnumerable {
+contract HNBox is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHN public hn;

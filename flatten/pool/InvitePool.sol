@@ -1086,7 +1086,6 @@ interface IERC20 {
 
 
 pragma solidity >=0.8.7;
-
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1130,17 +1129,12 @@ abstract contract IHNPool {
 
 
 pragma solidity >=0.8.9;
-
-
-
-
-
 /**
  * @title Invite Pool Contract
  * @author HASHLAND-TEAM
  * @notice In this contract users can bind inviters and inviters can harvest HC
  */
-contract InvitePool is AccessControlEnumerable {
+contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHC public hc;
