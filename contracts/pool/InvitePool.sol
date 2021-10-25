@@ -22,7 +22,6 @@ contract InvitePool is AccessControlEnumerable {
     bytes32 public constant HNPOOL_ROLE = keccak256("HNPOOL_ROLE");
 
     bool public openStatus = false;
-    uint256 public multiplier = 100;
 
     uint256 public stake;
     uint256 public accTokenPerStake;
@@ -62,32 +61,10 @@ contract InvitePool is AccessControlEnumerable {
     }
 
     /**
-     * @dev Withdraw Token
-     */
-    function withdrawToken(
-        address _tokenAddrs,
-        address to,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC20 token = IERC20(_tokenAddrs);
-        token.transfer(to, amount);
-    }
-
-    /**
      * @dev Set Open Status
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
-    }
-
-    /**
-     * @dev Set Multiplier
-     */
-    function setMultiplier(uint256 _multiplier)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        multiplier = _multiplier;
     }
 
     /**
@@ -151,7 +128,7 @@ contract InvitePool is AccessControlEnumerable {
     /**
      * @dev Bind Inviter
      */
-    function bindInviter(address inviter) external nonReentrant {
+    function bindInviter(address inviter) external {
         require(openStatus, "This pool is not opened");
         require(
             userInviter[msg.sender] == address(0),
@@ -189,7 +166,7 @@ contract InvitePool is AccessControlEnumerable {
     /**
      * @dev Harvest Token
      */
-    function harvestToken() external nonReentrant {
+    function harvestToken() external {
         updatePool();
 
         uint256 pendingToken = (inviterStake[msg.sender] *
@@ -312,7 +289,7 @@ contract InvitePool is AccessControlEnumerable {
      */
     function updatePool() public {
         if (stake > 0) {
-            uint256 amount = (hc.harvestToken() * multiplier) / 100;
+            uint256 amount = hc.harvestToken();
             accTokenPerStake += (amount * 1e18) / stake;
             releasedToken += amount;
         }
@@ -325,8 +302,7 @@ contract InvitePool is AccessControlEnumerable {
         uint256 accTokenPerStakeTemp = accTokenPerStake;
         if (stake > 0) {
             accTokenPerStakeTemp +=
-                (((hc.getTokenRewards(address(this)) * multiplier) / 100) *
-                    1e18) /
+                (hc.getTokenRewards(address(this)) * 1e18) /
                 stake;
         }
 

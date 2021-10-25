@@ -30,7 +30,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     uint256 public slotBasePrice = 4;
 
     bool public openStatus = false;
-    uint256 public multiplier = 100;
     uint256 public lastRewardBlock;
 
     address[] public tokenAddrs;
@@ -114,16 +113,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Set Multiplier
-     */
-    function setMultiplier(uint256 _multiplier)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        multiplier = _multiplier;
-    }
-
-    /**
      * @dev Set Max Slots
      */
     function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
@@ -168,30 +157,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Withdraw Token
-     */
-    function withdrawToken(
-        address _tokenAddrs,
-        address to,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC20 token = IERC20(_tokenAddrs);
-        token.transfer(to, amount);
-    }
-
-    /**
-     * @dev Withdraw NFT
-     */
-    function withdrawNFT(
-        address nftAddr,
-        address to,
-        uint256 tokenId
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC721Enumerable nft = IERC721Enumerable(nftAddr);
-        nft.safeTransferFrom(address(this), to, tokenId);
-    }
-
-    /**
      * @dev Airdrop Tokens
      */
     function airdropTokens(
@@ -224,7 +189,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Deposit
      */
-    function deposit(uint256[] calldata _hnIds) external nonReentrant {
+    function deposit(uint256[] calldata _hnIds) external {
         require(openStatus, "This pool is not opened");
         require(
             _hnIds.length <= getUserLeftSlots(msg.sender),
@@ -274,7 +239,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Withdraw
      */
-    function withdraw(uint256[] calldata _hnIds) external nonReentrant {
+    function withdraw(uint256[] calldata _hnIds) external {
         updatePool();
 
         for (uint256 i = 0; i < tokenAddrs.length; i++) {
@@ -380,7 +345,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Harvest Tokens
      */
-    function harvestTokens(uint256[] calldata tokenIds) external nonReentrant {
+    function harvestTokens(uint256[] calldata tokenIds) external {
         updatePool();
 
         uint256[] memory amounts = new uint256[](tokenIds.length);
@@ -411,7 +376,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Buy Slot
      */
-    function buySlot() external nonReentrant {
+    function buySlot() external {
         require(
             getUserSlots(msg.sender) < maxSlots,
             "Slots has reached the limit"
@@ -555,7 +520,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (i == 0) {
                 if (stakes[i] > 0) {
                     IHC hc = IHC(tokenAddrs[i]);
-                    uint256 amount = (hc.harvestToken() * multiplier) / 100;
+                    uint256 amount = hc.harvestToken();
                     accTokensPerStake[i] += (amount * 1e18) / stakes[i];
                     releasedTokens[i] += amount;
                 }
@@ -585,8 +550,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
             if (stakes[tokenId] > 0) {
                 IHC hc = IHC(tokenAddrs[0]);
                 accTokenPerStakeTemp +=
-                    (((hc.getTokenRewards(address(this)) * multiplier) / 100) *
-                        1e18) /
+                    (hc.getTokenRewards(address(this)) * 1e18) /
                     stakes[tokenId];
             }
         } else {

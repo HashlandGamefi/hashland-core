@@ -63,18 +63,6 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Withdraw NFT
-     */
-    function withdrawNFT(
-        address nftAddr,
-        address to,
-        uint256 tokenId
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC721Enumerable nft = IERC721Enumerable(nftAddr);
-        nft.safeTransferFrom(address(this), to, tokenId);
-    }
-
-    /**
      * @dev Set Max Level
      */
     function setMaxLevel(uint256 level) external onlyRole(MANAGER_ROLE) {
@@ -119,7 +107,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Upgrade
      */
-    function upgrade(uint256[] calldata hnIds) external nonReentrant {
+    function upgrade(uint256[] calldata hnIds) external {
         require(hnIds.length > 0, "HnIds length must > 0");
         require(hnIds.length <= 100, "HnIds length must <= 100");
         require(hnIds.length % 4 == 0, "HnIds length % 4 must == 0");

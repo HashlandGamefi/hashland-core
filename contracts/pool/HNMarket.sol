@@ -92,18 +92,6 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     }
 
     /**
-     * @dev Withdraw NFT
-     */
-    function withdrawNFT(
-        address nftAddr,
-        address to,
-        uint256 tokenId
-    ) external onlyRole(MANAGER_ROLE) {
-        IERC721Enumerable nft = IERC721Enumerable(nftAddr);
-        nft.safeTransferFrom(address(this), to, tokenId);
-    }
-
-    /**
      * @dev Set Open Status
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
@@ -153,7 +141,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
         uint256[] calldata _hnIds,
         uint256[] calldata prices,
         bool[] calldata isInPools
-    ) external nonReentrant {
+    ) external {
         require(
             _hnIds.length == prices.length && _hnIds.length == isInPools.length,
             "Data length mismatch"
@@ -184,7 +172,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Cancel
      */
-    function cancel(uint256[] calldata _hnIds) external nonReentrant {
+    function cancel(uint256[] calldata _hnIds) external {
         for (uint256 i = 0; i < _hnIds.length; i++) {
             require(hnIds.contains(_hnIds[i]), "This HN does not exist");
             require(
@@ -205,7 +193,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Buy
      */
-    function buy(uint256[] calldata _hnIds) external nonReentrant {
+    function buy(uint256[] calldata _hnIds) external {
         address[] memory _sellers = new address[](_hnIds.length);
         uint256[] memory prices = new uint256[](_hnIds.length);
         bool[] memory isInPools = new bool[](_hnIds.length);

@@ -17,9 +17,10 @@ contract HC is ERC20, AccessControlEnumerable {
 
     uint256 public constant blockPerDay = 28800;
     uint256 public constant blockPerQuarter = (blockPerDay * 365) / 4;
-    uint256 public constant initTokenPerDay = 6480 * 1e18;
+    uint256 public constant initTokenPerDay = 7200 * 1e18;
     uint256 public constant initTokenPerBlock = initTokenPerDay / blockPerDay;
     uint256 public constant reduceRatio = 90;
+    uint256 public constant maxSupply = 2100e4 * 1e18;
 
     uint256 public startBlock;
     uint256 public lastRewardBlock;
@@ -208,16 +209,17 @@ contract HC is ERC20, AccessControlEnumerable {
      * @dev Get Reduce Count
      */
     function getReduceCount() public view returns (uint256) {
-        return (block.number - startBlock) / blockPerQuarter;
+        uint256 count = (block.number - startBlock) / blockPerQuarter;
+        return count < 12 ? count : 12;
     }
 
     /**
      * @dev Get Token Per Block
      */
     function getTokenPerBlock() public view returns (uint256) {
-        return
-            (initTokenPerBlock * reduceRatio**getReduceCount()) /
+        uint256 amount = (initTokenPerBlock * reduceRatio**getReduceCount()) /
             100**getReduceCount();
+        return totalSupply() < maxSupply ? amount : 0;
     }
 
     /**
