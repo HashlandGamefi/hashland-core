@@ -10,7 +10,7 @@
     "build": "npm run clean && npm run compile",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
     "deploy": "npm run build && npx hardhat run --network testnet scripts/deploy.ts",
-    "flatten": "npx hardhat flatten ./contracts/pool/InvitePool.sol > ./flatten/pool/InvitePool.sol"
+    "flatten": "npx hardhat flatten ./contracts/pool/HNPool.sol > ./flatten/pool/HNPool.sol"
   },
   "repository": {
     "type": "git",
