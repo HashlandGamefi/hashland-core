@@ -1783,8 +1783,6 @@ contract HNPool is ERC721Holder, AccessControlEnumerable {
         }
 
         invitePool.withdrawInviter(seller, hcHashrate);
-        uint256[] memory _hnId = new uint256[](1);
-        _hnId[0] = hnId;
 
         emit HNMarketWithdraw(buyer, seller, hnId);
     }
