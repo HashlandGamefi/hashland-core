@@ -107,7 +107,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable {
     /**
      * @dev Upgrade
      */
-    function upgrade(uint256[] calldata hnIds) external {
+    function upgrade(uint256[] calldata hnIds) external nonReentrant {
         require(hnIds.length > 0, "HnIds length must > 0");
         require(hnIds.length <= 100, "HnIds length must <= 100");
         require(hnIds.length % 4 == 0, "HnIds length % 4 must == 0");

@@ -128,7 +128,7 @@ contract InvitePool is AccessControlEnumerable {
     /**
      * @dev Bind Inviter
      */
-    function bindInviter(address inviter) external {
+    function bindInviter(address inviter) external nonReentrant {
         require(openStatus, "This pool is not opened");
         require(
             userInviter[msg.sender] == address(0),
@@ -166,7 +166,7 @@ contract InvitePool is AccessControlEnumerable {
     /**
      * @dev Harvest Token
      */
-    function harvestToken() external {
+    function harvestToken() external nonReentrant {
         updatePool();
 
         uint256 pendingToken = (inviterStake[msg.sender] *

@@ -117,7 +117,11 @@ contract HNBox is AccessControlEnumerable {
     /**
      * @dev Buy Boxes
      */
-    function buyBoxes(uint256 boxesLength, uint256 tokenId) external payable {
+    function buyBoxes(uint256 boxesLength, uint256 tokenId)
+        external
+        payable
+        nonReentrant
+    {
         require(boxesLength > 0, "Boxes length must > 0");
         require(boxesLength <= 100, "Boxes length must <= 100");
         require(getBoxesLeftSupply() >= boxesLength, "Not enough boxes supply");
