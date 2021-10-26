@@ -1085,7 +1085,8 @@ interface IERC20 {
 // File contracts/token/interface/IHC.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
+
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1101,7 +1102,7 @@ interface IHC is IERC20 {
 // File contracts/pool/interface/IHNPool.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 /**
  * @title HN Pool Interface
@@ -1129,6 +1130,11 @@ abstract contract IHNPool {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
 /**
  * @title Invite Pool Contract
  * @author HASHLAND-TEAM

@@ -1085,7 +1085,8 @@ interface IERC20 {
 // File contracts/token/interface/IHC.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
+
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1102,6 +1103,10 @@ interface IHC is IERC20 {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
 /**
  * @title HC LP Pool Contract
  * @author HASHLAND-TEAM

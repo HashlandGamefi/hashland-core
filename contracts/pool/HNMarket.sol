@@ -45,6 +45,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     EnumerableSet.AddressSet private sellers;
     EnumerableSet.AddressSet private buyers;
     EnumerableSet.UintSet private hnIds;
+    mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
     mapping(address => EnumerableSet.UintSet) private sellerHnIds;
 
     event Sell(
@@ -128,6 +129,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
                 sellerHnIds[seller].contains(_hnIds[i])
             ) {
                 hnIds.remove(_hnIds[i]);
+                levelHnIds[hn.level(_hnIds[i])].remove(_hnIds[i]);
                 sellerHnIds[seller].remove(_hnIds[i]);
             }
             if (i == _hnIds.length - 1) emit Cancel(seller, _hnIds, true);
@@ -159,7 +161,9 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             }
 
             hnIds.add(_hnIds[i]);
+            levelHnIds[hn.level(_hnIds[i])].add(_hnIds[i]);
             sellerHnIds[msg.sender].add(_hnIds[i]);
+
             hnPrice[_hnIds[i]] = prices[i];
             hnSeller[_hnIds[i]] = msg.sender;
             hnIsInPool[_hnIds[i]] = isInPools[i];
@@ -181,6 +185,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             );
 
             hnIds.remove(_hnIds[i]);
+            levelHnIds[hn.level(_hnIds[i])].remove(_hnIds[i]);
             sellerHnIds[msg.sender].remove(_hnIds[i]);
 
             if (!hnIsInPool[_hnIds[i]])
@@ -208,6 +213,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             isInPools[i] = hnIsInPool[_hnIds[i]];
 
             hnIds.remove(_hnIds[i]);
+            levelHnIds[hn.level(_hnIds[i])].remove(_hnIds[i]);
             sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
             busd.transferFrom(msg.sender, _sellers[i], sellAmount);
@@ -312,6 +318,38 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         uint256[] memory values = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
             values[i] = hnIds.at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get Level HnIds Length
+     */
+    function getLevelHnIdsLength(uint256 level)
+        external
+        view
+        returns (uint256)
+    {
+        return levelHnIds[level].length();
+    }
+
+    /**
+     * @dev Get Level HnIds by Size
+     */
+    function getLevelHnIdsBySize(
+        uint256 level,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (uint256[] memory, uint256) {
+        uint256 length = size;
+        if (length > levelHnIds[level].length() - cursor) {
+            length = levelHnIds[level].length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = levelHnIds[level].at(cursor + i);
         }
 
         return (values, cursor + length);

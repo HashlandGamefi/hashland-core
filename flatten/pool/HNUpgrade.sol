@@ -1318,7 +1318,8 @@ interface IERC721Enumerable is IERC721 {
 // File contracts/token/interface/IHN.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1400,6 +1401,12 @@ abstract contract IHN is IERC721Enumerable {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
 /**
  * @title HN Upgrade Contract
  * @author HASHLAND-TEAM

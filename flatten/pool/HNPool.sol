@@ -1144,7 +1144,8 @@ interface IERC20 {
 // File contracts/token/interface/IHC.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
+
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1334,7 +1335,8 @@ interface IERC721Enumerable is IERC721 {
 // File contracts/token/interface/IHN.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1415,7 +1417,7 @@ abstract contract IHN is IERC721Enumerable {
 // File contracts/pool/interface/IInvitePool.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 /**
  * @title Invite Pool Interface
@@ -1432,7 +1434,7 @@ interface IInvitePool {
 // File contracts/pool/interface/IHNMarket.sol
 
 
-pragma solidity >=0.8.7;
+pragma solidity >=0.8.9;
 
 /**
  * @title HN Market Interface
@@ -1448,6 +1450,14 @@ interface IHNMarket {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
+
+
 /**
  * @title HN Pool Contract
  * @author HASHLAND-TEAM
