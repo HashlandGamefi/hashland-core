@@ -1262,7 +1262,11 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
             userInviter[msg.sender] == address(0),
             "You have already bound the inviter"
         );
-        require(inviter != msg.sender, "You can not bind yourself");
+        require(inviter != msg.sender, "You cannot bind yourself");
+        require(
+            userInviter[inviter] != msg.sender,
+            "Your inviter's inviter cannot be yourself"
+        );
 
         userInviter[msg.sender] = inviter;
 
