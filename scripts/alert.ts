@@ -11,6 +11,7 @@ const pancakeRouterAddr = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3';
 const zeroAddr = '0x0000000000000000000000000000000000000000';
 
 const hclpAbi = [
+  'function totalSupply() external view returns (uint256)',
   'event Mint(address indexed sender, uint amount0, uint amount1)',
   'event Burn(address indexed sender, uint amount0, uint amount1, address indexed to)',
   'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
@@ -18,7 +19,7 @@ const hclpAbi = [
   'event Transfer(address indexed from, address indexed to, uint value)',
 ];
 const pancakeRouterAbi = [
-  'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
+  'function getAmountsOut(uint amountIn, address[] memory path) external view returns (uint[] memory amounts)',
 ];
 
 function format(bigNum: any) {
