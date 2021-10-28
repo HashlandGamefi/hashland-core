@@ -5,7 +5,7 @@ import TelegramBot from 'node-telegram-bot-api';
 const hcAddr = '0x20a3276972380E3c456137E49c32061498311Dd2';
 const hclpAddr = '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5';
 const hclpAbi = [
-  'event Transfer(address indexed from, address indexed to, uint value);',
+  'event Transfer(address indexed from, address indexed to, uint value)',
   'event Mint(address indexed sender, uint amount0, uint amount1)',
   'event Burn(address indexed sender, uint amount0, uint amount1, address indexed to)',
   'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
