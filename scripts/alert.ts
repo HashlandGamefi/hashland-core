@@ -10,7 +10,7 @@ async function main() {
   const hclp = await ethers.getContractAt('HC', '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5');
   const filter = hc.filters.Transfer(null, '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5')
 
-  bot.onText(/\/lp@HcAlertBot/, async (msg, match) => {
+  bot.onText(/\/lp/, async (msg, match) => {
     const totalSupply = await hclp.totalSupply();
     const chatId = msg.chat.id;
     const message = `HC LP Total Supply: ${(totalSupply / 1e18).toFixed(4)}`;
