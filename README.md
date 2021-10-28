@@ -44,3 +44,15 @@ npm run deploy
 ```
 npm run flatten
 ```
+
+## Run Scripts on Server
+
+```
+pm2 start
+```
+
+## Check Scripts Logs on Server
+
+```
+pm2 logs
+```
