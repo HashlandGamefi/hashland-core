@@ -46,7 +46,7 @@ async function main() {
     bot.sendMessage(-670292888, message);
   });
 
-  hclp.on('Swap', async (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
+  hclp.on('Swap', (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
     let message;
     if (hcAmountIn > 0 && busdAmountOunt > 0) {
       message = `[Sell HC] ${to} swap ${(hcAmountIn / 1e18).toFixed(4)} HC to ${(busdAmountOunt / 1e18).toFixed(4)} BUSD`;
@@ -55,15 +55,15 @@ async function main() {
     }
     console.log(message);
     bot.sendMessage(-670292888, message);
-
-    const hcPrice = (await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1];
-    message = `[HC Info] HC current price is ${hcPrice} BUSD`;
-    console.log(message);
-    bot.sendMessage(-670292888, message);
   });
 
-  hclp.on('Sync', (hcAmount, busdAmount, event) => {
-    const message = `[Pool Info] The pool now has ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD`;
+  hclp.on('Sync', async (hcAmount, busdAmount, event) => {
+    let message = `[Pool Info] The pool now has ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+
+    const hcPrice = (await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1];
+    message = `[HC Info] HC current price is ${(hcPrice / 1e18).toFixed(4)} BUSD`;
     console.log(message);
     bot.sendMessage(-670292888, message);
   });
