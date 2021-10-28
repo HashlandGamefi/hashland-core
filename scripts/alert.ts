@@ -2,13 +2,15 @@ import { utils } from 'ethers';
 import { ethers } from 'hardhat';
 import TelegramBot from 'node-telegram-bot-api';
 
+const hcAddr = '0x20a3276972380E3c456137E49c32061498311Dd2';
+const hclpAddr = '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5';
+
 async function main() {
   const token = process.env.TOKEN as string;
   const bot = new TelegramBot(token, { polling: true });
 
-  const hc = await ethers.getContractAt('HC', '0x20a3276972380E3c456137E49c32061498311Dd2');
-  const hclp = await ethers.getContractAt('HC', '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5');
-  const filter = hc.filters.Transfer(null, '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5')
+  const hc = await ethers.getContractAt('HC', hcAddr);
+  const hclp = await ethers.getContractAt('HC', hclpAddr);
 
   bot.onText(/\/lp/, async (msg, match) => {
     const totalSupply = await hclp.totalSupply();
@@ -18,8 +20,21 @@ async function main() {
     bot.sendMessage(chatId, message);
   });
 
-  hc.on(filter, (from, to, amount, event) => {
-    const message = `${from} sell ${utils.formatEther(amount)} HC`;
+  hclp.on('Mint', (sender, hcAmount, busdAmount, event) => {
+    const message = `[Add Liquidity] ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD have been added to the pool`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+  });
+
+  const filter = hclp.filters.Transfer('0x0000000000000000000000000000000000000000');
+  hclp.on(filter, (from, to, amount, event) => {
+    const message = `[Add Liquidity] ${to} got ${(amount / 1e18).toFixed(4)} LP`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+  });
+
+  hclp.on('Sync', (hcAmount, busdAmount, event) => {
+    const message = `[Pool Info] The pool now has ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD`;
     console.log(message);
     bot.sendMessage(-670292888, message);
   });
