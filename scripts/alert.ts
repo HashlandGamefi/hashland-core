@@ -15,7 +15,7 @@ const hclpAbi = [
   'event Transfer(address indexed from, address indexed to, uint value)',
 ];
 const pancakeRouterAbi = [
-  'function getAmountsOut(uint amountIn, address[] memory path) public view virtual override returns (uint[] memory amounts)',
+  'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
 ];
 
 async function main() {
