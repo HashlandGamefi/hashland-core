@@ -1,15 +1,21 @@
-import { utils } from 'ethers';
+import { constants } from 'ethers';
 import { ethers } from 'hardhat';
 import TelegramBot from 'node-telegram-bot-api';
 
 const hcAddr = '0x20a3276972380E3c456137E49c32061498311Dd2';
 const hclpAddr = '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5';
+const busdAddr = '0x6cbb3ef5a8c9743a1e2148d6dca69f3ba26bc8c5';
+const pancakeRouterAddr = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3';
+
 const hclpAbi = [
   'event Mint(address indexed sender, uint amount0, uint amount1)',
   'event Burn(address indexed sender, uint amount0, uint amount1, address indexed to)',
   'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
   'event Sync(uint112 reserve0, uint112 reserve1)',
   'event Transfer(address indexed from, address indexed to, uint value)',
+];
+const pancakeRouterAbi = [
+  'function getAmountsOut(uint amountIn, address[] memory path) public view virtual override returns (uint[] memory amounts)',
 ];
 
 async function main() {
@@ -18,6 +24,7 @@ async function main() {
 
   const hc = await ethers.getContractAt('HC', hcAddr);
   const hclp = await ethers.getContractAt(hclpAbi, hclpAddr);
+  const pancakeRouter = await ethers.getContractAt(pancakeRouterAbi, pancakeRouterAddr);
 
   bot.onText(/\/lp/, async (msg, match) => {
     const totalSupply = await hclp.totalSupply();
@@ -39,13 +46,18 @@ async function main() {
     bot.sendMessage(-670292888, message);
   });
 
-  hclp.on('Swap', (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
+  hclp.on('Swap', async (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
     let message;
-    if (hcAmountIn && busdAmountOunt) {
+    if (hcAmountIn > 0 && busdAmountOunt > 0) {
       message = `[Sell HC] ${to} swap ${(hcAmountIn / 1e18).toFixed(4)} HC to ${(busdAmountOunt / 1e18).toFixed(4)} BUSD`;
     } else {
       message = `[Buy HC] ${to} swap ${(busdAmountIn / 1e18).toFixed(4)} BUSD to ${(hcAmountOut / 1e18).toFixed(4)} HC`;
     }
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+
+    const hcPrice = (await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1];
+    message = `[HC Info] HC current price is ${hcPrice} BUSD`;
     console.log(message);
     bot.sendMessage(-670292888, message);
   });
@@ -63,7 +75,7 @@ async function main() {
     bot.sendMessage(-670292888, message);
   });
 
-  const filterBurnLP = hclp.filters.Transfer(null, '0x0000000000000000000000000000000000000000');
+  const filterBurnLP = hclp.filters.Transfer(null, hclpAddr);
   hclp.on(filterBurnLP, (from, to, amount, event) => {
     const message = `[Burn LP] ${from} lost ${(amount / 1e18).toFixed(4)} LP`;
     console.log(message);
