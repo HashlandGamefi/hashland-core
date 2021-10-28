@@ -5,11 +5,11 @@ import TelegramBot from 'node-telegram-bot-api';
 const hcAddr = '0x20a3276972380E3c456137E49c32061498311Dd2';
 const hclpAddr = '0xdb83d062fa300fb8b00f6ceb79ecc71dfef921a5';
 const hclpAbi = [
-  'event Transfer(address indexed from, address indexed to, uint value)',
   'event Mint(address indexed sender, uint amount0, uint amount1)',
   'event Burn(address indexed sender, uint amount0, uint amount1, address indexed to)',
   'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
-  'event Sync(uint112 reserve0, uint112 reserve1)'
+  'event Sync(uint112 reserve0, uint112 reserve1)',
+  'event Transfer(address indexed from, address indexed to, uint value)',
 ];
 
 async function main() {
@@ -33,15 +33,39 @@ async function main() {
     bot.sendMessage(-670292888, message);
   });
 
-  const filter = hclp.filters.Transfer('0x0000000000000000000000000000000000000000');
-  hclp.on(filter, (from, to, amount, event) => {
-    const message = `[Add Liquidity] ${to} got ${(amount / 1e18).toFixed(4)} LP`;
+  hclp.on('Burn', (sender, hcAmount, busdAmount, to, event) => {
+    const message = `[Remove Liquidity] Removed ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD from the pool`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+  });
+
+  hclp.on('Swap', (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
+    let message;
+    if (hcAmountIn && busdAmountOunt) {
+      message = `[Sell HC] ${to} swap ${(hcAmountIn / 1e18).toFixed(4)} HC to ${(busdAmountOunt / 1e18).toFixed(4)} BUSD`;
+    } else {
+      message = `[Buy HC] ${to} swap ${(busdAmountIn / 1e18).toFixed(4)} BUSD to ${(hcAmountOut / 1e18).toFixed(4)} HC`;
+    }
     console.log(message);
     bot.sendMessage(-670292888, message);
   });
 
   hclp.on('Sync', (hcAmount, busdAmount, event) => {
     const message = `[Pool Info] The pool now has ${(hcAmount / 1e18).toFixed(4)} HC and ${(busdAmount / 1e18).toFixed(4)} BUSD`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+  });
+
+  const filterMintLP = hclp.filters.Transfer('0x0000000000000000000000000000000000000000');
+  hclp.on(filterMintLP, (from, to, amount, event) => {
+    const message = `[Mint LP] ${to} got ${(amount / 1e18).toFixed(4)} LP`;
+    console.log(message);
+    bot.sendMessage(-670292888, message);
+  });
+
+  const filterBurnLP = hclp.filters.Transfer(null, '0x0000000000000000000000000000000000000000');
+  hclp.on(filterBurnLP, (from, to, amount, event) => {
+    const message = `[Burn LP] ${from} lost ${(amount / 1e18).toFixed(4)} LP`;
     console.log(message);
     bot.sendMessage(-670292888, message);
   });
