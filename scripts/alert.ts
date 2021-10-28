@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 import TelegramBot from 'node-telegram-bot-api';
 
 async function main() {
-  const token = '2069552244:AAHCbvYTta8tEHA0DmV4AQxOYQ6oBZXd12g';
+  const token = process.env.TOKEN as string;
   const bot = new TelegramBot(token, { polling: true });
   bot.onText(/\/echo (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
