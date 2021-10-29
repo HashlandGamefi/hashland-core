@@ -2,7 +2,6 @@
 pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,7 +12,7 @@ import "../token/interface/IHN.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can upgrade HN
  */
-contract HNUpgrade is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
+contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IERC20 public hc;
@@ -139,7 +138,7 @@ contract HNUpgrade is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
 
                 hn.safeTransferFrom(
                     msg.sender,
-                    address(this),
+                    receivingAddress,
                     materialHnIds[i]
                 );
 
