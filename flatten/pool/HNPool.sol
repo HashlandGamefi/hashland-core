@@ -1472,6 +1472,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     IHNMarket public hnMarket;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant AIRDROPPER_ROLE = keccak256("AIRDROPPER_ROLE");
 
     address public receivingAddress;
     uint256 public maxSlots = 6;
@@ -1522,12 +1523,14 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      * @param _tokenAddrs Initialize Tokens Address
      * @param receivingAddr Initialize Receiving Address
      * @param manager Initialize Manager Role
+     * @param airdropper Initialize Airdropper Role
      */
     constructor(
         address hnAddr,
         address[] memory _tokenAddrs,
         address receivingAddr,
-        address manager
+        address manager,
+        address airdropper
     ) {
         hn = IHN(hnAddr);
         tokenAddrs = _tokenAddrs;
@@ -1536,6 +1539,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
+        _setupRole(AIRDROPPER_ROLE, airdropper);
     }
 
     /**
@@ -1611,7 +1615,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         uint256[] calldata tokenIds,
         uint256[] calldata amounts,
         uint256[] calldata releaseBlocks
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(AIRDROPPER_ROLE) {
         require(
             tokenIds.length == amounts.length &&
                 tokenIds.length == releaseBlocks.length,
