@@ -1378,7 +1378,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
-    event UpgradeHns(address user, uint256[] hnIds);
+    event UpgradeHns(address indexed user, uint256[] indexed hnIds);
 
     /**
      * @param hcAddr Initialize HC Address

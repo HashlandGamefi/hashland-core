@@ -38,7 +38,11 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
-    event SpawnHns(address indexed user, uint256 boxesLength, uint256[] hnIds);
+    event SpawnHns(
+        address indexed user,
+        uint256 boxesLength,
+        uint256[] indexed hnIds
+    );
 
     /**
      * @param hnAddr Initialize HN Address
