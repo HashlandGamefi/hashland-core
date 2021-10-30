@@ -1381,6 +1381,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
     event UpgradeHns(
         address indexed user,
         uint256 indexed level,
+        uint256 length,
         uint256[] indexed hnIds
     );
 
@@ -1544,7 +1545,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
 
-        emit UpgradeHns(msg.sender, level + 1, upgradedHnIds);
+        emit UpgradeHns(msg.sender, level + 1, hnIds.length / 4, upgradedHnIds);
     }
 
     /**
