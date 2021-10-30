@@ -38,7 +38,11 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
-    event UpgradeHns(address indexed user, uint256[] indexed hnIds);
+    event UpgradeHns(
+        address indexed user,
+        uint256 indexed level,
+        uint256[] indexed hnIds
+    );
 
     /**
      * @param hcAddr Initialize HC Address
@@ -116,8 +120,10 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         uint256 upgradePrice = getUpgradePrice(hnIds);
         hc.transferFrom(msg.sender, receivingAddress, upgradePrice);
 
+        uint256[] memory upgradedHnIds = new uint256[](hnIds.length / 4);
         for (uint256 index = 0; index < hnIds.length; index += 4) {
             uint256 hnId = hnIds[index];
+            upgradedHnIds[index / 4] = hnId;
             uint256[] memory materialHnIds = new uint256[](3);
             materialHnIds[0] = hnIds[index + 1];
             materialHnIds[1] = hnIds[index + 2];
@@ -198,7 +204,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
 
-        emit UpgradeHns(msg.sender, hnIds);
+        emit UpgradeHns(msg.sender, level + 1, upgradedHnIds);
     }
 
     /**
