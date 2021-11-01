@@ -23,6 +23,13 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     mapping(uint256 => mapping(string => uint256)) public data;
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
+    event SpawnHn(address indexed to, uint256 indexed hnId);
+    event SetLevel(uint256 indexed hnId, uint256 level);
+    event SetHashrates(uint256 indexed hnId, uint256[] hashrates);
+    event SetData(uint256 indexed hnId, string indexed slot, uint256 data);
+    event SetDatas(uint256 indexed hnId, string indexed slot, uint256[] datas);
+    event RenameHn(uint256 indexed hnId, string name);
+
     /**
      * @param spawner Initialize Spawner Role
      * @param setter Initialize Setter Role
@@ -53,6 +60,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
 
         _safeMint(to, newHnId);
 
+        emit SpawnHn(to, newHnId);
+
         return newHnId;
     }
 
@@ -64,6 +73,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         onlyRole(SETTER_ROLE)
     {
         level[hnId] = _level;
+
+        emit SetLevel(hnId, _level);
     }
 
     /**
@@ -74,6 +85,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         onlyRole(SETTER_ROLE)
     {
         hashrates[hnId] = _hashrates;
+
+        emit SetHashrates(hnId, _hashrates);
     }
 
     /**
@@ -85,6 +98,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         uint256 _data
     ) external onlyRole(SETTER_ROLE) {
         data[hnId][slot] = _data;
+
+        emit SetData(hnId, slot, _data);
     }
 
     /**
@@ -96,6 +111,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
         uint256[] calldata _datas
     ) external onlyRole(SETTER_ROLE) {
         datas[hnId][slot] = _datas;
+
+        emit SetDatas(hnId, slot, _datas);
     }
 
     /**
@@ -104,6 +121,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     function renameHn(uint256 hnId, string calldata _name) external {
         require(ownerOf(hnId) == msg.sender, "This Hn is not own");
         name[hnId] = _name;
+
+        emit RenameHn(hnId, _name);
     }
 
     /**

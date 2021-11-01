@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -16,6 +17,8 @@ import "./interface/IHNMarket.sol";
  * @notice In this Contract users can stake HN to harvest HC and Tokens
  */
 contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    using SafeERC20 for IHC;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -56,6 +59,18 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     EnumerableSet.AddressSet private users;
     mapping(address => EnumerableSet.UintSet) private userHnIds;
 
+    event SetTokensInfo(address[] tokenAddrs, uint256[] tokensPerBlock);
+    event SetOpenStatus(bool status);
+    event SetMaxSlots(uint256 slots);
+    event SetSlotBasePrice(uint256 price);
+    event SetReceivingAddress(address receivingAddr);
+    event SetInvitePoolAddress(address invitePoolAddr);
+    event SetHNMarketAddress(address hnMarketAddr);
+    event AirdropTokens(
+        uint256[] tokenIds,
+        uint256[] amounts,
+        uint256[] releaseBlocks
+    );
     event Deposit(address indexed user, uint256[] indexed hnIds);
     event Withdraw(address indexed user, uint256[] indexed hnIds);
     event HNMarketWithdraw(
@@ -107,6 +122,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         );
         tokenAddrs = _tokenAddrs;
         tokensPerBlock = _tokensPerBlock;
+
+        emit SetTokensInfo(_tokenAddrs, _tokensPerBlock);
     }
 
     /**
@@ -114,6 +131,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+
+        emit SetOpenStatus(status);
     }
 
     /**
@@ -121,6 +140,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      */
     function setMaxSlots(uint256 slots) external onlyRole(MANAGER_ROLE) {
         maxSlots = slots;
+
+        emit SetMaxSlots(slots);
     }
 
     /**
@@ -128,6 +149,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      */
     function setSlotBasePrice(uint256 price) external onlyRole(MANAGER_ROLE) {
         slotBasePrice = price;
+
+        emit SetSlotBasePrice(price);
     }
 
     /**
@@ -138,6 +161,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         receivingAddress = receivingAddr;
+
+        emit SetReceivingAddress(receivingAddr);
     }
 
     /**
@@ -148,6 +173,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         invitePool = IInvitePool(invitePoolAddr);
+
+        emit SetInvitePoolAddress(invitePoolAddr);
     }
 
     /**
@@ -158,6 +185,8 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         hnMarket = IHNMarket(hnMarketAddr);
+
+        emit SetHNMarketAddress(hnMarketAddr);
     }
 
     /**
@@ -181,13 +210,15 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             require(releaseBlocks[i] > 0, "Release blocks must > 0");
 
             IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-            token.transferFrom(msg.sender, address(this), amounts[i]);
+            token.safeTransferFrom(msg.sender, address(this), amounts[i]);
             tokensPerBlock[tokenIds[i]] = amounts[i] / releaseBlocks[i];
 
             airdropedTokens[tokenIds[i]] += amounts[i];
             lastAirdropedTokens[tokenIds[i]] = amounts[i];
             lastAirdropTimes[tokenIds[i]] = block.timestamp;
         }
+
+        emit AirdropTokens(tokenIds, amounts, releaseBlocks);
     }
 
     /**
@@ -367,7 +398,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
                 harvestedTokens[tokenIds[i]] += amounts[i];
 
                 IERC20 token = IERC20(tokenAddrs[tokenIds[i]]);
-                token.transfer(msg.sender, amounts[i]);
+                token.safeTransfer(msg.sender, amounts[i]);
             }
         }
 
@@ -385,7 +416,7 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
 
         uint256 amount = getUserSlotPrice(msg.sender);
         IHC hc = IHC(tokenAddrs[0]);
-        hc.transferFrom(msg.sender, receivingAddress, amount);
+        hc.safeTransferFrom(msg.sender, receivingAddress, amount);
         userSlots[msg.sender]++;
 
         emit BuySlot(msg.sender, amount);
@@ -582,7 +613,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      * @dev Get User Left Slots
      */
     function getUserLeftSlots(address user) public view returns (uint256) {
-        return getUserSlots(user) - userHnIds[user].length();
+        if (getUserSlots(user) > userHnIds[user].length()) {
+            return getUserSlots(user) - userHnIds[user].length();
+        } else {
+            return 0;
+        }
     }
 
     /**

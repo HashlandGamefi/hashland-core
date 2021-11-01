@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -12,6 +13,8 @@ import "../token/interface/IHC.sol";
  * @notice In this contract users can stake HC LP to harvest HC
  */
 contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+    using SafeERC20 for IHC;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHC public hc;
@@ -33,6 +36,7 @@ contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
+    event SetOpenStatus(bool status);
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event HarvestToken(address indexed user, uint256 amount);
@@ -59,6 +63,8 @@ contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+
+        emit SetOpenStatus(status);
     }
 
     /**
@@ -79,7 +85,7 @@ contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
         }
 
         if (amount > 0) {
-            lpToken.transferFrom(msg.sender, address(this), amount);
+            lpToken.safeTransferFrom(msg.sender, address(this), amount);
             userStake[msg.sender] += amount;
             stake += amount;
         }
@@ -110,7 +116,7 @@ contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
         if (amount > 0) {
             userStake[msg.sender] -= amount;
             stake -= amount;
-            lpToken.transfer(msg.sender, amount);
+            lpToken.safeTransfer(msg.sender, amount);
         }
 
         userLastAccTokenPerStake[msg.sender] = accTokenPerStake;
@@ -134,7 +140,7 @@ contract HCLPPool is AccessControlEnumerable, ReentrancyGuard {
         userHarvestedToken[msg.sender] += amount;
         harvestedToken += amount;
 
-        hc.transfer(msg.sender, amount);
+        hc.safeTransfer(msg.sender, amount);
 
         emit HarvestToken(msg.sender, amount);
     }
