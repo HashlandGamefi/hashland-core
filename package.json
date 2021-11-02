@@ -10,6 +10,7 @@
     "build": "npm run clean && npm run compile",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
     "deploy": "npm run build && npx hardhat run --network testnet scripts/deploy.ts",
+    "store": "npx hardhat run --network testnet scripts/nftStore.ts",
     "flatten": "npx hardhat flatten ./contracts/token/HN.sol > ./flatten/token/HN.sol"
   },
   "repository": {
@@ -44,7 +45,7 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.6.7",
-    "nft.storage": "^3.3.0",
+    "nft.storage": "3.3",
     "node-schedule": "^2.0.0",
     "node-telegram-bot-api": "^0.54.0",
     "pm2": "^5.1.2",

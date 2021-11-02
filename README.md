@@ -56,3 +56,13 @@ pm2 start
 ```
 pm2 logs
 ```
+
+## Store NFT Data on IPFS
+
+Needs NFT_STORAGE_API_KEY in `.env` file.
+
+If you do not have NFT_STORAGE_API_KEY, go to `https://nft.storage/` and add one.
+
+```
+npm run store
+```
