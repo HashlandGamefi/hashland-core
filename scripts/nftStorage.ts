@@ -1,23 +1,56 @@
 import fs from 'fs';
 import { NFTStorage, File } from 'nft.storage'
 import { ethers } from 'hardhat';
+import { BigNumber, utils } from 'ethers';
+import sharp from 'sharp';
+
+// const client = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY as string });
+
+function getRandomNumber(hnId: number, slot: string, base: number, range: number) {
+    return BigNumber.from(utils.solidityKeccak256(['uint256', 'string'], [hnId, slot])).mod(range).add(base).toNumber();
+}
+
+async function composite(hnId: number) {
+    const level = 1;
+    const hnClass = getRandomNumber(hnId, 'class', 1, 4);
+
+    const bg = sharp(`nft/material/bg/${level}.png`).toBuffer();
+
+    const materials = [
+        `nft/materials/class${hnClass}/effect/bg/${level}.png`,
+        `nft/materials/class${hnClass}/hero.png`,
+        `nft/materials/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
+        `nft/materials/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
+        `nft/materials/class${hnClass}/effect/hero/${level}.png`,
+        `nft/materials/class${hnClass}/info.png`
+    ].reduce(async (input, overlay) => {
+        return await sharp(await input).composite([{ input: overlay }]).toBuffer();
+    }, bg);
+
+    const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
+
+    fs.writeFileSync(`nft/images/hashlandnft${hnId}.png`, composited);
+}
+
+function compositeBatch(start: number, length: number) {
+    for (let i = start; i < length; i++) {
+        composite(i);
+    }
+}
 
 async function main() {
-    const hnbox = await ethers.getContractAt('HNBox', '0x643a7a48FbB612938b7F08552936D3443F1b1b6c');
-    
-    hnbox.on('SpawnHns', (user, boxesLength, hnIds, event) => {
-        console.log(hnIds);
-    });
+    const length = 1000;
 
-    // const length = 500;
+    // compositeBatch(0, length);
 
-    // const image = [];
-    // for (let j = 0; j < length; j++) {
-    //     getHnImg(j, )
-    //     const buffer = Buffer.from();
-    //     image.push(new File([buffer], `${j + 1}.jpg`, { type: 'image/jpg' }));
+    // const hnbox = await ethers.getContractAt('HNBox', '0x643a7a48FbB612938b7F08552936D3443F1b1b6c');
+
+    // const images = [];
+    // for (let i = 0; i < length; i++) {
+    //     const buffer = Buffer.from(fs.readFileSync(`nft/composited/hashlandnft${i}.png`));
+    //     images.push(new File([buffer], `${i}.png`, { type: 'image/png' }));
     // }
-    // const newImageCID = await client.storeDirectory(image);
+    // const newImageCID = await client.storeDirectory(images);
     // console.log('New Image CID:', newImageCID);
 
     // const metadata = [];

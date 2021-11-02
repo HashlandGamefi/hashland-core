@@ -232,7 +232,15 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
 
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        tokenId.toString(),
+                        "-",
+                        level[tokenId].toString(),
+                        ".json"
+                    )
+                )
                 : "";
     }
 

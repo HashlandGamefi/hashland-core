@@ -1964,9 +1964,6 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 
 
 pragma solidity >=0.8.9;
-
-
-
 /**
  * @title Hashland NFT
  * @author HASHLAND-TEAM
@@ -2194,7 +2191,15 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
 
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        tokenId.toString(),
+                        "-",
+                        level[tokenId].toString(),
+                        ".json"
+                    )
+                )
                 : "";
     }
 

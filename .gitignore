@@ -1,8 +1,10 @@
 node_modules/
 cache/
 build/
-typechain/
+typechain-types/
 artifacts/
 logs/
+nft/images
+nft/metadatas
 coverage*
 .env
