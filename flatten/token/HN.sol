@@ -1991,6 +1991,7 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     mapping(uint256 => mapping(string => uint256)) public data;
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
+    event SetBaseURI(string uri);
     event SpawnHn(address indexed to, uint256 indexed hnId);
     event SetLevel(uint256 indexed hnId, uint256 level);
     event SetHashrates(uint256 indexed hnId, uint256[] hashrates);
@@ -2019,6 +2020,8 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
      */
     function setBaseURI(string memory uri) external onlyRole(MANAGER_ROLE) {
         baseURI = uri;
+
+        emit SetBaseURI(uri);
     }
 
     /**
