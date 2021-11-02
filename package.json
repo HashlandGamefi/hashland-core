@@ -43,6 +43,7 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.6.7",
+    "nft.storage": "^3.3.0",
     "node-schedule": "^2.0.0",
     "node-telegram-bot-api": "^0.54.0",
     "pm2": "^5.1.2",
