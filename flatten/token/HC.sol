@@ -1406,9 +1406,6 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
 
 
 pragma solidity >=0.8.9;
-
-
-
 /**
  * @title Hashland Coin
  * @author HASHLAND-TEAM
@@ -1440,6 +1437,10 @@ contract HC is ERC20, AccessControlEnumerable {
     mapping(address => uint256) public poolHarvestedToken;
 
     EnumerableSet.AddressSet private pools;
+
+    event AddWeight(address indexed pool, uint256 weight);
+    event SubWeight(address indexed pool, uint256 weight);
+    event HarvestToken(address indexed pool, uint256 amount);
 
     /**
      * @param manager Initialize Manager Role
@@ -1483,6 +1484,8 @@ contract HC is ERC20, AccessControlEnumerable {
 
         poolLastAccTokenPerWeight[poolAddr] = accTokenPerWeight;
         if (poolWeight[poolAddr] > 0) pools.add(poolAddr);
+
+        emit AddWeight(poolAddr, _weight);
     }
 
     /**
@@ -1492,6 +1495,7 @@ contract HC is ERC20, AccessControlEnumerable {
         external
         onlyRole(MANAGER_ROLE)
     {
+        require(block.number >= startBlock, "Block number must >= start block");
         require(poolWeight[poolAddr] >= _weight, "Not enough weight to sub");
 
         updatePool();
@@ -1509,6 +1513,8 @@ contract HC is ERC20, AccessControlEnumerable {
 
         poolLastAccTokenPerWeight[poolAddr] = accTokenPerWeight;
         if (poolWeight[poolAddr] == 0) pools.remove(poolAddr);
+
+        emit SubWeight(poolAddr, _weight);
     }
 
     /**
@@ -1529,6 +1535,8 @@ contract HC is ERC20, AccessControlEnumerable {
 
             _mint(msg.sender, amount);
         }
+
+        emit HarvestToken(msg.sender, amount);
 
         return amount;
     }

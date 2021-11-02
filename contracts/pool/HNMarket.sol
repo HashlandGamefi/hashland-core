@@ -2,6 +2,7 @@
 pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -15,6 +16,7 @@ import "../pool/interface/IHNPool.sol";
  * @notice In this contract users can trade HN
  */
 contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -48,6 +50,9 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
     mapping(address => EnumerableSet.UintSet) private sellerHnIds;
 
+    event SetOpenStatus(bool status);
+    event SetFeeRatio(uint256 ratio);
+    event SetReceivingAddress(address receivingAddr);
     event Sell(
         address indexed seller,
         uint256[] indexed hnIds,
@@ -97,13 +102,18 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+
+        emit SetOpenStatus(status);
     }
 
     /**
      * @dev Set Fee Ratio
      */
     function setFeeRatio(uint256 ratio) external onlyRole(MANAGER_ROLE) {
+        require(ratio <= 2000, "The fee ratio cannot exceed 20%");
         feeRatio = ratio;
+
+        emit SetFeeRatio(ratio);
     }
 
     /**
@@ -114,6 +124,8 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         receivingAddress = receivingAddr;
+
+        emit SetReceivingAddress(receivingAddr);
     }
 
     /**
@@ -216,8 +228,8 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             levelHnIds[hn.level(_hnIds[i])].remove(_hnIds[i]);
             sellerHnIds[_sellers[i]].remove(_hnIds[i]);
 
-            busd.transferFrom(msg.sender, _sellers[i], sellAmount);
-            busd.transferFrom(msg.sender, receivingAddress, feeAmount);
+            busd.safeTransferFrom(msg.sender, _sellers[i], sellAmount);
+            busd.safeTransferFrom(msg.sender, receivingAddress, feeAmount);
             if (isInPools[i]) {
                 hnPool.hnMarketWithdraw(msg.sender, _sellers[i], _hnIds[i]);
             } else {

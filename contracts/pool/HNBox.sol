@@ -2,6 +2,7 @@
 pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,6 +14,7 @@ import "../token/interface/IHN.sol";
  * @notice In this contract users can draw HN
  */
 contract HNBox is AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHN public hn;
@@ -38,6 +40,11 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
+    event SetTokensInfo(uint256[] boxTokenPrices, address[] tokenAddrs);
+    event SetReceivingAddress(address receivingAddr);
+    event AddBoxesMaxSupply(uint256 supply);
+    event SetDatas(uint256 btcBase, uint256 btcRange);
+    event BuyBoxes(address indexed user, uint256 indexed tokenId, uint256 price);
     event SpawnHns(
         address indexed user,
         uint256 boxesLength,
@@ -75,6 +82,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
         );
         boxTokenPrices = _boxTokenPrices;
         tokenAddrs = _tokenAddrs;
+
+        emit SetTokensInfo(_boxTokenPrices, _tokenAddrs);
     }
 
     /**
@@ -85,6 +94,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         receivingAddress = receivingAddr;
+
+        emit SetReceivingAddress(receivingAddr);
     }
 
     /**
@@ -92,6 +103,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
      */
     function addBoxesMaxSupply(uint256 supply) external onlyRole(MANAGER_ROLE) {
         boxesMaxSupply += supply;
+
+        emit AddBoxesMaxSupply(supply);
     }
 
     /**
@@ -103,19 +116,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
     {
         btcBase = _btcBase;
         btcRange = _btcRange;
-    }
 
-    /**
-     * @dev Admin Buy Boxes
-     */
-    function adminBuyBoxes(address to, uint256 boxesLength)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        require(boxesLength > 0, "Boxes length must > 0");
-        require(boxesLength <= 100, "The boxes length must <= 100");
-
-        spawnHns(to, boxesLength);
+        emit SetDatas(_btcBase, _btcRange);
     }
 
     /**
@@ -129,6 +131,11 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
         require(boxesLength > 0, "Boxes length must > 0");
         require(boxesLength <= 100, "Boxes length must <= 100");
         require(getBoxesLeftSupply() >= boxesLength, "Not enough boxes supply");
+        require(tokenId < tokenAddrs.length, "This token ID does not exist");
+        require(
+            boxTokenPrices[tokenId] > 0,
+            "The box price of this token has not been set"
+        );
 
         uint256 price = boxesLength * boxTokenPrices[tokenId];
         if (tokenId == 0) {
@@ -136,7 +143,7 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
             payable(receivingAddress).transfer(price);
         } else {
             IERC20 token = IERC20(tokenAddrs[tokenId]);
-            token.transferFrom(msg.sender, receivingAddress, price);
+            token.safeTransferFrom(msg.sender, receivingAddress, price);
         }
 
         spawnHns(msg.sender, boxesLength);
@@ -146,6 +153,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
         totalBoxesLength += boxesLength;
         totalTokenBuyAmount[tokenId] += price;
         users.add(msg.sender);
+
+        emit BuyBoxes(msg.sender, tokenId, price);
     }
 
     /**

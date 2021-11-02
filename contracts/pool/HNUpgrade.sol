@@ -2,6 +2,7 @@
 pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,6 +14,7 @@ import "../token/interface/IHN.sol";
  * @notice In this contract users can upgrade HN
  */
 contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IERC20 public hc;
@@ -38,6 +40,15 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
+    event SetMaxLevel(uint256 level);
+    event SetUpgradeBasePrice(uint256 price);
+    event SetReceivingAddress(address receivingAddr);
+    event SetDatas(
+        uint256 hcBase,
+        uint256 hcRange,
+        uint256 hashratesBase,
+        uint256 hashratesRange
+    );
     event UpgradeHns(
         address indexed user,
         uint256 indexed level,
@@ -71,6 +82,8 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
      */
     function setMaxLevel(uint256 level) external onlyRole(MANAGER_ROLE) {
         maxLevel = level;
+
+        emit SetMaxLevel(level);
     }
 
     /**
@@ -81,6 +94,8 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         upgradeBasePrice = price;
+
+        emit SetUpgradeBasePrice(price);
     }
 
     /**
@@ -91,6 +106,8 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         onlyRole(MANAGER_ROLE)
     {
         receivingAddress = receivingAddr;
+
+        emit SetReceivingAddress(receivingAddr);
     }
 
     /**
@@ -106,6 +123,8 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         hcRange = _hcRange;
         hashratesBase = _hashratesBase;
         hashratesRange = _hashratesRange;
+
+        emit SetDatas(_hcBase, _hcRange, _hashratesBase, _hashratesRange);
     }
 
     /**
@@ -119,7 +138,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
         require(level < maxLevel, "Hn level must < max Level");
 
         uint256 upgradePrice = getUpgradePrice(hnIds);
-        hc.transferFrom(msg.sender, receivingAddress, upgradePrice);
+        hc.safeTransferFrom(msg.sender, receivingAddress, upgradePrice);
 
         uint256[] memory upgradedHnIds = new uint256[](hnIds.length / 4);
         for (uint256 index = 0; index < hnIds.length; index += 4) {
@@ -138,6 +157,10 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
             class = class > 0 ? class : hn.getRandomNumber(hnId, "class", 1, 4);
             uint256 sameClassCount;
             for (uint256 i = 0; i < materialHnIds.length; i++) {
+                require(
+                    hn.ownerOf(materialHnIds[i]) == msg.sender,
+                    "This Material Hn is not own"
+                );
                 require(
                     hn.level(materialHnIds[i]) == level,
                     "Material level mismatch"

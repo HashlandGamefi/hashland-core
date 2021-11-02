@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,6 +14,7 @@ import "../pool/interface/IHNPool.sol";
  * @notice In this contract users can bind inviters and inviters can harvest HC
  */
 contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
+    using SafeERC20 for IHC;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     IHC public hc;
@@ -39,6 +41,7 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     EnumerableSet.AddressSet private inviters;
     mapping(address => EnumerableSet.AddressSet) private inviterUsers;
 
+    event SetOpenStatus(bool status);
     event BindInviter(address indexed user, address indexed inviter);
     event HarvestToken(address indexed inviter, uint256 amount);
 
@@ -65,6 +68,8 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
      */
     function setOpenStatus(bool status) external onlyRole(MANAGER_ROLE) {
         openStatus = status;
+
+        emit SetOpenStatus(status);
     }
 
     /**
@@ -185,7 +190,7 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
         inviterHarvestedToken[msg.sender] += amount;
         harvestedToken += amount;
 
-        hc.transfer(msg.sender, amount);
+        hc.safeTransfer(msg.sender, amount);
 
         emit HarvestToken(msg.sender, amount);
     }
