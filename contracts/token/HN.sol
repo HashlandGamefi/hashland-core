@@ -3,6 +3,7 @@ pragma solidity >=0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title Hashland NFT
@@ -10,8 +11,13 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
  * @notice This Contract Supply HN
  */
 contract HN is ERC721Enumerable, AccessControlEnumerable {
+    using Strings for uint256;
+
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant SPAWNER_ROLE = keccak256("SPAWNER_ROLE");
     bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
+
+    string public baseURI;
 
     mapping(uint256 => string) public name;
     mapping(uint256 => uint256) public ip;
@@ -24,13 +30,26 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
     /**
+     * @param manager Initialize Manager Role
      * @param spawner Initialize Spawner Role
      * @param setter Initialize Setter Role
      */
-    constructor(address spawner, address setter) ERC721("Hashland NFT", "HN") {
+    constructor(
+        address manager,
+        address spawner,
+        address setter
+    ) ERC721("Hashland NFT", "HN") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(MANAGER_ROLE, manager);
         _setupRole(SPAWNER_ROLE, spawner);
         _setupRole(SETTER_ROLE, setter);
+    }
+
+    /**
+     * @dev Allows the manager to set the base URI to be used for all token IDs
+     */
+    function setBaseURI(string memory uri) external onlyRole(MANAGER_ROLE) {
+        baseURI = uri;
     }
 
     /**
@@ -173,6 +192,26 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     ) external pure returns (uint256) {
         uint256 randomness = uint256(keccak256(abi.encodePacked(hnId, slot)));
         return base + (randomness % range);
+    }
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for a token ID
+     */
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
+                : "";
     }
 
     /**
