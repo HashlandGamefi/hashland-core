@@ -176,7 +176,6 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
             hnSeller[_hnIds[i]] = msg.sender;
             hnIsInPool[_hnIds[i]] = isInPools[i];
         }
-        sellers.add(msg.sender);
 
         emit Sell(msg.sender, _hnIds, prices, isInPools);
     }
@@ -234,6 +233,7 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
 
             sellerTotalSellAmount[_sellers[i]] += sellAmount;
             sellerTotalSellCount[_sellers[i]]++;
+            sellers.add(_sellers[i]);
 
             buyerTotalBuyAmount[msg.sender] += sellAmount;
             buyerTotalBuyCount[msg.sender]++;
