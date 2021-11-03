@@ -1465,7 +1465,6 @@ abstract contract ReentrancyGuard {
 
 
 pragma solidity >=0.8.9;
-
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1656,7 +1655,6 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.9;
-
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1770,15 +1768,6 @@ interface IHNMarket {
 
 
 pragma solidity >=0.8.9;
-
-
-
-
-
-
-
-
-
 /**
  * @title HN Pool Contract
  * @author HASHLAND-TEAM
@@ -1824,8 +1813,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     mapping(address => mapping(uint256 => uint256)) public userHarvestedTokens;
 
     EnumerableSet.UintSet private hnIds;
+    mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
     EnumerableSet.AddressSet private users;
     mapping(address => EnumerableSet.UintSet) private userHnIds;
+    mapping(address => mapping(uint256 => EnumerableSet.UintSet))
+        private userLevelHnIds;
 
     event SetTokensInfo(address[] tokenAddrs, uint256[] tokensPerBlock);
     event SetOpenStatus(bool status);
@@ -2018,8 +2010,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
                     stakes[j] += hashrates[j];
                 }
             }
+            uint256 level = hn.level(_hnIds[i]);
             hnIds.add(_hnIds[i]);
+            levelHnIds[level].add(_hnIds[i]);
             userHnIds[msg.sender].add(_hnIds[i]);
+            userLevelHnIds[msg.sender][level].add(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
         }
 
@@ -2067,8 +2062,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
                     stakes[j] -= hashrates[j];
                 }
             }
+            uint256 level = hn.level(_hnIds[i]);
             hnIds.remove(_hnIds[i]);
+            levelHnIds[level].remove(_hnIds[i]);
             userHnIds[msg.sender].remove(_hnIds[i]);
+            userLevelHnIds[msg.sender][level].remove(_hnIds[i]);
             if (hashrates[0] > 0) hcHashrate += hashrates[0];
             hn.safeTransferFrom(address(this), msg.sender, _hnIds[i]);
         }
@@ -2122,8 +2120,11 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
                 stakes[j] -= hashrates[j];
             }
         }
+        uint256 level = hn.level(hnId);
         hnIds.remove(hnId);
+        levelHnIds[level].remove(hnId);
         userHnIds[seller].remove(hnId);
+        userLevelHnIds[seller][level].remove(hnId);
         if (hashrates[0] > 0) hcHashrate = hashrates[0];
         hn.safeTransferFrom(address(this), buyer, hnId);
 
@@ -2238,6 +2239,53 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     }
 
     /**
+     * @dev Get Each Level HnIds Length
+     */
+    function getEachLevelHnIdsLength(uint256 maxLevel)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory lengths = new uint256[](maxLevel);
+        for (uint256 i = 0; i < maxLevel; i++) {
+            lengths[i] = levelHnIds[i + 1].length();
+        }
+        return lengths;
+    }
+
+    /**
+     * @dev Get Level HnIds Length
+     */
+    function getLevelHnIdsLength(uint256 level)
+        external
+        view
+        returns (uint256)
+    {
+        return levelHnIds[level].length();
+    }
+
+    /**
+     * @dev Get Level HnIds by Size
+     */
+    function getLevelHnIdsBySize(
+        uint256 level,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (uint256[] memory, uint256) {
+        uint256 length = size;
+        if (length > levelHnIds[level].length() - cursor) {
+            length = levelHnIds[level].length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = levelHnIds[level].at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
      * @dev Get Users Length
      */
     function getUsersLength() external view returns (uint256) {
@@ -2299,6 +2347,54 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         uint256[] memory values = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
             values[i] = userHnIds[user].at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get User Each Level HnIds Length
+     */
+    function getUserEachLevelHnIdsLength(address user, uint256 maxLevel)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory lengths = new uint256[](maxLevel);
+        for (uint256 i = 0; i < maxLevel; i++) {
+            lengths[i] = userLevelHnIds[user][i + 1].length();
+        }
+        return lengths;
+    }
+
+    /**
+     * @dev Get User Level HnIds Length
+     */
+    function getUserLevelHnIdsLength(address user, uint256 level)
+        external
+        view
+        returns (uint256)
+    {
+        return userLevelHnIds[user][level].length();
+    }
+
+    /**
+     * @dev Get User Level HnIds by Size
+     */
+    function getUserLevelHnIdsBySize(
+        address user,
+        uint256 level,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (uint256[] memory, uint256) {
+        uint256 length = size;
+        if (length > userLevelHnIds[user][level].length() - cursor) {
+            length = userLevelHnIds[user][level].length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = userLevelHnIds[user][level].at(cursor + i);
         }
 
         return (values, cursor + length);
