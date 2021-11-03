@@ -1,9 +1,9 @@
 import fs from 'fs';
-import { NFTStorage, File } from 'nft.storage';
+// import { NFTStorage, File } from 'nft.storage';
 import { BigNumber, utils } from 'ethers';
-const sharp = require('sharp');
+import sharp from 'sharp';
 
-const client = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY as string });
+// const client = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY as string });
 
 function getRandomNumber(hnId: number, slot: string, base: number, range: number) {
     return BigNumber.from(utils.solidityKeccak256(['uint256', 'string'], [hnId, slot])).mod(range).add(base).toNumber();
@@ -48,7 +48,7 @@ async function uploadImages(start: number, end: number) {
         }
     }
 
-    return await client.storeDirectory(images);
+    // return await client.storeDirectory(images);
 }
 
 function generateMetadata(imagesCid: string, hnId: number, level: number) {
@@ -59,12 +59,12 @@ function generateMetadata(imagesCid: string, hnId: number, level: number) {
 
     const metadata = {
         name: `Hashland NFT #${hnId}`,
-        description: 'Hashland NFT description.',
-        image: `ipfs://${imagesCid}/${fileName}.png`,
+        description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
+        image: `${imagesCid}/${fileName}.png`,
         attributes: [
             {
                 trait_type: 'Ip',
-                value: `I'm MT`,
+                value: `I AM MT`,
             },
             {
                 trait_type: 'Series',
@@ -105,20 +105,20 @@ async function uploadMetadatas(start: number, end: number) {
             metadatas.push(new File([json], fileName));
         }
     }
-    return await client.storeDirectory(metadatas);
+    // return await client.storeDirectory(metadatas);
 }
 
 async function main() {
     const start = 0;
-    const end = 100;
+    const end = 1000;
 
-    generateImages(start, end);
-    const newImageCID = await uploadImages(start, end);
-    console.log('New Image CID:', newImageCID);
+    // generateImages(start, end);
+    // const newImageCID = await uploadImages(start, end);
+    // console.log('New Image CID:', newImageCID);
 
-    generateMetadatas(newImageCID, start, end);
-    const newMetadataCID = await uploadMetadatas(start, end);
-    console.log('New Metadata CID:', newMetadataCID);
+    generateMetadatas('https://cdn.hashland.com/nft/images', start, end);
+    // const newMetadataCID = await uploadMetadatas(start, end);
+    // console.log('New Metadata CID:', newMetadataCID);
 }
 
 main();
