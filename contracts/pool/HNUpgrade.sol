@@ -51,9 +51,9 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
     );
     event UpgradeHns(
         address indexed user,
-        uint256 indexed level,
+        uint256 level,
         uint256 length,
-        uint256[] indexed hnIds
+        uint256[] hnIds
     );
 
     /**

@@ -1580,6 +1580,7 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1661,6 +1662,12 @@ abstract contract IHN is IERC721Enumerable {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
 /**
  * @title HN Upgrade Contract
  * @author HASHLAND-TEAM
@@ -1704,9 +1711,9 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
     );
     event UpgradeHns(
         address indexed user,
-        uint256 indexed level,
+        uint256 level,
         uint256 length,
-        uint256[] indexed hnIds
+        uint256[] hnIds
     );
 
     /**

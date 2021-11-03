@@ -55,19 +55,15 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     event SetReceivingAddress(address receivingAddr);
     event Sell(
         address indexed seller,
-        uint256[] indexed hnIds,
+        uint256[] hnIds,
         uint256[] prices,
         bool[] isInPools
     );
-    event Cancel(
-        address indexed seller,
-        uint256[] indexed hnIds,
-        bool isHnPoolCancel
-    );
+    event Cancel(address indexed seller, uint256[] hnIds, bool isHnPoolCancel);
     event Buy(
         address indexed buyer,
-        address[] indexed sellers,
-        uint256[] indexed hnIds,
+        address[] sellers,
+        uint256[] hnIds,
         uint256[] prices,
         bool[] isInPools
     );

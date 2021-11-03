@@ -1639,6 +1639,7 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1747,6 +1748,14 @@ abstract contract IHNPool {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
+
+
 /**
  * @title HN Market Contract
  * @author HASHLAND-TEAM
@@ -1792,19 +1801,15 @@ contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     event SetReceivingAddress(address receivingAddr);
     event Sell(
         address indexed seller,
-        uint256[] indexed hnIds,
+        uint256[] hnIds,
         uint256[] prices,
         bool[] isInPools
     );
-    event Cancel(
-        address indexed seller,
-        uint256[] indexed hnIds,
-        bool isHnPoolCancel
-    );
+    event Cancel(address indexed seller, uint256[] hnIds, bool isHnPoolCancel);
     event Buy(
         address indexed buyer,
-        address[] indexed sellers,
-        uint256[] indexed hnIds,
+        address[] sellers,
+        uint256[] hnIds,
         uint256[] prices,
         bool[] isInPools
     );

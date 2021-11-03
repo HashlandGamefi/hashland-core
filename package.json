@@ -1,6 +1,6 @@
 {
   "name": "hashland-core",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
     "deploy": "npm run build && npx hardhat run --network testnet scripts/deploy.ts",
     "store": "npx hardhat run --network testnet scripts/nftStore.ts",
-    "flatten": "npx hardhat flatten ./contracts/token/HN.sol > ./flatten/token/HN.sol"
+    "flatten": "npx hardhat flatten ./contracts/pool/InvitePool.sol > ./flatten/pool/InvitePool.sol"
   },
   "repository": {
     "type": "git",
@@ -49,9 +49,7 @@
     "node-schedule": "^2.0.0",
     "node-telegram-bot-api": "^0.54.0",
     "pm2": "^5.1.2",
-    "sharp": "^0.29.2",
     "solc": "^0.8.9",
-    "solidity-coverage": "^0.7.17",
     "ts-generator": "^0.1.1",
     "ts-node": "^10.4.0",
     "typechain": "^6.0.2",

@@ -30,11 +30,11 @@ contract HN is ERC721Enumerable, AccessControlEnumerable {
     mapping(uint256 => mapping(string => uint256[])) public datas;
 
     event SetBaseURI(string uri);
-    event SpawnHn(address indexed to, uint256 indexed hnId);
+    event SpawnHn(address indexed to, uint256 hnId);
     event SetLevel(uint256 indexed hnId, uint256 level);
     event SetHashrates(uint256 indexed hnId, uint256[] hashrates);
-    event SetData(uint256 indexed hnId, string indexed slot, uint256 data);
-    event SetDatas(uint256 indexed hnId, string indexed slot, uint256[] datas);
+    event SetData(uint256 indexed hnId, string slot, uint256 data);
+    event SetDatas(uint256 indexed hnId, string slot, uint256[] datas);
     event RenameHn(uint256 indexed hnId, string name);
 
     /**

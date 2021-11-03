@@ -44,12 +44,8 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
     event SetReceivingAddress(address receivingAddr);
     event AddBoxesMaxSupply(uint256 supply);
     event SetDatas(uint256 btcBase, uint256 btcRange);
-    event BuyBoxes(address indexed user, uint256 indexed tokenId, uint256 price);
-    event SpawnHns(
-        address indexed user,
-        uint256 boxesLength,
-        uint256[] indexed hnIds
-    );
+    event BuyBoxes(address indexed user, uint256 tokenId, uint256 price);
+    event SpawnHns(address indexed user, uint256 boxesLength, uint256[] hnIds);
 
     /**
      * @param hnAddr Initialize HN Address

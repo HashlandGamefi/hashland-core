@@ -1465,6 +1465,7 @@ abstract contract ReentrancyGuard {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1655,6 +1656,7 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -1768,6 +1770,15 @@ interface IHNMarket {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
+
+
+
 /**
  * @title HN Pool Contract
  * @author HASHLAND-TEAM
@@ -1828,16 +1839,12 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         uint256[] amounts,
         uint256[] releaseBlocks
     );
-    event Deposit(address indexed user, uint256[] indexed hnIds);
-    event Withdraw(address indexed user, uint256[] indexed hnIds);
-    event HNMarketWithdraw(
-        address indexed buyer,
-        address indexed seller,
-        uint256 indexed hnId
-    );
+    event Deposit(address indexed user, uint256[] hnIds);
+    event Withdraw(address indexed user, uint256[] hnIds);
+    event HNMarketWithdraw(address indexed buyer, address seller, uint256 hnId);
     event HarvestTokens(
         address indexed user,
-        uint256[] indexed tokenIds,
+        uint256[] tokenIds,
         uint256[] amounts
     );
     event BuySlot(address indexed user, uint256 amount);

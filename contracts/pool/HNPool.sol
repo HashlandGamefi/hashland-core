@@ -71,16 +71,12 @@ contract HNPool is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
         uint256[] amounts,
         uint256[] releaseBlocks
     );
-    event Deposit(address indexed user, uint256[] indexed hnIds);
-    event Withdraw(address indexed user, uint256[] indexed hnIds);
-    event HNMarketWithdraw(
-        address indexed buyer,
-        address indexed seller,
-        uint256 indexed hnId
-    );
+    event Deposit(address indexed user, uint256[] hnIds);
+    event Withdraw(address indexed user, uint256[] hnIds);
+    event HNMarketWithdraw(address indexed buyer, address seller, uint256 hnId);
     event HarvestTokens(
         address indexed user,
-        uint256[] indexed tokenIds,
+        uint256[] tokenIds,
         uint256[] amounts
     );
     event BuySlot(address indexed user, uint256 amount);

@@ -5,7 +5,7 @@ import { HardhatUserConfig } from "hardhat/types";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-etherscan";
-import "solidity-coverage";
+// import "solidity-coverage";
 
 const PRIVATE_KEY =
   process.env.PRIVATE_KEY! ||

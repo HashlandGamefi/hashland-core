@@ -1406,6 +1406,7 @@ abstract contract ReentrancyGuard {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HC Interface
  * @author HASHLAND-TEAM
@@ -1449,6 +1450,12 @@ abstract contract IHNPool {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
 /**
  * @title Invite Pool Contract
  * @author HASHLAND-TEAM
@@ -1483,7 +1490,7 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     mapping(address => EnumerableSet.AddressSet) private inviterUsers;
 
     event SetOpenStatus(bool status);
-    event BindInviter(address indexed user, address indexed inviter);
+    event BindInviter(address indexed user, address inviter);
     event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
