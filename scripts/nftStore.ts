@@ -11,7 +11,7 @@ const client = new OSS({
     accessKeyId: process.env.accessKeyId as string,
     accessKeySecret: process.env.accessKeySecret as string,
     bucket: 'hashlandgamefi',
-  });
+});
 
 function getRandomNumber(hnId: number, slot: string, base: number, range: number) {
     return BigNumber.from(utils.solidityKeccak256(['uint256', 'string'], [hnId, slot])).mod(range).add(base).toNumber();
@@ -33,10 +33,10 @@ async function generateImage(hnId: number, level: number) {
         return await sharp(await input).composite([{ input: overlay }]).toBuffer();
     }, bg);
 
-    const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
+    const composited = await sharp(await materials).sharpen().withMetadata().webp({ quality: 90 }).toBuffer();
 
-    const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
-    console.log(result);
+    const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, Buffer.from(composited));
+    console.log(result.url);
 }
 
 function generateImages(start: number, end: number) {
@@ -120,13 +120,13 @@ function generateMetadatas(imagesCid: string, start: number, end: number) {
 
 async function main() {
     const start = 0;
-    const end = 1000;
+    const end = 10;
 
-    // generateImages(start, end);
+    generateImages(start, end);
     // const newImageCID = await uploadImages(start, end);
     // console.log('New Image CID:', newImageCID);
 
-    generateMetadatas('https://cdn.hashland.com/nft/images', start, end);
+    // generateMetadatas('https://cdn.hashland.com/nft/images', start, end);
     // const newMetadataCID = await uploadMetadatas(start, end);
     // console.log('New Metadata CID:', newMetadataCID);
 }
