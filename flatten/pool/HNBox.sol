@@ -1785,7 +1785,7 @@ contract HNBox is AccessControlEnumerable, ReentrancyGuard {
         nonReentrant
     {
         require(boxesLength > 0, "Boxes length must > 0");
-        require(boxesLength <= 100, "Boxes length must <= 100");
+        require(boxesLength <= 256, "Boxes length must <= 256");
         require(getBoxesLeftSupply() >= boxesLength, "Not enough boxes supply");
         require(tokenId < tokenAddrs.length, "This token ID does not exist");
         require(

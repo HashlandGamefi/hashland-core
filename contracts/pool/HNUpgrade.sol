@@ -132,7 +132,7 @@ contract HNUpgrade is AccessControlEnumerable, ReentrancyGuard {
      */
     function upgrade(uint256[] calldata hnIds) external nonReentrant {
         require(hnIds.length > 0, "HnIds length must > 0");
-        require(hnIds.length <= 100, "HnIds length must <= 100");
+        require(hnIds.length <= 256, "HnIds length must <= 256");
         require(hnIds.length % 4 == 0, "HnIds length % 4 must == 0");
         uint256 level = hn.level(hnIds[0]);
         require(level < maxLevel, "Hn level must < max Level");
