@@ -1,4 +1,3 @@
-import fs from 'fs';
 // import { NFTStorage, File } from 'nft.storage';
 import OSS from 'ali-oss';
 import { BigNumber, utils } from 'ethers';
