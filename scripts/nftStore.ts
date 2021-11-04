@@ -1,9 +1,17 @@
 import fs from 'fs';
 // import { NFTStorage, File } from 'nft.storage';
+import OSS from 'ali-oss';
 import { BigNumber, utils } from 'ethers';
 import sharp from 'sharp';
 
 // const client = new NFTStorage({ token: process.env.NFT_STORAGE_API_KEY as string });
+
+const client = new OSS({
+    region: 'oss-ap-southeast-1',
+    accessKeyId: process.env.accessKeyId as string,
+    accessKeySecret: process.env.accessKeySecret as string,
+    bucket: 'hashlandgamefi',
+  });
 
 function getRandomNumber(hnId: number, slot: string, base: number, range: number) {
     return BigNumber.from(utils.solidityKeccak256(['uint256', 'string'], [hnId, slot])).mod(range).add(base).toNumber();
@@ -27,7 +35,8 @@ async function generateImage(hnId: number, level: number) {
 
     const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
 
-    fs.writeFileSync(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
+    const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
+    console.log(result);
 }
 
 function generateImages(start: number, end: number) {
@@ -38,23 +47,23 @@ function generateImages(start: number, end: number) {
     }
 }
 
-async function uploadImages(start: number, end: number) {
-    const images = [];
-    for (let hnId = start; hnId < end; hnId++) {
-        for (let level = 1; level <= 5; level++) {
-            const fileName = `hashland-nft-${hnId}-${level}.png`;
-            const image = Buffer.from(fs.readFileSync(`nft/images/${fileName}`));
-            images.push(new File([image], fileName, { type: 'image/webp' }));
-        }
-    }
+// async function uploadImages(start: number, end: number) {
+//     const images = [];
+//     for (let hnId = start; hnId < end; hnId++) {
+//         for (let level = 1; level <= 5; level++) {
+//             const fileName = `hashland-nft-${hnId}-${level}.png`;
+//             const image = Buffer.from(fs.readFileSync(`nft/images/${fileName}`));
+//             images.push(new File([image], fileName, { type: 'image/webp' }));
+//         }
+//     }
 
-    // return await client.storeDirectory(images);
-}
+//     return await client.storeDirectory(images);
+// }
 
-function generateMetadata(imagesCid: string, hnId: number, level: number) {
+async function generateMetadata(imagesCid: string, hnId: number, level: number) {
     const hnClass = getRandomNumber(hnId, 'class', 1, 4);
     const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
-    const heroName = ['Main Tan', 'Lady', 'Hunter', `Gul'dan`];
+    const heroName = ['Main Tank', 'Lady', 'Hunter', `Gul'dan`];
     const fileName = `hashland-nft-${hnId}-${level}`;
 
     const metadata = {
@@ -85,7 +94,8 @@ function generateMetadata(imagesCid: string, hnId: number, level: number) {
         ],
     }
 
-    fs.writeFileSync(`nft/metadatas/${fileName}.json`, JSON.stringify(metadata));
+    const result = await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
+    console.log(result.url);
 }
 
 function generateMetadatas(imagesCid: string, start: number, end: number) {
@@ -96,17 +106,17 @@ function generateMetadatas(imagesCid: string, start: number, end: number) {
     }
 }
 
-async function uploadMetadatas(start: number, end: number) {
-    const metadatas = [];
-    for (let hnId = start; hnId < end; hnId++) {
-        for (let level = 1; level <= 5; level++) {
-            const fileName = `hashland-nft-${hnId}-${level}.json`;
-            const json = fs.readFileSync(`nft/metadatas/${fileName}`).toString();
-            metadatas.push(new File([json], fileName));
-        }
-    }
-    // return await client.storeDirectory(metadatas);
-}
+// async function uploadMetadatas(start: number, end: number) {
+//     const metadatas = [];
+//     for (let hnId = start; hnId < end; hnId++) {
+//         for (let level = 1; level <= 5; level++) {
+//             const fileName = `hashland-nft-${hnId}-${level}.json`;
+//             const json = fs.readFileSync(`nft/metadatas/${fileName}`).toString();
+//             metadatas.push(new File([json], fileName));
+//         }
+//     }
+//     return await client.storeDirectory(metadatas);
+// }
 
 async function main() {
     const start = 0;
