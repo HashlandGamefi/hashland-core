@@ -128,12 +128,13 @@ function generateMetadatas(imagesCid: string, start: number, end: number) {
 // }
 
 async function main() {
-    const totalSupply = 1000;
+    const start = 1000;
+    const end = 2000;
     const batch = 100;
 
-    for (let i = 0; i < totalSupply / batch; i++) {
+    for (let i = start / batch; i < end / batch; i++) {
         await generateImages(i * batch, (i + 1) * batch);
-        console.log(`${(i + 1) * batch} / ${totalSupply}`);
+        console.log(`${(i + 1) * batch} / ${end}`);
     }
     // const newImageCID = await uploadImages(start, end);
     // console.log('New Image CID:', newImageCID);
