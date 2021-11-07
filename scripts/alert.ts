@@ -18,8 +18,6 @@ const pancakeRouterAddr = '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3';
 // const busdAddr = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
 // const pancakeRouterAddr = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
 
-const zeroAddr = '0x0000000000000000000000000000000000000000';
-
 const hclpAbi = [
   'function totalSupply() external view returns (uint256)',
   'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
@@ -39,6 +37,7 @@ function format(bigNum: any) {
 }
 
 let hcAlarmLimit = 500;
+let autoBuyRatio = 90;
 
 async function main() {
   const bot = new TelegramBot(token, { polling: true });
@@ -48,7 +47,7 @@ async function main() {
   const busd = await ethers.getContractAt('ERC20', busdAddr);
   const pancakeRouter = await ethers.getContractAt(pancakeRouterAbi, pancakeRouterAddr);
 
-  async function getWalletsBusdBalance() {
+  async function getWalletsBalance() {
     let count = 0;
     return new Promise(resolve => {
       wallets.map(async item => {
@@ -62,6 +61,10 @@ async function main() {
     })
   }
 
+  async function getHcPrice() {
+    return format((await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1]);
+  }
+
   bot.onText(/\/token/, async (msg, match) => {
     if (msg.chat.id == Number(groupId)) {
       let totalSupply = await hc.totalSupply();
@@ -69,8 +72,7 @@ async function main() {
       console.log(message);
       bot.sendMessage(groupId, message);
 
-      const hcPrice = (await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1];
-      message = `[HC Info] HC current price is ${format(hcPrice)} BUSD`;
+      message = `[HC Info] HC current price is ${getHcPrice()} BUSD`;
       console.log(message);
       bot.sendMessage(groupId, message);
 
@@ -88,7 +90,7 @@ async function main() {
 
   bot.onText(/\/wallet/, async (msg, match) => {
     if (msg.chat.id == Number(groupId)) {
-      await getWalletsBusdBalance();
+      await getWalletsBalance();
       let message = `[Wallets Info] `;
       wallets.map(item => message + `${item.address} HC Balance: ${(item as any).hcBalance} BUSD Balance: ${(item as any).busdBalance}`);
       console.log(message);
@@ -105,8 +107,17 @@ async function main() {
     }
   });
 
+  bot.onText(/\/ratio (.+)/, async (msg, match) => {
+    if (msg.chat.id == Number(groupId)) {
+      autoBuyRatio = (match as any)[1];
+      const message = `[Set Ratio] Auto buy ratio has been set to ${autoBuyRatio}`;
+      console.log(message);
+      bot.sendMessage(groupId, message);
+    }
+  });
+
   hclp.on('Mint', (sender, hcAmount, busdAmount, event) => {
-    if (hcAmount >= hcAlarmLimit) {
+    if (hcAmount / 1e18 >= hcAlarmLimit) {
       const message = `[Add Liquidity] ${format(hcAmount)} HC and ${format(busdAmount)} BUSD have been added to the pool`;
       console.log(message);
       bot.sendMessage(groupId, message);
@@ -114,7 +125,7 @@ async function main() {
   });
 
   hclp.on('Burn', (sender, hcAmount, busdAmount, to, event) => {
-    if (hcAmount >= hcAlarmLimit) {
+    if (hcAmount / 1e18 >= hcAlarmLimit) {
       const message = `[Remove Liquidity] ${to} Removed ${format(hcAmount)} HC and ${format(busdAmount)} BUSD from the pool`;
       console.log(message);
       bot.sendMessage(groupId, message);
@@ -122,7 +133,7 @@ async function main() {
   });
 
   hclp.on('Swap', async (sender, hcAmountIn, busdAmountIn, hcAmountOut, busdAmountOunt, to, event) => {
-    if (hcAmountIn >= hcAlarmLimit || hcAmountOut >= hcAlarmLimit) {
+    if (hcAmountIn / 1e18 >= hcAlarmLimit || hcAmountOut / 1e18 >= hcAlarmLimit) {
       let message;
       if (hcAmountIn > 0 && busdAmountOunt > 0) {
         message = `[Sell HC] ${to} swap ${format(hcAmountIn)} HC to ${format(busdAmountOunt)} BUSD`;
@@ -133,15 +144,19 @@ async function main() {
       bot.sendMessage(groupId, message);
     }
 
-    if (hcAmountIn >= hcAlarmLimit) {
-      await getWalletsBusdBalance();
-      const wallet = wallets.find(item => (item as any).busdBlance >= hcAlarmLimit);
+    if (hcAmountIn / 1e18 >= hcAlarmLimit) {
+      await getWalletsBalance();
+      const wallet = wallets.find(item => (item as any).busdBlance >= busdAmountOunt);
       if (wallet) {
-        const hcAmount = (await pancakeRouter.getAmountsOut(hcAlarmLimit, [busdAddr, hcAddr]))[1];
-        const tx = await pancakeRouter.connect(wallet).swapExactTokensForToken(hcAlarmLimit, hcAmount, [busdAddr, hcAddr], wallet.address, new Date().getTime() / 1000);
+        const tx = await pancakeRouter.connect(wallet).swapExactTokensForToken(busdAmountOunt.mul(autoBuyRatio).div(100), hcAmountIn.mul(autoBuyRatio).div(100), [busdAddr, hcAddr], wallet.address, new Date().getTime() / 1000);
         const receipt = await tx.wait();
         if (receipt.status == 1) {
-          const message = `[Auto Buy] ${wallet.address} swap ${hcAlarmLimit} BUSD to ${format(hcAmount)} HC`;
+          let message = `[Auto Buy] ${wallet.address} swap ${busdAmountOunt} BUSD to ${format(hcAmountIn)} HC`;
+          bot.sendMessage(groupId, message);
+
+          await getWalletsBalance();
+          const totalBusd = wallets.reduce((pre, cur) => (pre as any).busdBalance + (cur as any).busdBalance);
+          message = `[Wallets BUSD] There is a total balance of ${totalBusd} BUSD in the wallets`;
           bot.sendMessage(groupId, message);
         }
       }
