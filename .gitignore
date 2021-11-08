@@ -5,4 +5,5 @@ typechain-types/
 artifacts/
 logs/
 coverage*
+scripts/alert.ts
 .env
