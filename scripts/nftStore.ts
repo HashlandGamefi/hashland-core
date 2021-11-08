@@ -108,11 +108,19 @@ async function generateMetadata(imagesCid: string, hnId: number, level: number) 
 }
 
 function generateMetadatas(imagesCid: string, start: number, end: number) {
-    for (let hnId = start; hnId < end; hnId++) {
-        for (let level = 1; level <= maxLevel; level++) {
-            generateMetadata(imagesCid, hnId, level);
+    return new Promise(resolve => {
+        let count = 0;
+        for (let hnId = start; hnId < end; hnId++) {
+            for (let level = 1; level <= maxLevel; level++) {
+                generateMetadata(imagesCid, hnId, level).then(() => {
+                    count++;
+                    if (count == (end - start) * maxLevel) {
+                        resolve(true);
+                    }
+                });
+            }
         }
-    }
+    });
 }
 
 // async function uploadMetadatas(start: number, end: number) {
@@ -132,14 +140,17 @@ async function main() {
     const end = 2000;
     const batch = 100;
 
-    for (let i = start / batch; i < end / batch; i++) {
-        await generateImages(i * batch, (i + 1) * batch);
-        console.log(`${(i + 1) * batch} / ${end}`);
-    }
+    // for (let i = start / batch; i < end / batch; i++) {
+    //     await generateImages(i * batch, (i + 1) * batch);
+    //     console.log(`${(i + 1) * batch} / ${end}`);
+    // }
     // const newImageCID = await uploadImages(start, end);
     // console.log('New Image CID:', newImageCID);
 
-    // generateMetadatas('https://cdn.hashland.com/nft/images', start, end);
+    for (let i = start / batch; i < end / batch; i++) {
+        await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
+        console.log(`${(i + 1) * batch} / ${end}`);
+    }
     // const newMetadataCID = await uploadMetadatas(start, end);
     // console.log('New Metadata CID:', newMetadataCID);
 }

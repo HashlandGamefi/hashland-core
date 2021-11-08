@@ -61,6 +61,15 @@ async function main() {
     })
   }
 
+  function showWalletsBalance() {
+    let message = `[Wallets Info] `;
+    wallets.map(item => message += `${item.address} HC Balance: ${(item as any).hcBalance} BUSD Balance: ${(item as any).busdBalance} `);
+    const totalBusd = wallets.reduce((pre, cur) => (pre as any).busdBalance + (cur as any).busdBalance);
+    message = `There is a total balance of ${totalBusd} BUSD in the wallets`;
+    console.log(message);
+    bot.sendMessage(groupId, message);
+  }
+
   async function getHcPrice() {
     return format((await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1]);
   }
@@ -91,8 +100,16 @@ async function main() {
   bot.onText(/\/wallet/, async (msg, match) => {
     if (msg.chat.id == Number(groupId)) {
       await getWalletsBalance();
-      let message = `[Wallets Info] `;
-      wallets.map(item => message + `${item.address} HC Balance: ${(item as any).hcBalance} BUSD Balance: ${(item as any).busdBalance}`);
+      showWalletsBalance();
+    }
+  });
+
+  bot.onText(/\/info/, async (msg, match) => {
+    if (msg.chat.id == Number(groupId)) {
+      let message = `[Limit Info] Now HC alarm limit is ${hcAlarmLimit}`;
+      console.log(message);
+      bot.sendMessage(groupId, message);
+      message = `[Ratio Info] Now auto buy ratio is ${autoBuyRatio}`;
       console.log(message);
       bot.sendMessage(groupId, message);
     }
@@ -155,9 +172,7 @@ async function main() {
           bot.sendMessage(groupId, message);
 
           await getWalletsBalance();
-          const totalBusd = wallets.reduce((pre, cur) => (pre as any).busdBalance + (cur as any).busdBalance);
-          message = `[Wallets BUSD] There is a total balance of ${totalBusd} BUSD in the wallets`;
-          bot.sendMessage(groupId, message);
+          showWalletsBalance();
         }
       }
     }
