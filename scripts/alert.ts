@@ -72,7 +72,7 @@ async function main() {
   }
 
   async function getHcPrice() {
-    return format((await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1]);
+    return (await pancakeRouter.getAmountsOut(constants.WeiPerEther, [hcAddr, busdAddr]))[1];
   }
 
   bot.onText(/\/token/, async (msg, match) => {
@@ -82,7 +82,7 @@ async function main() {
       console.log(message);
       bot.sendMessage(groupId, message);
 
-      message = `[HC Info] HC current price is ${getHcPrice()} BUSD`;
+      message = `[HC Info] HC current price is ${format(getHcPrice())} BUSD`;
       console.log(message);
       bot.sendMessage(groupId, message);
 
