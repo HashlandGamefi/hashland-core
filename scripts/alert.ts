@@ -51,6 +51,7 @@ async function main() {
     let count = 0;
     return new Promise(resolve => {
       wallets.map(async item => {
+        (item as any).bnbBalance = format(await item.getBalance());
         (item as any).hcBalance = format(await hc.balanceOf(item.address));
         (item as any).busdBalance = format(await busd.balanceOf(item.address));
         count++;
@@ -63,7 +64,7 @@ async function main() {
 
   function showWalletsBalance() {
     let message = `[Wallets Info] `;
-    wallets.map(item => message += `${item.address} HC Balance: ${(item as any).hcBalance} BUSD Balance: ${(item as any).busdBalance} `);
+    wallets.map(item => message += `${item.address} BNB Balance: ${(item as any).bnbBalance} HC Balance: ${(item as any).hcBalance} BUSD Balance: ${(item as any).busdBalance} `);
     const totalBusd = wallets.reduce((pre, cur) => (pre as any).busdBalance + (cur as any).busdBalance);
     message = `There is a total balance of ${totalBusd} BUSD in the wallets`;
     console.log(message);
