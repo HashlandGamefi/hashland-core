@@ -3,12 +3,13 @@ import hre, { ethers } from "hardhat";
 async function main() {
   const constructorArgs: any[] = [
     "0x105A80A5Da83997c32818716846BB609C5Ffe35d",
-    2000000,
+    "0x105A80A5Da83997c32818716846BB609C5Ffe35d",
+    "0x105A80A5Da83997c32818716846BB609C5Ffe35d",
   ];
-  const factory = await ethers.getContractFactory("HC");
+  const factory = await ethers.getContractFactory("HN");
   const contract = await factory.deploy(...constructorArgs);
   await contract.deployed();
-  console.log("HC contract successfully deployed:", contract.address)
+  console.log("HN contract successfully deployed:", contract.address)
   await hre.run("verify:verify", {
     address: contract.address,
     constructorArguments: constructorArgs
