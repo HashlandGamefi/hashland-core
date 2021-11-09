@@ -22,7 +22,7 @@ async function generateImage(hnId: number, level: number) {
     const hnClass = getRandomNumber(hnId, 'class', 1, 4);
 
     const heroItems = [
-        ``,
+        `nft/class${hnClass}/hero.png`,
         `nft/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
         `nft/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
         `nft/class${hnClass}/item3/${getRandomNumber(hnId, 'item3', 1, 10)}.png`,
@@ -34,17 +34,16 @@ async function generateImage(hnId: number, level: number) {
 
     const heroItemsByLevel = [
         [],
-        [heroItems[1], heroItems[2]],
-        [heroItems[1], heroItems[2], heroItems[3]],
-        [heroItems[4], heroItems[5], heroItems[3]],
-        [heroItems[4], heroItems[5], heroItems[3], heroItems[6]],
-        hnClass == 2 ? [heroItems[7], heroItems[4], heroItems[5], heroItems[3], heroItems[6]] : [heroItems[4], heroItems[5], heroItems[3], heroItems[6], heroItems[7]],
+        [heroItems[0], heroItems[1], heroItems[2]],
+        [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
+        [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
+        [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
+        hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
     ];
 
     const bg = sharp(`nft/bg/${level}.png`).toBuffer();
     const materials = [
         `nft/class${hnClass}/effect/bg/${level}.png`,
-        `nft/class${hnClass}/hero.png`,
         ...heroItemsByLevel[level],
         `nft/class${hnClass}/effect/hero/${level}.png`,
         `nft/class${hnClass}/info.png`
