@@ -45,20 +45,21 @@ contract HCSeedPool is ReentrancyGuard {
 
     /**
      * @param hcAddr Initialize HC Address
-     * @param _stake Initialize stake
      * @param userAddrs Initialize users
      * @param userStakes Initialize user stake
      */
     constructor(
         address hcAddr,
-        uint256 _stake,
         address[] memory userAddrs,
         uint256[] memory userStakes
     ) {
-        require(userAddrs.length == userStakes.length, "Data length mismatch");
+        require(
+            userAddrs.length == userStakes.length,
+            "Data length does not match"
+        );
 
         hc = IERC20(hcAddr);
-        stake = _stake;
+
         for (uint256 i = 0; i < userAddrs.length; i++) {
             userStake[userAddrs[i]] += userStakes[i];
             stake += userStakes[i];

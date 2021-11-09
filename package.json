@@ -11,7 +11,7 @@
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
     "deploy": "npm run build && npx hardhat run --network testnet scripts/deploy.ts",
     "store": "npx hardhat run --network testnet scripts/nftStore.ts",
-    "flatten": "npx hardhat flatten ./contracts/pool/HCSeedPool.sol > ./flatten/pool/HCSeedPool.sol"
+    "flatten": "npx hardhat flatten ./contracts/pool/HCPEPool.sol > ./flatten/pool/HCPEPool.sol"
   },
   "repository": {
     "type": "git",
