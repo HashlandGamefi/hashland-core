@@ -21,13 +21,31 @@ function getRandomNumber(hnId: number, slot: string, base: number, range: number
 async function generateImage(hnId: number, level: number) {
     const hnClass = getRandomNumber(hnId, 'class', 1, 4);
 
-    const bg = sharp(`nft/bg/${level}.png`).toBuffer();
+    const heroItems = [
+        ``,
+        `nft/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
+        `nft/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
+        `nft/class${hnClass}/item3/${getRandomNumber(hnId, 'item3', 1, 10)}.png`,
+        `nft/class${hnClass}/item4/${getRandomNumber(hnId, 'item4', 1, 10)}.png`,
+        `nft/class${hnClass}/item5/${getRandomNumber(hnId, 'item5', 1, 10)}.png`,
+        `nft/class${hnClass}/item6/${getRandomNumber(hnId, 'item6', 1, 10)}.png`,
+        `nft/class${hnClass}/item7/${getRandomNumber(hnId, 'item7', 1, 10)}.png`,
+    ];
 
+    const heroItemsByLevel = [
+        [],
+        [heroItems[1], heroItems[2]],
+        [heroItems[1], heroItems[2], heroItems[3]],
+        [heroItems[4], heroItems[5], heroItems[3]],
+        [heroItems[4], heroItems[5], heroItems[3], heroItems[6]],
+        hnClass == 2 ? [heroItems[7], heroItems[4], heroItems[5], heroItems[3], heroItems[6]] : [heroItems[4], heroItems[5], heroItems[3], heroItems[6], heroItems[7]],
+    ];
+
+    const bg = sharp(`nft/bg/${level}.png`).toBuffer();
     const materials = [
         `nft/class${hnClass}/effect/bg/${level}.png`,
         `nft/class${hnClass}/hero.png`,
-        `nft/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
-        `nft/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
+        ...heroItemsByLevel[level],
         `nft/class${hnClass}/effect/hero/${level}.png`,
         `nft/class${hnClass}/info.png`
     ].reduce(async (input, overlay) => {
@@ -136,21 +154,21 @@ function generateMetadatas(imagesCid: string, start: number, end: number) {
 // }
 
 async function main() {
-    const start = 1000;
-    const end = 2000;
+    const start = 0;
+    const end = 100;
     const batch = 100;
 
-    // for (let i = start / batch; i < end / batch; i++) {
-    //     await generateImages(i * batch, (i + 1) * batch);
-    //     console.log(`${(i + 1) * batch} / ${end}`);
-    // }
+    for (let i = start / batch; i < end / batch; i++) {
+        await generateImages(i * batch, (i + 1) * batch);
+        console.log(`${(i + 1) * batch} / ${end}`);
+    }
     // const newImageCID = await uploadImages(start, end);
     // console.log('New Image CID:', newImageCID);
 
-    for (let i = start / batch; i < end / batch; i++) {
-        await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
-        console.log(`${(i + 1) * batch} / ${end}`);
-    }
+    // for (let i = start / batch; i < end / batch; i++) {
+    //     await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
+    //     console.log(`${(i + 1) * batch} / ${end}`);
+    // }
     // const newMetadataCID = await uploadMetadatas(start, end);
     // console.log('New Metadata CID:', newMetadataCID);
 }
