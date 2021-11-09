@@ -27,7 +27,7 @@ async function main() {
         const hashrateText = Buffer.from(`
             <svg width="400" height="500">
                 <style>
-                    .title { fill: #FFF; font-size: 14px; font-weight: bold; font-family: Poppins; }
+                    .title { fill: #FFF; font-size: 14px; font-weight: bold; font-family: "Poppins"; }
                 </style>
                 <text x="56%" y="11%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
                 <text x="76%" y="11%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
