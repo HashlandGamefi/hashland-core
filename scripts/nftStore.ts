@@ -36,7 +36,7 @@ async function generateImage(hnId: number, level: number) {
         [],
         [heroItems[0], heroItems[1], heroItems[2]],
         [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
-        [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
+        hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
         [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
         hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
     ];
@@ -153,9 +153,9 @@ function generateMetadatas(imagesCid: string, start: number, end: number) {
 // }
 
 async function main() {
-    const start = 0;
-    const end = 100;
-    const batch = 100;
+    const start = 100;
+    const end = 1000;
+    const batch = 10;
 
     for (let i = start / batch; i < end / batch; i++) {
         await generateImages(i * batch, (i + 1) * batch);
