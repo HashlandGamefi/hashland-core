@@ -4,7 +4,11 @@ import { ethers } from 'hardhat';
 import sharp from 'sharp';
 
 const maxLevel = 5;
-const hnAddr = '0xe0bC28c693315dB601046BfB01c231DDf16145B8';
+
+// Mainet
+const hnAddr = '0xEEa8bD31DA9A2169C38968958B6DF216381B0f08'
+// Testnet
+// const hnAddr = '0xe0bC28c693315dB601046BfB01c231DDf16145B8';
 
 const client = new OSS({
     region: 'oss-ap-southeast-1',
@@ -25,9 +29,9 @@ async function main() {
         const hashrates = await hn.getHashrates(hnId);
 
         const hashrateText = Buffer.from(`
-            <svg width="400" height="500">
+            <svg width="1024" height="1024">
                 <style>
-                    .title { fill: #FFF; font-size: 14px; font-weight: bold; }
+                    .title { fill: #FFF; font-size: 28px; font-weight: bold; }
                 </style>
                 <text x="56%" y="11%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
                 <text x="76%" y="11%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
@@ -48,7 +52,7 @@ async function main() {
         const heroItemsByLevel = [
             [],
             [heroItems[0], heroItems[1], heroItems[2]],
-            [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
+            hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
             hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
             [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
             hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
@@ -60,7 +64,7 @@ async function main() {
             ...heroItemsByLevel[level],
             `nft/class${hnClass}/effect/hero/${level}.png`,
             `nft/class${hnClass}/info.png`,
-            hashrateText,
+            // hashrateText,
         ].reduce(async (input, overlay) => {
             return await sharp(await input).composite([{ input: overlay }]).toBuffer();
         }, bg);
@@ -100,7 +104,7 @@ async function main() {
         const fileName = `hashland-nft-${hnId}-${level}`;
 
         const metadata = {
-            name: `Hashland NFT #${hnId}`,
+            name: `HashLand NFT #${hnId}`,
             description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
             image: `${imagesCid}/${fileName}.png`,
             attributes: [
@@ -159,37 +163,37 @@ async function main() {
         });
     }
 
-    hn.on('SpawnHn', async (to, hnId, event) => {
-        const level = await hn.level(hnId);
-        console.log('');
-        console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
+    // hn.on('SpawnHn', async (to, hnId, event) => {
+    //     const level = await hn.level(hnId);
+    //     console.log('');
+    //     console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
 
-        generateImage(hnId, level);
-        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    });
+    //     generateImage(hnId, level);
+    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    // });
 
-    hn.on('SetHashrates', async (hnId, hashrates, event) => {
-        const level = await hn.level(hnId);
-        console.log('');
-        console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+    // hn.on('SetHashrates', async (hnId, hashrates, event) => {
+    //     const level = await hn.level(hnId);
+    //     console.log('');
+    //     console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
 
-        generateImage(hnId, level);
-        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    });
+    //     generateImage(hnId, level);
+    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    // });
 
-    // const start = 0;
-    // const end = 1000;
-    // const batch = 50;
+    const start = 0;
+    const end = 1000;
+    const batch = 20;
 
     // for (let i = start / batch; i < end / batch; i++) {
     //     await generateImages(i * batch, (i + 1) * batch);
     //     console.log(`${(i + 1) * batch} / ${end}`);
     // }
 
-    // for (let i = start / batch; i < end / batch; i++) {
-    //     await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
-    //     console.log(`${(i + 1) * batch} / ${end}`);
-    // }
+    for (let i = start / batch; i < end / batch; i++) {
+        await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
+        console.log(`${(i + 1) * batch} / ${end}`);
+    }
 }
 
 main();
