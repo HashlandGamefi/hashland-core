@@ -31,10 +31,10 @@ async function main() {
         const hashrateText = Buffer.from(`
             <svg width="1024" height="1024">
                 <style>
-                    .title { fill: #FFF; font-size: 28px; font-weight: bold; }
+                    .title { fill: #FFF; font-size: 24px; font-weight: bold; }
                 </style>
-                <text x="56%" y="11%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
-                <text x="76%" y="11%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
+                <text x="42%" y="8%" text-anchor="middle" class="title">${(8888888 / 1e4).toFixed(4)}</text>
+                <text x="67%" y="8%" text-anchor="middle" class="title">${(9999999 / 1e4).toFixed(4)}</text>
             </svg>
         `);
 
@@ -64,7 +64,8 @@ async function main() {
             ...heroItemsByLevel[level],
             `nft/class${hnClass}/effect/hero/${level}.png`,
             `nft/class${hnClass}/info.png`,
-            // hashrateText,
+            `nft/bar/${level}.png`,
+            hashrateText,
         ].reduce(async (input, overlay) => {
             return await sharp(await input).composite([{ input: overlay }]).toBuffer();
         }, bg);
@@ -182,13 +183,13 @@ async function main() {
     // });
 
     const start = 0;
-    const end = 1000;
-    const batch = 20;
+    const end = 10;
+    const batch = 10;
 
-    // for (let i = start / batch; i < end / batch; i++) {
-    //     await generateImages(i * batch, (i + 1) * batch);
-    //     console.log(`${(i + 1) * batch} / ${end}`);
-    // }
+    for (let i = start / batch; i < end / batch; i++) {
+        await generateImages(i * batch, (i + 1) * batch);
+        console.log(`${(i + 1) * batch} / ${end}`);
+    }
 
     for (let i = start / batch; i < end / batch; i++) {
         await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
