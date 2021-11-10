@@ -33,8 +33,8 @@ async function main() {
                 <style>
                     .title { fill: #FFF; font-size: 24px; font-weight: bold; }
                 </style>
-                <text x="42%" y="8%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
-                <text x="67%" y="8%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
+                <text x="44%" y="10%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
+                <text x="69%" y="10%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
             </svg>
         `);
 
@@ -183,7 +183,7 @@ async function main() {
     // });
 
     const start = 0;
-    const end = 100;
+    const end = 10;
     const batch = 10;
 
     for (let i = start / batch; i < end / batch; i++) {
