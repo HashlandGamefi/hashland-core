@@ -182,8 +182,8 @@ async function main() {
     //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
     // });
 
-    const start = 0;
-    const end = 300;
+    const start = 110;
+    const end = 310;
     const batch = 10;
 
     for (let i = start / batch; i < end / batch; i++) {
