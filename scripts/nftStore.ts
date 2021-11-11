@@ -154,35 +154,35 @@ async function main() {
         });
     }
 
-    // hn.on('SpawnHn', async (to, hnId, event) => {
-    //     const level = await hn.level(hnId);
-    //     console.log('');
-    //     console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
+    hn.on('SpawnHn', async (to, hnId, event) => {
+        const level = await hn.level(hnId);
+        console.log('');
+        console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
 
-    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    // });
+        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    });
 
-    // hn.on('SetHashrates', async (hnId, hashrates, event) => {
-    //     const level = await hn.level(hnId);
-    //     console.log('');
-    //     console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+    hn.on('SetHashrates', async (hnId, hashrates, event) => {
+        const level = await hn.level(hnId);
+        console.log('');
+        console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
 
-    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    // });
+        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    });
 
-    const start = 310;
-    const end = 3000;
-    const batch = 10;
+    // const start = 0;
+    // const end = 3000;
+    // const batch = 10;
 
-    for (let i = start / batch; i < end / batch; i++) {
-        await generateImages(i * batch, (i + 1) * batch);
-        console.log(`${(i + 1) * batch} / ${end}`);
-    }
+    // for (let i = start / batch; i < end / batch; i++) {
+    //     await generateImages(i * batch, (i + 1) * batch);
+    //     console.log(`${(i + 1) * batch} / ${end}`);
+    // }
 
-    for (let i = start / batch; i < end / batch; i++) {
-        await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
-        console.log(`${(i + 1) * batch} / ${end}`);
-    }
+    // for (let i = start / batch; i < end / batch; i++) {
+    //     await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
+    //     console.log(`${(i + 1) * batch} / ${end}`);
+    // }
 }
 
 main();
