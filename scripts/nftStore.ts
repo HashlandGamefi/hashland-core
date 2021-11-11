@@ -26,17 +26,6 @@ async function main() {
 
     async function generateImage(hnId: number, level: number) {
         const hnClass = getRandomNumber(hnId, 'class', 1, 4);
-        const hashrates = await hn.getHashrates(hnId);
-
-        const hashrateText = Buffer.from(`
-            <svg width="1024" height="1024">
-                <style>
-                    .title { fill: #FFF; font-size: 24px; font-weight: bold; }
-                </style>
-                <text x="44%" y="10%" text-anchor="middle" class="title">${(hashrates[0] / 1e4).toFixed(4)}</text>
-                <text x="69%" y="10%" text-anchor="middle" class="title">${(hashrates[1] / 1e4).toFixed(4)}</text>
-            </svg>
-        `);
 
         const heroItems = [
             `nft/class${hnClass}/hero.png`,
@@ -65,7 +54,6 @@ async function main() {
             `nft/class${hnClass}/effect/hero/${level}.png`,
             `nft/class${hnClass}/info.png`,
             `nft/bar/${level}.png`,
-            hashrateText,
         ].reduce(async (input, overlay) => {
             return await sharp(await input).composite([{ input: overlay }]).toBuffer();
         }, bg);
@@ -104,10 +92,12 @@ async function main() {
         const heroName = ['Main Tank', 'Lady', 'Hunter', `Gul'dan`];
         const fileName = `hashland-nft-${hnId}-${level}`;
 
+        const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79/watermark,text_${Buffer.from((hashrates[1] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_655,y_79`;
+
         const metadata = {
             name: `HashLand NFT #${hnId}`,
             description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
-            image: `${imagesCid}/${fileName}.png`,
+            image: `${imagesCid}/${fileName}.png?image_process=${watermark}`,
             attributes: [
                 {
                     trait_type: 'Ip',
@@ -169,7 +159,6 @@ async function main() {
     //     console.log('');
     //     console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
 
-    //     generateImage(hnId, level);
     //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
     // });
 
@@ -178,12 +167,11 @@ async function main() {
     //     console.log('');
     //     console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
 
-    //     generateImage(hnId, level);
     //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
     // });
 
-    const start = 110;
-    const end = 310;
+    const start = 310;
+    const end = 3000;
     const batch = 10;
 
     for (let i = start / batch; i < end / batch; i++) {
