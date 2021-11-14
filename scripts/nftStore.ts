@@ -60,12 +60,8 @@ async function main() {
 
         const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
 
-        try {
-            const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
-            console.log(result.url);
-        } catch (e) {
-            console.log(e);
-        }
+        const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
+        console.log(result.url);
     }
 
     async function generateImages(start: number, end: number) {
@@ -170,9 +166,9 @@ async function main() {
         generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
     });
 
-    // const start = 4000;
-    // const end = 6000;
-    // const batch = 100;
+    // const start = 1680;
+    // const end = 5000;
+    // const batch = 50;
 
     // for (let i = start / batch; i < end / batch; i++) {
     //     await generateImages(i * batch, (i + 1) * batch);
