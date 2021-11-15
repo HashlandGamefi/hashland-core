@@ -1,6 +1,6 @@
 {
   "name": "hashland-core",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "build": "npm run clean && npm run compile",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
     "deploy": "npm run build && npx hardhat run --network testnet scripts/deploy.ts",
-    "flatten": "npx hardhat flatten ./contracts/pool/HCPEPool.sol > ./flatten/pool/HCPEPool.sol"
+    "flatten": "npx hardhat flatten ./contracts/token/HT.sol > ./flatten/token/HT.sol"
   },
   "repository": {
     "type": "git",
