@@ -189,12 +189,9 @@ async function main() {
                 }
                 generateAllLevelImages(hnId.value).then(() => {
                     set.delete(hnId.value);
-                    console.log(`NFT #${hnId.value} image uploaded successfully`);
-                    if (set.size == 0) {
-                        console.log(`All ${end - start} images uploaded successfully`);
-                    }
+                    console.log(`(${end - start - set.size}/${end - start}) NFT #${hnId.value} image uploaded successfully`);
                 }).catch(e => {
-                    console.log(`NFT #${hnId.value} image uploaded failed`);
+                    console.log(`(${end - start - set.size}/${end - start}) NFT #${hnId.value} image uploaded failed`);
                 }).finally(async () => {
                     count++;
                     if (count == imagesBatch) {
@@ -215,12 +212,9 @@ async function main() {
                 }
                 generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId.value).then(() => {
                     set.delete(hnId.value);
-                    console.log(`NFT #${hnId.value} metadata uploaded successfully`);
-                    if (set.size == 0) {
-                        console.log(`All ${end - start} metadatas uploaded successfully`);
-                    }
+                    console.log(`(${end - start - set.size}/${end - start}) NFT #${hnId.value} metadata uploaded successfully`);
                 }).catch(e => {
-                    console.log(`NFT #${hnId.value} metadata uploaded failed`);
+                    console.log(`(${end - start - set.size}/${end - start}) NFT #${hnId.value} metadata uploaded failed`);
                 }).finally(async () => {
                     count++;
                     if (count == metadatasBatch) {
