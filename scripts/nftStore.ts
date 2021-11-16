@@ -21,45 +21,50 @@ async function main() {
     const hn = await ethers.getContractAt('HN', hnAddr);
 
     async function generateImageByLevel(hnId: number, level: number) {
-        try {
-            const hnClass = getRandomNumber(hnId, 'class', 1, 4);
+        return new Promise(async (resolve, reject) => {
+            try {
+                const hnClass = getRandomNumber(hnId, 'class', 1, 4);
 
-            const heroItems = [
-                `nft/class${hnClass}/hero.png`,
-                `nft/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
-                `nft/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
-                `nft/class${hnClass}/item3/${getRandomNumber(hnId, 'item3', 1, 10)}.png`,
-                `nft/class${hnClass}/item4/${getRandomNumber(hnId, 'item4', 1, 10)}.png`,
-                `nft/class${hnClass}/item5/${getRandomNumber(hnId, 'item5', 1, 10)}.png`,
-                `nft/class${hnClass}/item6/${getRandomNumber(hnId, 'item6', 1, 10)}.png`,
-                `nft/class${hnClass}/item7/${getRandomNumber(hnId, 'item7', 1, 10)}.png`,
-            ];
+                const heroItems = [
+                    `nft/class${hnClass}/hero.png`,
+                    `nft/class${hnClass}/item1/${getRandomNumber(hnId, 'item1', 1, 10)}.png`,
+                    `nft/class${hnClass}/item2/${getRandomNumber(hnId, 'item2', 1, 10)}.png`,
+                    `nft/class${hnClass}/item3/${getRandomNumber(hnId, 'item3', 1, 10)}.png`,
+                    `nft/class${hnClass}/item4/${getRandomNumber(hnId, 'item4', 1, 10)}.png`,
+                    `nft/class${hnClass}/item5/${getRandomNumber(hnId, 'item5', 1, 10)}.png`,
+                    `nft/class${hnClass}/item6/${getRandomNumber(hnId, 'item6', 1, 10)}.png`,
+                    `nft/class${hnClass}/item7/${getRandomNumber(hnId, 'item7', 1, 10)}.png`,
+                ];
 
-            const heroItemsByLevel = [
-                [],
-                [heroItems[0], heroItems[1], heroItems[2]],
-                hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
-                hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
-                [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
-                hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
-            ];
+                const heroItemsByLevel = [
+                    [],
+                    [heroItems[0], heroItems[1], heroItems[2]],
+                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
+                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
+                    [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
+                    hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
+                ];
 
-            const bg = sharp(`nft/bg/${level}.png`).toBuffer();
-            const materials = [
-                `nft/class${hnClass}/effect/bg/${level}.png`,
-                ...heroItemsByLevel[level],
-                `nft/class${hnClass}/effect/hero/${level}.png`,
-                `nft/class${hnClass}/info.png`,
-                `nft/bar/${level}.png`,
-            ].reduce(async (input, overlay) => {
-                return await sharp(await input).composite([{ input: overlay }]).toBuffer();
-            }, bg);
+                const bg = sharp(`nft/bg/${level}.png`).toBuffer();
+                const materials = [
+                    `nft/class${hnClass}/effect/bg/${level}.png`,
+                    ...heroItemsByLevel[level],
+                    `nft/class${hnClass}/effect/hero/${level}.png`,
+                    `nft/class${hnClass}/info.png`,
+                    `nft/bar/${level}.png`,
+                ].reduce(async (input, overlay) => {
+                    return await sharp(await input).composite([{ input: overlay }]).toBuffer();
+                }, bg);
 
-            const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
+                const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
 
-            const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
-            console.log(result.url);
-        } catch (e) { }
+                const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
+                console.log(result.url);
+                resolve(true);
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
 
     async function generateAllLevelImages(hnId: number) {
@@ -79,54 +84,59 @@ async function main() {
     }
 
     async function generateMetadataByLevel(imagesCid: string, hnId: number, level: number) {
-        try {
-            const hnClass = getRandomNumber(hnId, 'class', 1, 4);
-            const hashrates = await hn.getHashrates(hnId);
-            const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
-            const heroName = ['Main Tank', 'Lady', 'Hunter', `Gul'dan`];
-            const fileName = `hashland-nft-${hnId}-${level}`;
+        return new Promise(async (resolve, reject) => {
+            try {
+                const hnClass = getRandomNumber(hnId, 'class', 1, 4);
+                const hashrates = await hn.getHashrates(hnId);
+                const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
+                const heroName = ['Main Tank', 'Lady', 'Hunter', `Gul'dan`];
+                const fileName = `hashland-nft-${hnId}-${level}`;
 
-            const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79/watermark,text_${Buffer.from((hashrates[1] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_655,y_79`;
+                const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79/watermark,text_${Buffer.from((hashrates[1] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_655,y_79`;
 
-            const metadata = {
-                name: `HashLand NFT #${hnId}`,
-                description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
-                image: `${imagesCid}/${fileName}.png?image_process=${watermark}`,
-                attributes: [
-                    {
-                        trait_type: 'Ip',
-                        value: `I AM MT`,
-                    },
-                    {
-                        trait_type: 'Series',
-                        value: 'Basic',
-                    },
-                    {
-                        trait_type: 'Level',
-                        value: level,
-                    },
-                    {
-                        trait_type: 'Class',
-                        value: className[hnClass - 1],
-                    },
-                    {
-                        trait_type: 'Hero',
-                        value: heroName[hnClass - 1],
-                    },
-                    {
-                        trait_type: 'HC_Hashrate',
-                        value: (hashrates[0] / 1e4).toFixed(4),
-                    },
-                    {
-                        trait_type: 'BTC_Hashrate',
-                        value: (hashrates[1] / 1e4).toFixed(4),
-                    },
-                ],
+                const metadata = {
+                    name: `HashLand NFT #${hnId}`,
+                    description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
+                    image: `${imagesCid}/${fileName}.png?image_process=${watermark}`,
+                    attributes: [
+                        {
+                            trait_type: 'Ip',
+                            value: `I AM MT`,
+                        },
+                        {
+                            trait_type: 'Series',
+                            value: 'Basic',
+                        },
+                        {
+                            trait_type: 'Level',
+                            value: level,
+                        },
+                        {
+                            trait_type: 'Class',
+                            value: className[hnClass - 1],
+                        },
+                        {
+                            trait_type: 'Hero',
+                            value: heroName[hnClass - 1],
+                        },
+                        {
+                            trait_type: 'HC_Hashrate',
+                            value: (hashrates[0] / 1e4).toFixed(4),
+                        },
+                        {
+                            trait_type: 'BTC_Hashrate',
+                            value: (hashrates[1] / 1e4).toFixed(4),
+                        },
+                    ],
+                }
+
+                const result = await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
+                console.log(result.url);
+                resolve(true);
+            } catch (e) {
+                reject(e);
             }
-
-            const result = await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
-            console.log(result.url);
-        } catch (e) { }
+        });
     }
 
     async function generateAllLevelMetadatas(imagesCid: string, hnId: number) {
@@ -161,10 +171,10 @@ async function main() {
         generateMetadataByLevel('https://cdn.hashland.com/nft/images', hnId, level);
     });
 
-    const start = 10400;
+    const start = 0;
     const end = 34000;
-    const imagesBatch = 50;
-    const metadatasBatch = 500;
+    const imagesBatch = 20;
+    const metadatasBatch = 200;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {
         set.add(i);
