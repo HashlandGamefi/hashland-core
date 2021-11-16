@@ -24,7 +24,7 @@ function getRandomNumber(hnId: number, slot: string, base: number, range: number
 async function main() {
     const hn = await ethers.getContractAt('HN', hnAddr);
 
-    async function generateImage(hnId: number, level: number) {
+    async function generateImageByLevel(hnId: number, level: number) {
         const hnClass = getRandomNumber(hnId, 'class', 1, 4);
 
         const heroItems = [
@@ -60,27 +60,26 @@ async function main() {
 
         const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
 
-        const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
-        console.log(result.url);
+        try {
+            await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
+        } catch (e) { }
     }
 
-    async function generateImages(start: number, end: number) {
+    async function generateAllLevelImages(hnId: number) {
         return new Promise(resolve => {
             let count = 0;
-            for (let hnId = start; hnId < end; hnId++) {
-                for (let level = 1; level <= maxLevel; level++) {
-                    generateImage(hnId, level).then(() => {
-                        count++;
-                        if (count == (end - start) * maxLevel) {
-                            resolve(true);
-                        }
-                    });
-                }
+            for (let level = 1; level <= maxLevel; level++) {
+                generateImageByLevel(hnId, level).then(() => {
+                    count++;
+                    if (count == maxLevel) {
+                        resolve(true);
+                    }
+                });
             }
         });
     }
 
-    async function generateMetadata(imagesCid: string, hnId: number, level: number) {
+    async function generateMetadataByLevel(imagesCid: string, hnId: number, level: number) {
         const hnClass = getRandomNumber(hnId, 'class', 1, 4);
         const hashrates = await hn.getHashrates(hnId);
 
@@ -127,54 +126,94 @@ async function main() {
         }
 
         try {
-            const result = await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
-            console.log(result.url);
-        } catch (e) {
-            console.log(e);
-        }
+            await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
+        } catch (e) { }
     }
 
-    function generateMetadatas(imagesCid: string, start: number, end: number) {
+    async function generateAllLevelMetadatas(imagesCid: string, hnId: number) {
         return new Promise(resolve => {
             let count = 0;
-            for (let hnId = start; hnId < end; hnId++) {
-                for (let level = 1; level <= maxLevel; level++) {
-                    generateMetadata(imagesCid, hnId, level).then(() => {
-                        count++;
-                        if (count == (end - start) * maxLevel) {
-                            resolve(true);
-                        }
-                    });
-                }
+            for (let level = 1; level <= maxLevel; level++) {
+                generateMetadataByLevel(imagesCid, hnId, level).then(() => {
+                    count++;
+                    if (count == maxLevel) {
+                        resolve(true);
+                    }
+                });
             }
         });
     }
 
-    hn.on('SpawnHn', async (to, hnId, event) => {
-        const level = await hn.level(hnId);
-        console.log('');
-        console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
+    // hn.on('SpawnHn', async (to, hnId, event) => {
+    //     const level = await hn.level(hnId);
+    //     console.log('');
+    //     console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
 
-        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    });
+    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    // });
 
-    hn.on('SetHashrates', async (hnId, hashrates, event) => {
-        const level = await hn.level(hnId);
-        console.log('');
-        console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+    // hn.on('SetHashrates', async (hnId, hashrates, event) => {
+    //     const level = await hn.level(hnId);
+    //     console.log('');
+    //     console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
 
-        generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
-    });
+    //     generateMetadata('https://cdn.hashland.com/nft/images', hnId, level);
+    // });
 
-    // const start = 0;
-    // const end = 5000;
-    // const batch = 10;
+    const start = 0;
+    const end = 20;
+    const imagesBatch = 21;
+    const metadatasBatch = 200;
+    const set: Set<number> = new Set();
+    for (let i = start; i < end; i++) {
+        set.add(i);
+    }
 
-    // for (let i = start / batch; i < end / batch; i++) {
-    //     await generateImages(i * batch, (i + 1) * batch);
-    //     await generateMetadatas('https://cdn.hashland.com/nft/images', i * batch, (i + 1) * batch);
-    //     console.log(`${(i + 1) * batch} / ${end}`);
-    // }
+    async function uploadAllImages() {
+        return new Promise((resolve, reject) => {
+            const iterator = set.values();
+            let count = 0;
+            for (let i = 0; i < imagesBatch; i++) {
+                const hnId = iterator.next();
+                console.log(hnId);
+                if (hnId.done) reject(false);
+                generateAllLevelImages(hnId.value).then(() => {
+                    set.delete(hnId.value);
+                    console.log(`NFT #${hnId} image uploaded successfully`)
+                }).catch(e => {
+                    console.log(`NFT #${hnId} image uploaded failed`)
+                }).finally(async () => {
+                    count++;
+                    if (count == imagesBatch) {
+                        resolve(await uploadAllImages());
+                    }
+                });
+            }
+        });
+    }
+    async function uploadAllMetadatas() {
+        return new Promise((resolve, reject) => {
+            const iterator = set.values();
+            let count = 0;
+            for (let i = 0; i < metadatasBatch; i++) {
+                const hnId = iterator.next();
+                if (hnId.done) reject(false);
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId.value).then(() => {
+                    set.delete(hnId.value);
+                    console.log(`NFT #${hnId} metadata uploaded successfully`)
+                }).catch(e => {
+                    console.log(`NFT #${hnId} metadata uploaded failed`)
+                }).finally(async () => {
+                    count++;
+                    if (count == metadatasBatch) {
+                        resolve(await uploadAllImages());
+                    }
+                });
+            }
+        });
+    }
+    await uploadAllImages();
+    // await uploadAllMetadatas();
 }
 
 main();
