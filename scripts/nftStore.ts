@@ -58,8 +58,7 @@ async function main() {
 
                 const composited = await sharp(await materials).sharpen().webp({ quality: 90 }).toBuffer();
 
-                const result = await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
-                console.log(result.url);
+                await client.put(`nft/images/hashland-nft-${hnId}-${level}.png`, composited);
                 resolve(true);
             } catch (e) {
                 reject(e);
@@ -130,8 +129,7 @@ async function main() {
                     ],
                 }
 
-                const result = await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
-                console.log(result.url);
+                await client.put(`nft/metadatas/${fileName}.json`, Buffer.from(JSON.stringify(metadata)));
                 resolve(true);
             } catch (e) {
                 reject(e);
@@ -191,6 +189,7 @@ async function main() {
                 }
                 generateAllLevelImages(hnId.value).then(() => {
                     set.delete(hnId.value);
+                    console.log(`NFT #${hnId.value} image uploaded successfully`);
                     if (set.size == 0) {
                         console.log(`All ${end - start} images uploaded successfully`);
                     }
@@ -216,6 +215,7 @@ async function main() {
                 }
                 generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId.value).then(() => {
                     set.delete(hnId.value);
+                    console.log(`NFT #${hnId.value} metadata uploaded successfully`);
                     if (set.size == 0) {
                         console.log(`All ${end - start} metadatas uploaded successfully`);
                     }
