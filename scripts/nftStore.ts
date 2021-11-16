@@ -217,8 +217,8 @@ async function main() {
         });
     }
 
-    // updateMetadata();
-    await uploadAllImagesAndMetadatas();
+    updateMetadata();
+    // await uploadAllImagesAndMetadatas();
 }
 
 main();
