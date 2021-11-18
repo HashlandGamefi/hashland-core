@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'alert',
       script: 'npx',
-      args: 'hardhat run --network testnet scripts/alert.ts',
+      args: 'hardhat run --network mainnet scripts/alert.ts',
       autorestart: true,
       max_restarts: 5,
       min_uptime: '10s',
