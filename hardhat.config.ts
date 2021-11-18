@@ -21,7 +21,7 @@ const config: HardhatUserConfig = {
     hardhat: {},
     localhost: {},
     testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      url: "https://data-seed-prebsc-1-s2.binance.org:8545/",
       chainId: 97,
       gas: 2100000,
       gasPrice: 20000000000,
