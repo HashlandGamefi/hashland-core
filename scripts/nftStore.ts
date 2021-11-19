@@ -1,6 +1,7 @@
 import OSS from 'ali-oss';
 import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
+import { resolve } from 'path/posix';
 import sharp from 'sharp';
 
 const maxLevel = 5;
@@ -167,8 +168,17 @@ async function main() {
         });
     }
 
+    async function sleep(seconds: number) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve(true);
+            }, seconds * 1000);
+        });
+    }
+
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
+            await sleep(5);
             const level = (await hn.level(hnId)).toNumber();
             console.log('');
             console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
@@ -177,6 +187,7 @@ async function main() {
         });
 
         hn.on('SetHashrates', async (hnId, hashrates, event) => {
+            await sleep(5);
             const level = (await hn.level(hnId)).toNumber();
             console.log('');
             console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
