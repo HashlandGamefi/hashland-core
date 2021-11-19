@@ -178,21 +178,13 @@ async function main() {
 
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
-            await sleep(60);
-            const level = (await hn.level(hnId)).toNumber();
-            console.log('');
-            console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
-
-            generateMetadataByLevel('https://cdn.hashland.com/nft/images', hnId, level);
+            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+            console.log(`Spawn NFT #${hnId} to ${to}`);
         });
 
         hn.on('SetHashrates', async (hnId, hashrates, event) => {
-            await sleep(60);
-            const level = (await hn.level(hnId)).toNumber();
-            console.log('');
-            console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
-
-            generateMetadataByLevel('https://cdn.hashland.com/nft/images', hnId, level);
+            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+            console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
         });
     }
 
