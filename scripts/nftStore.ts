@@ -178,7 +178,7 @@ async function main() {
 
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
-            await sleep(30);
+            await sleep(60);
             const level = (await hn.level(hnId)).toNumber();
             console.log('');
             console.log(`Spawn level-${level} NFT #${hnId} to ${to}`);
@@ -187,7 +187,7 @@ async function main() {
         });
 
         hn.on('SetHashrates', async (hnId, hashrates, event) => {
-            await sleep(30);
+            await sleep(60);
             const level = (await hn.level(hnId)).toNumber();
             console.log('');
             console.log(`Set level-${level} NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
