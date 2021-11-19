@@ -168,14 +168,6 @@ async function main() {
         });
     }
 
-    async function sleep(seconds: number) {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve(true);
-            }, seconds * 1000);
-        });
-    }
-
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
             generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
