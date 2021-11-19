@@ -89,7 +89,7 @@ async function main() {
                 const hnClass = getRandomNumber(hnId, 'class', 1, 4);
                 const hashrates = await hn.getHashrates(hnId);
                 const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
-                const heroName = ['Main Tank', 'Lady', 'Hunter', `Gul'dan`];
+                const heroName = ['Main Tank', 'Lady', 'Hunter', `Golden`];
                 const fileName = `hashland-nft-${hnId}-${level}`;
 
                 const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79/watermark,text_${Buffer.from((hashrates[1] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_655,y_79`;
