@@ -16,6 +16,7 @@ import "../token/interface/IHN.sol";
 contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     IHN public hn;
 
@@ -24,29 +25,38 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     mapping(uint256 => uint256) public boxTokenPrices;
     mapping(uint256 => address) public tokenAddrs;
     mapping(uint256 => address) public receivingAddrs;
+    mapping(uint256 => uint256) public maxBuyLengths;
+    mapping(uint256 => uint256[]) public levelProbabilities;
 
     mapping(uint256 => uint256) public boxesMaxSupply;
     mapping(uint256 => uint256) public totalBoxesLength;
 
-    uint256 public btcBase = 10000;
-    uint256 public btcRange = 1000;
+    uint256[] public hashrateBases = [10000, 44000, 211200, 1098240, 6150144];
+    uint256[] public hashrateRanges = [1000, 8800, 63360, 439296, 3075072];
 
     mapping(uint256 => uint256) public totalTokenBuyAmount;
     mapping(address => uint256) public userBoxesLength;
     mapping(address => mapping(uint256 => uint256)) public userTokenBuyAmount;
 
     EnumerableSet.AddressSet private users;
+    mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
 
     event SetTokenInfo(
         uint256 tokenId,
         uint256 boxTokenPrice,
         address tokenAddr,
-        address receivingAddr
+        address receivingAddr,
+        uint256 maxBuyAmount,
+        uint256[] levelProbability
     );
     event AddBoxesMaxSupply(uint256 supply, uint256 tokenId);
-    event SetDatas(uint256 btcBase, uint256 btcRange);
     event BuyBoxes(address indexed user, uint256 tokenId, uint256 price);
-    event SpawnHns(address indexed user, uint256 boxesLength, uint256[] hnIds);
+    event SpawnHns(
+        address indexed user,
+        uint256 boxesLength,
+        uint256[] hnIds,
+        uint256[] levels
+    );
 
     /**
      * @param hnAddr Initialize HN Address
@@ -66,13 +76,24 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         uint256 tokenId,
         uint256 boxTokenPrice,
         address tokenAddr,
-        address receivingAddr
+        address receivingAddr,
+        uint256 maxBuyLength,
+        uint256[] calldata levelProbability
     ) external onlyRole(MANAGER_ROLE) {
         boxTokenPrices[tokenId] = boxTokenPrice;
         tokenAddrs[tokenId] = tokenAddr;
         receivingAddrs[tokenId] = receivingAddr;
+        maxBuyLengths[tokenId] = maxBuyLength;
+        levelProbabilities[tokenId] = levelProbability;
 
-        emit SetTokenInfo(tokenId, boxTokenPrice, tokenAddr, receivingAddr);
+        emit SetTokenInfo(
+            tokenId,
+            boxTokenPrice,
+            tokenAddr,
+            receivingAddr,
+            maxBuyLength,
+            levelProbability
+        );
     }
 
     /**
@@ -88,19 +109,6 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     }
 
     /**
-     * @dev Set Datas
-     */
-    function setDatas(uint256 _btcBase, uint256 _btcRange)
-        external
-        onlyRole(MANAGER_ROLE)
-    {
-        btcBase = _btcBase;
-        btcRange = _btcRange;
-
-        emit SetDatas(_btcBase, _btcRange);
-    }
-
-    /**
      * @dev Buy Boxes
      */
     function buyBoxes(uint256 boxesLength, uint256 tokenId)
@@ -109,7 +117,10 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         nonReentrant
     {
         require(boxesLength > 0, "Boxes length must > 0");
-        require(boxesLength <= 256, "Boxes length must <= 256");
+        require(
+            boxesLength <= maxBuyLengths[tokenId],
+            "Boxes length exceeds the limit"
+        );
         require(
             getBoxesLeftSupply(tokenId) >= boxesLength,
             "Not enough boxes supply"
@@ -125,6 +136,10 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         require(
             receivingAddrs[tokenId] != address(0),
             "The receiving address of this token has not been set"
+        );
+        require(
+            levelProbabilities[tokenId].length == 5,
+            "The level probability of this token has not been set"
         );
 
         uint256 price = boxesLength * boxTokenPrices[tokenId];
@@ -156,13 +171,17 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         returns (
             uint256,
             address,
-            address
+            address,
+            uint256,
+            uint256[] memory
         )
     {
         return (
             boxTokenPrices[tokenId],
             tokenAddrs[tokenId],
-            receivingAddrs[tokenId]
+            receivingAddrs[tokenId],
+            maxBuyLengths[tokenId],
+            levelProbabilities[tokenId]
         );
     }
 
@@ -195,10 +214,77 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     }
 
     /**
+     * @dev Get Each Level HnIds Length
+     */
+    function getEachLevelHnIdsLength(uint256 maxLevel)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory lengths = new uint256[](maxLevel);
+        for (uint256 i = 0; i < maxLevel; i++) {
+            lengths[i] = levelHnIds[i + 1].length();
+        }
+        return lengths;
+    }
+
+    /**
+     * @dev Get Level HnIds Length
+     */
+    function getLevelHnIdsLength(uint256 level)
+        external
+        view
+        returns (uint256)
+    {
+        return levelHnIds[level].length();
+    }
+
+    /**
+     * @dev Get Level HnIds by Size
+     */
+    function getLevelHnIdsBySize(
+        uint256 level,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (uint256[] memory, uint256) {
+        uint256 length = size;
+        if (length > levelHnIds[level].length() - cursor) {
+            length = levelHnIds[level].length() - cursor;
+        }
+
+        uint256[] memory values = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = levelHnIds[level].at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
      * @dev Get Boxes Left Supply
      */
     function getBoxesLeftSupply(uint256 tokenId) public view returns (uint256) {
         return boxesMaxSupply[tokenId] - totalBoxesLength[tokenId];
+    }
+
+    /**
+     * @dev Get Level
+     */
+    function getLevel(uint256 tokenId, uint256 random)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 accProbability;
+        uint256 level;
+        for (uint256 i = 0; i < levelProbabilities[tokenId].length; i++) {
+            accProbability += levelProbabilities[tokenId][i];
+            if (random < accProbability) {
+                level = i;
+                break;
+            }
+        }
+        return level + 1;
     }
 
     /**
@@ -210,6 +296,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         uint256 tokenId
     ) private {
         uint256[] memory hnIds = new uint256[](boxesLength);
+        uint256[] memory levels = new uint256[](boxesLength);
         for (uint256 i = 0; i < boxesLength; i++) {
             uint256 randomness = uint256(
                 keccak256(
@@ -227,15 +314,23 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
                 )
             );
 
-            uint256[] memory hashrates = new uint256[](2);
-            hashrates[0] = 0;
-            hashrates[1] = btcBase + (randomness % btcRange);
+            uint256 level = getLevel(tokenId, randomness % 1e4);
+            uint256 btcBase = hashrateBases[level - 1];
+            uint256 btcRange = hashrateRanges[level - 1];
+            uint256 hcBase = level >= 2 ? hashrateBases[level - 2] : 0;
+            uint256 hcRange = level >= 2 ? hashrateRanges[level - 2] : 1;
 
-            uint256 hnId = hn.spawnHn(to, 1, 1, 1, hashrates);
+            uint256[] memory hashrates = new uint256[](2);
+            hashrates[0] = hcBase + (((randomness % 1e14) / 1e4) % hcRange);
+            hashrates[1] = btcBase + (((randomness % 1e24) / 1e14) % btcRange);
+
+            uint256 hnId = hn.spawnHn(to, 1, 1, level, hashrates);
 
             hnIds[i] = hnId;
+            levels[i] = level;
+            levelHnIds[level].add(hnId);
         }
 
-        emit SpawnHns(to, boxesLength, hnIds);
+        emit SpawnHns(to, boxesLength, hnIds, levels);
     }
 }
