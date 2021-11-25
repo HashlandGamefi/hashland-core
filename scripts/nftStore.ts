@@ -178,10 +178,15 @@ async function main() {
             generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
             console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
         });
+
+        hn.on('RenameHn', async (hnId, name, event) => {
+            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+            console.log(`Set NFT #${hnId} name to ${name}`);
+        });
     }
 
-    const start = 10700;
-    const end = 34000;
+    const start = 47000;
+    const end = 49000;
     const batch = 10;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {
