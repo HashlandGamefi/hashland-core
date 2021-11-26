@@ -179,9 +179,10 @@ async function main() {
             console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
         });
 
-        hn.on('RenameHn', async (hnId, name, event) => {
+        const filter = hn.filters.Transfer(null, '0xe0A9e5B59701a776575fDd6257c3F89Ae362629a');
+        hn.on(filter, async (from, to, hnId, event) => {
             generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Set NFT #${hnId} name to ${name}`);
+            console.log(`Transfer NFT #${hnId} from ${from} to Binance NFT Market`);
         });
     }
 
