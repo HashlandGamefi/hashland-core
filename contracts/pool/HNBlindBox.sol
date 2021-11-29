@@ -26,6 +26,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     mapping(uint256 => address) public tokenAddrs;
     mapping(uint256 => address) public receivingAddrs;
     mapping(uint256 => uint256) public maxBuyLengths;
+    mapping(uint256 => bool) public whiteListFlags;
     mapping(uint256 => uint256[]) public levelProbabilities;
 
     mapping(uint256 => uint256) public boxesMaxSupply;
@@ -40,6 +41,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
     mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
+    mapping(uint256 => EnumerableSet.AddressSet) private whiteList;
 
     event SetTokenInfo(
         uint256 tokenId,
@@ -47,6 +49,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         address tokenAddr,
         address receivingAddr,
         uint256 maxBuyAmount,
+        bool whiteListFlag,
         uint256[] levelProbability
     );
     event AddBoxesMaxSupply(uint256 supply, uint256 tokenId);
@@ -78,12 +81,14 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         address tokenAddr,
         address receivingAddr,
         uint256 maxBuyLength,
+        bool whiteListFlag,
         uint256[] calldata levelProbability
     ) external onlyRole(MANAGER_ROLE) {
         boxTokenPrices[tokenId] = boxTokenPrice;
         tokenAddrs[tokenId] = tokenAddr;
         receivingAddrs[tokenId] = receivingAddr;
         maxBuyLengths[tokenId] = maxBuyLength;
+        whiteListFlags[tokenId] = whiteListFlag;
         levelProbabilities[tokenId] = levelProbability;
 
         emit SetTokenInfo(
@@ -92,6 +97,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             tokenAddr,
             receivingAddr,
             maxBuyLength,
+            whiteListFlag,
             levelProbability
         );
     }
@@ -106,6 +112,30 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         boxesMaxSupply[tokenId] += supply;
 
         emit AddBoxesMaxSupply(supply, tokenId);
+    }
+
+    /**
+     * @dev Add White List
+     */
+    function addWhiteList(uint256 tokenId, address[] calldata whiteUsers)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        for (uint256 i = 0; i < whiteUsers.length; i++) {
+            whiteList[tokenId].add(whiteUsers[i]);
+        }
+    }
+
+    /**
+     * @dev Remove White List
+     */
+    function removeWhiteList(uint256 tokenId, address[] calldata whiteUsers)
+        external
+        onlyRole(MANAGER_ROLE)
+    {
+        for (uint256 i = 0; i < whiteUsers.length; i++) {
+            whiteList[tokenId].remove(whiteUsers[i]);
+        }
     }
 
     /**
@@ -141,6 +171,12 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             levelProbabilities[tokenId].length == 5,
             "The level probability of this token has not been set"
         );
+        if (whiteListFlags[tokenId]) {
+            require(
+                whiteList[tokenId].contains(msg.sender),
+                "Your address must be on the whitelist"
+            );
+        }
 
         uint256 price = boxesLength * boxTokenPrices[tokenId];
         if (tokenId == 0) {
@@ -173,6 +209,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             address,
             address,
             uint256,
+            bool,
             uint256[] memory
         )
     {
@@ -181,6 +218,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             tokenAddrs[tokenId],
             receivingAddrs[tokenId],
             maxBuyLengths[tokenId],
+            whiteListFlags[tokenId],
             levelProbabilities[tokenId]
         );
     }
@@ -255,6 +293,49 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         uint256[] memory values = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
             values[i] = levelHnIds[level].at(cursor + i);
+        }
+
+        return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get White List Existence
+     */
+    function getWhiteListExistence(uint256 tokenId, address user)
+        external
+        view
+        returns (bool)
+    {
+        return whiteList[tokenId].contains(user);
+    }
+
+    /**
+     * @dev Get White List Length
+     */
+    function getWhiteListLength(uint256 tokenId)
+        external
+        view
+        returns (uint256)
+    {
+        return whiteList[tokenId].length();
+    }
+
+    /**
+     * @dev Get White List by Size
+     */
+    function getWhiteListBySize(
+        uint256 tokenId,
+        uint256 cursor,
+        uint256 size
+    ) external view returns (address[] memory, uint256) {
+        uint256 length = size;
+        if (length > whiteList[tokenId].length() - cursor) {
+            length = whiteList[tokenId].length() - cursor;
+        }
+
+        address[] memory values = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            values[i] = whiteList[tokenId].at(cursor + i);
         }
 
         return (values, cursor + length);
