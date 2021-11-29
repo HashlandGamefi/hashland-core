@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "../token/interface/IHN.sol";
 
 /**
@@ -13,7 +14,11 @@ import "../token/interface/IHN.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract users can draw high level HN
  */
-contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
+contract HNBlindBox is
+    AccessControlEnumerable,
+    VRFConsumerBase,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -27,6 +32,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     mapping(uint256 => address) public receivingAddrs;
     mapping(uint256 => uint256) public maxBuyLengths;
     mapping(uint256 => bool) public whiteListFlags;
+    mapping(uint256 => bool) public vrfFlags;
     mapping(uint256 => uint256[]) public levelProbabilities;
 
     mapping(uint256 => uint256) public boxesMaxSupply;
@@ -43,6 +49,13 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
     mapping(uint256 => EnumerableSet.AddressSet) private whiteList;
 
+    mapping(bytes32 => address) public requestIdToUser;
+    mapping(bytes32 => uint256) public requestIdToBoxesLength;
+    mapping(bytes32 => uint256) public requestIdToTokenId;
+
+    bytes32 public keyHash;
+    uint256 public fee;
+
     event SetTokenInfo(
         uint256 tokenId,
         uint256 boxTokenPrice,
@@ -50,9 +63,12 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         address receivingAddr,
         uint256 maxBuyAmount,
         bool whiteListFlag,
+        bool vrfFlag,
         uint256[] levelProbability
     );
     event AddBoxesMaxSupply(uint256 supply, uint256 tokenId);
+    event AddWhiteList(uint256 tokenId, address[] whiteUsers);
+    event RemoveWhiteList(uint256 tokenId, address[] whiteUsers);
     event BuyBoxes(address indexed user, uint256 tokenId, uint256 price);
     event SpawnHns(
         address indexed user,
@@ -62,14 +78,42 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
     );
 
     /**
+     * @param vrfAddr Initialize VRF Coordinator Address
+     * @param linkAddr Initialize LINK Token Address
+     * @param _keyHash Initialize Key Hash
+     * @param _fee Initialize Fee
      * @param hnAddr Initialize HN Address
      * @param manager Initialize Manager Role
      */
-    constructor(address hnAddr, address manager) {
+    constructor(
+        address vrfAddr,
+        address linkAddr,
+        bytes32 _keyHash,
+        uint256 _fee,
+        address hnAddr,
+        address manager
+    ) VRFConsumerBase(vrfAddr, linkAddr) {
+        keyHash = _keyHash;
+        fee = _fee;
+
         hn = IHN(hnAddr);
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, manager);
+    }
+
+    /**
+     * @dev Set Key Hash
+     */
+    function setKeyHash(bytes32 _keyHash) external onlyRole(MANAGER_ROLE) {
+        keyHash = _keyHash;
+    }
+
+    /**
+     * @dev Set Fee
+     */
+    function setFee(uint256 _fee) external onlyRole(MANAGER_ROLE) {
+        fee = _fee;
     }
 
     /**
@@ -82,6 +126,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         address receivingAddr,
         uint256 maxBuyLength,
         bool whiteListFlag,
+        bool vrfFlag,
         uint256[] calldata levelProbability
     ) external onlyRole(MANAGER_ROLE) {
         boxTokenPrices[tokenId] = boxTokenPrice;
@@ -89,6 +134,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         receivingAddrs[tokenId] = receivingAddr;
         maxBuyLengths[tokenId] = maxBuyLength;
         whiteListFlags[tokenId] = whiteListFlag;
+        vrfFlags[tokenId] = vrfFlag;
         levelProbabilities[tokenId] = levelProbability;
 
         emit SetTokenInfo(
@@ -98,6 +144,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             receivingAddr,
             maxBuyLength,
             whiteListFlag,
+            vrfFlag,
             levelProbability
         );
     }
@@ -109,6 +156,9 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         external
         onlyRole(MANAGER_ROLE)
     {
+        if (vrfFlags[tokenId]) {
+            LINK.transferFrom(msg.sender, address(this), supply * fee);
+        }
         boxesMaxSupply[tokenId] += supply;
 
         emit AddBoxesMaxSupply(supply, tokenId);
@@ -124,6 +174,8 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         for (uint256 i = 0; i < whiteUsers.length; i++) {
             whiteList[tokenId].add(whiteUsers[i]);
         }
+
+        emit AddWhiteList(tokenId, whiteUsers);
     }
 
     /**
@@ -136,6 +188,8 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
         for (uint256 i = 0; i < whiteUsers.length; i++) {
             whiteList[tokenId].remove(whiteUsers[i]);
         }
+
+        emit RemoveWhiteList(tokenId, whiteUsers);
     }
 
     /**
@@ -187,7 +241,15 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             token.safeTransferFrom(msg.sender, receivingAddrs[tokenId], price);
         }
 
-        spawnHns(msg.sender, boxesLength, tokenId);
+        if (vrfFlags[tokenId]) {
+            require(LINK.balanceOf(address(this)) >= fee, "Not Enough LINK");
+            bytes32 requestId = requestRandomness(keyHash, fee);
+            requestIdToUser[requestId] = msg.sender;
+            requestIdToBoxesLength[requestId] = boxesLength;
+            requestIdToTokenId[requestId] = tokenId;
+        } else {
+            spawnHns(msg.sender, boxesLength, tokenId);
+        }
 
         userBoxesLength[msg.sender] += boxesLength;
         userTokenBuyAmount[msg.sender][tokenId] += price;
@@ -210,6 +272,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             address,
             uint256,
             bool,
+            bool,
             uint256[] memory
         )
     {
@@ -219,6 +282,7 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             receivingAddrs[tokenId],
             maxBuyLengths[tokenId],
             whiteListFlags[tokenId],
+            vrfFlags[tokenId],
             levelProbabilities[tokenId]
         );
     }
@@ -366,6 +430,55 @@ contract HNBlindBox is AccessControlEnumerable, ReentrancyGuard {
             }
         }
         return level + 1;
+    }
+
+    /**
+     * @dev Spawn HN to User when get Randomness Response
+     */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        uint256[] memory hnIds = new uint256[](
+            requestIdToBoxesLength[requestId]
+        );
+        uint256[] memory levels = new uint256[](
+            requestIdToBoxesLength[requestId]
+        );
+        for (uint256 i = 0; i < requestIdToBoxesLength[requestId]; i++) {
+            uint256 level = getLevel(
+                requestIdToTokenId[requestId],
+                randomness % 1e4
+            );
+            uint256 btcBase = hashrateBases[level - 1];
+            uint256 btcRange = hashrateRanges[level - 1];
+            uint256 hcBase = level >= 2 ? hashrateBases[level - 2] : 0;
+            uint256 hcRange = level >= 2 ? hashrateRanges[level - 2] : 1;
+
+            uint256[] memory hashrates = new uint256[](2);
+            hashrates[0] = hcBase + (((randomness % 1e14) / 1e4) % hcRange);
+            hashrates[1] = btcBase + (((randomness % 1e24) / 1e14) % btcRange);
+
+            uint256 hnId = hn.spawnHn(
+                requestIdToUser[requestId],
+                1,
+                1,
+                level,
+                hashrates
+            );
+
+            hnIds[i] = hnId;
+            levels[i] = level;
+            levelHnIds[level].add(hnId);
+            randomness /= 1e24;
+        }
+
+        emit SpawnHns(
+            requestIdToUser[requestId],
+            requestIdToBoxesLength[requestId],
+            hnIds,
+            levels
+        );
     }
 
     /**
