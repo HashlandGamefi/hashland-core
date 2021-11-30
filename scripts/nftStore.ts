@@ -35,15 +35,17 @@ async function main() {
                     `nft/class${hnClass}/item5/${getRandomNumber(hnId, 'item5', 1, 10)}.png`,
                     `nft/class${hnClass}/item6/${getRandomNumber(hnId, 'item6', 1, 10)}.png`,
                     `nft/class${hnClass}/item7/${getRandomNumber(hnId, 'item7', 1, 10)}.png`,
+                    `nft/class${hnClass}/item8/${getRandomNumber(hnId, 'item8', 1, 10)}.png`,
+                    `nft/class${hnClass}/item9/${getRandomNumber(hnId, 'item9', 1, 10)}.png`,
                 ];
 
                 const heroItemsByLevel = [
                     [],
-                    [heroItems[0], heroItems[1], heroItems[2]],
-                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[1], heroItems[2]],
-                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
-                    [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
-                    hnClass == 2 ? [heroItems[7], heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
+                    [heroItems[8], heroItems[0], heroItems[9], heroItems[1], heroItems[2]],
+                    hnClass == 4 ? [heroItems[8], heroItems[0], heroItems[9], heroItems[1], heroItems[3], heroItems[2]] : [heroItems[8], heroItems[0], heroItems[9], heroItems[3], heroItems[1], heroItems[2]],
+                    hnClass == 4 ? [heroItems[8], heroItems[0], heroItems[9], heroItems[1], heroItems[3], heroItems[4], heroItems[2]] : [heroItems[8], heroItems[0], heroItems[9], heroItems[3], heroItems[4], heroItems[1], heroItems[2]],
+                    [heroItems[8], heroItems[0], heroItems[9], heroItems[3], heroItems[4], heroItems[5], heroItems[6]],
+                    hnClass == 2 ? [heroItems[7], heroItems[8], heroItems[0], heroItems[9], heroItems[3], heroItems[4], heroItems[5], heroItems[6]] : [heroItems[8], heroItems[0], heroItems[9], heroItems[3], heroItems[4], heroItems[5], heroItems[6], heroItems[7]],
                 ];
 
                 const bg = sharp(`nft/bg/${level}.png`).toBuffer();
@@ -186,8 +188,8 @@ async function main() {
         });
     }
 
-    const start = 47000;
-    const end = 49000;
+    const start = 0;
+    const end = 100;
     const batch = 10;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {
