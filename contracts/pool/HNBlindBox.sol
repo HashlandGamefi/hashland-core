@@ -30,7 +30,7 @@ contract HNBlindBox is
     mapping(uint256 => uint256) public boxTokenPrices;
     mapping(uint256 => address) public tokenAddrs;
     mapping(uint256 => address) public receivingAddrs;
-    mapping(uint256 => uint256) public maxBuyLengths;
+    mapping(uint256 => uint256) public hourlyBuyLimits;
     mapping(uint256 => bool) public whiteListFlags;
     mapping(uint256 => bool) public vrfFlags;
     mapping(uint256 => uint256[]) public levelProbabilities;
@@ -44,6 +44,8 @@ contract HNBlindBox is
     mapping(uint256 => uint256) public totalTokenBuyAmount;
     mapping(address => uint256) public userBoxesLength;
     mapping(address => mapping(uint256 => uint256)) public userTokenBuyAmount;
+    mapping(address => mapping(uint256 => uint256))
+        public userHourlyBoxesLength;
 
     EnumerableSet.AddressSet private users;
     mapping(uint256 => EnumerableSet.UintSet) private levelHnIds;
@@ -61,7 +63,7 @@ contract HNBlindBox is
         uint256 boxTokenPrice,
         address tokenAddr,
         address receivingAddr,
-        uint256 maxBuyAmount,
+        uint256 hourlyBuylimit,
         bool whiteListFlag,
         bool vrfFlag,
         uint256[] levelProbability
@@ -124,7 +126,7 @@ contract HNBlindBox is
         uint256 boxTokenPrice,
         address tokenAddr,
         address receivingAddr,
-        uint256 maxBuyLength,
+        uint256 hourlyBuyLimit,
         bool whiteListFlag,
         bool vrfFlag,
         uint256[] calldata levelProbability
@@ -132,7 +134,7 @@ contract HNBlindBox is
         boxTokenPrices[tokenId] = boxTokenPrice;
         tokenAddrs[tokenId] = tokenAddr;
         receivingAddrs[tokenId] = receivingAddr;
-        maxBuyLengths[tokenId] = maxBuyLength;
+        hourlyBuyLimits[tokenId] = hourlyBuyLimit;
         whiteListFlags[tokenId] = whiteListFlag;
         vrfFlags[tokenId] = vrfFlag;
         levelProbabilities[tokenId] = levelProbability;
@@ -142,7 +144,7 @@ contract HNBlindBox is
             boxTokenPrice,
             tokenAddr,
             receivingAddr,
-            maxBuyLength,
+            hourlyBuyLimit,
             whiteListFlag,
             vrfFlag,
             levelProbability
@@ -202,8 +204,12 @@ contract HNBlindBox is
     {
         require(boxesLength > 0, "Boxes length must > 0");
         require(
-            boxesLength <= maxBuyLengths[tokenId],
-            "Boxes length exceeds the limit"
+            getUserHourlyBoxesLeftSupply(
+                tokenId,
+                msg.sender,
+                block.timestamp
+            ) >= boxesLength,
+            "Boxes length exceeds the hourly buy limit"
         );
         require(
             getBoxesLeftSupply(tokenId) >= boxesLength,
@@ -252,6 +258,9 @@ contract HNBlindBox is
         }
 
         userBoxesLength[msg.sender] += boxesLength;
+        userHourlyBoxesLength[msg.sender][
+            block.timestamp / 3600
+        ] += boxesLength;
         userTokenBuyAmount[msg.sender][tokenId] += price;
         totalBoxesLength[tokenId] += boxesLength;
         totalTokenBuyAmount[tokenId] += price;
@@ -280,7 +289,7 @@ contract HNBlindBox is
             boxTokenPrices[tokenId],
             tokenAddrs[tokenId],
             receivingAddrs[tokenId],
-            maxBuyLengths[tokenId],
+            hourlyBuyLimits[tokenId],
             whiteListFlags[tokenId],
             vrfFlags[tokenId],
             levelProbabilities[tokenId]
@@ -410,6 +419,19 @@ contract HNBlindBox is
      */
     function getBoxesLeftSupply(uint256 tokenId) public view returns (uint256) {
         return boxesMaxSupply[tokenId] - totalBoxesLength[tokenId];
+    }
+
+    /**
+     * @dev Get User Hourly Boxes Left Supply
+     */
+    function getUserHourlyBoxesLeftSupply(
+        uint256 tokenId,
+        address user,
+        uint256 timestamp
+    ) public view returns (uint256) {
+        return
+            hourlyBuyLimits[tokenId] -
+            userHourlyBoxesLength[user][timestamp / 3600];
     }
 
     /**
