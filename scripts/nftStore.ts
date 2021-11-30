@@ -188,7 +188,7 @@ async function main() {
         });
     }
 
-    const start = 100;
+    const start = 0;
     const end = 60000;
     const batch = 10;
     const set: Set<number> = new Set();
