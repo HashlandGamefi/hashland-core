@@ -1965,6 +1965,7 @@ interface IERC721Enumerable is IERC721 {
 
 
 pragma solidity >=0.8.9;
+
 /**
  * @title HN Interface
  * @author HASHLAND-TEAM
@@ -2046,6 +2047,13 @@ abstract contract IHN is IERC721Enumerable {
 
 
 pragma solidity >=0.8.9;
+
+
+
+
+
+
+
 /**
  * @title HN Blind Box Contract
  * @author HASHLAND-TEAM
