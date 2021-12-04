@@ -1437,7 +1437,7 @@ contract HWDeposit is AccessControlEnumerable, ReentrancyGuard {
         uint256[] weights,
         uint256 totalWeight
     );
-    event Deposit(address user, uint256 amount);
+    event Deposit(address indexed user, uint256 amount);
 
     /**
      * @param hcAddr Initialize HC Address
