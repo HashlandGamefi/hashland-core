@@ -21,6 +21,7 @@ contract HWPvPPool is AccessControlEnumerable, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     uint256 public releasedToken;
+    uint256 public storedToken;
     uint256 public harvestedToken;
 
     mapping(address => uint256) public userStoredToken;
@@ -28,8 +29,12 @@ contract HWPvPPool is AccessControlEnumerable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private users;
 
-    event AddRewards(address[] users, uint256[] amounts);
-    event RemoveRewards(address[] users, uint256[] amounts);
+    event AddRewards(address[] users, uint256[] amounts, uint256 totalAmount);
+    event RemoveRewards(
+        address[] users,
+        uint256[] amounts,
+        uint256 totalAmount
+    );
     event HarvestToken(address indexed user, uint256 amount);
 
     /**
@@ -57,11 +62,14 @@ contract HWPvPPool is AccessControlEnumerable, ReentrancyGuard {
 
         updatePool();
 
+        uint256 totalAmount;
         for (uint256 i = 0; i < rewardUsers.length; i++) {
             userStoredToken[rewardUsers[i]] += amounts[i];
+            totalAmount += amounts[i];
         }
+        storedToken += totalAmount;
 
-        emit AddRewards(rewardUsers, amounts);
+        emit AddRewards(rewardUsers, amounts, totalAmount);
     }
 
     /**
@@ -78,11 +86,14 @@ contract HWPvPPool is AccessControlEnumerable, ReentrancyGuard {
 
         updatePool();
 
+        uint256 totalAmount;
         for (uint256 i = 0; i < rewardUsers.length; i++) {
             userStoredToken[rewardUsers[i]] -= amounts[i];
+            totalAmount += amounts[i];
         }
+        storedToken -= totalAmount;
 
-        emit RemoveRewards(rewardUsers, amounts);
+        emit RemoveRewards(rewardUsers, amounts, totalAmount);
     }
 
     /**
@@ -131,6 +142,13 @@ contract HWPvPPool is AccessControlEnumerable, ReentrancyGuard {
         }
 
         return (values, cursor + length);
+    }
+
+    /**
+     * @dev Get Left Token
+     */
+    function getLeftToken() external view returns (uint256) {
+        return releasedToken - storedToken;
     }
 
     /**
