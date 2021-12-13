@@ -12,7 +12,7 @@ import "../token/interface/IHC.sol";
  * @author HASHLAND-TEAM
  * @notice In this contract, players can harvest HC of World Event rewards
  */
-contract HWPvEPool is AccessControlEnumerable, ReentrancyGuard {
+contract HWWEPool is AccessControlEnumerable, ReentrancyGuard {
     using SafeERC20 for IHC;
     using EnumerableSet for EnumerableSet.AddressSet;
 
