@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.9;
+pragma solidity >=0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
@@ -42,7 +42,17 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     mapping(address => EnumerableSet.AddressSet) private inviterUsers;
 
     event SetOpenStatus(bool status);
-    event BindInviter(address indexed user, address inviter);
+    event DepositInviter(
+        address indexed user,
+        address inviter,
+        uint256 hashrate
+    );
+    event WithdrawInviter(
+        address indexed user,
+        address inviter,
+        uint256 hashrate
+    );
+    event BindInviter(address indexed user, address inviter, uint256 hashrate);
     event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
@@ -99,6 +109,8 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
 
             inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
+
+        emit DepositInviter(user, inviter, hashrate);
     }
 
     /**
@@ -128,6 +140,8 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
 
             inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
+
+        emit WithdrawInviter(user, inviter, hashrate);
     }
 
     /**
@@ -170,7 +184,7 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
         users.add(msg.sender);
         inviterUsers[inviter].add(msg.sender);
 
-        emit BindInviter(msg.sender, inviter);
+        emit BindInviter(msg.sender, inviter, hashrate);
     }
 
     /**

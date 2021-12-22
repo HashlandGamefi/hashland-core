@@ -1,8 +1,9 @@
-// Sources flattened with hardhat v2.6.7 https://hardhat.org
+// Sources flattened with hardhat v2.7.1 https://hardhat.org
 
-// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.3.2
+// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.4.0
 
 // SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts v4.4.0 (token/ERC20/IERC20.sol)
 
 pragma solidity ^0.8.0;
 
@@ -85,9 +86,10 @@ interface IERC20 {
 }
 
 
-// File @openzeppelin/contracts/utils/Address.sol@v4.3.2
+// File @openzeppelin/contracts/utils/Address.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/Address.sol)
 
 pragma solidity ^0.8.0;
 
@@ -305,9 +307,10 @@ library Address {
 }
 
 
-// File @openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol@v4.3.2
+// File @openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (token/ERC20/utils/SafeERC20.sol)
 
 pragma solidity ^0.8.0;
 
@@ -405,9 +408,10 @@ library SafeERC20 {
 }
 
 
-// File @openzeppelin/contracts/access/IAccessControl.sol@v4.3.2
+// File @openzeppelin/contracts/access/IAccessControl.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (access/IAccessControl.sol)
 
 pragma solidity ^0.8.0;
 
@@ -496,9 +500,10 @@ interface IAccessControl {
 }
 
 
-// File @openzeppelin/contracts/access/IAccessControlEnumerable.sol@v4.3.2
+// File @openzeppelin/contracts/access/IAccessControlEnumerable.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (access/IAccessControlEnumerable.sol)
 
 pragma solidity ^0.8.0;
 
@@ -528,9 +533,10 @@ interface IAccessControlEnumerable is IAccessControl {
 }
 
 
-// File @openzeppelin/contracts/utils/Context.sol@v4.3.2
+// File @openzeppelin/contracts/utils/Context.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/Context.sol)
 
 pragma solidity ^0.8.0;
 
@@ -555,9 +561,10 @@ abstract contract Context {
 }
 
 
-// File @openzeppelin/contracts/utils/Strings.sol@v4.3.2
+// File @openzeppelin/contracts/utils/Strings.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/Strings.sol)
 
 pragma solidity ^0.8.0;
 
@@ -625,9 +632,10 @@ library Strings {
 }
 
 
-// File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.3.2
+// File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/introspection/IERC165.sol)
 
 pragma solidity ^0.8.0;
 
@@ -653,9 +661,10 @@ interface IERC165 {
 }
 
 
-// File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.3.2
+// File @openzeppelin/contracts/utils/introspection/ERC165.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/introspection/ERC165.sol)
 
 pragma solidity ^0.8.0;
 
@@ -683,9 +692,10 @@ abstract contract ERC165 is IERC165 {
 }
 
 
-// File @openzeppelin/contracts/access/AccessControl.sol@v4.3.2
+// File @openzeppelin/contracts/access/AccessControl.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (access/AccessControl.sol)
 
 pragma solidity ^0.8.0;
 
@@ -835,7 +845,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
      * purpose is to provide a mechanism for accounts to lose their privileges
      * if they are compromised (such as when a trusted device is misplaced).
      *
-     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * If the calling account had been revoked `role`, emits a {RoleRevoked}
      * event.
      *
      * Requirements:
@@ -863,6 +873,8 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
      * Using this function in any other way is effectively circumventing the admin
      * system imposed by {AccessControl}.
      * ====
+     *
+     * NOTE: This function is deprecated in favor of {_grantRole}.
      */
     function _setupRole(bytes32 role, address account) internal virtual {
         _grantRole(role, account);
@@ -879,14 +891,24 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
         emit RoleAdminChanged(role, previousAdminRole, adminRole);
     }
 
-    function _grantRole(bytes32 role, address account) private {
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * Internal function without access restriction.
+     */
+    function _grantRole(bytes32 role, address account) internal virtual {
         if (!hasRole(role, account)) {
             _roles[role].members[account] = true;
             emit RoleGranted(role, account, _msgSender());
         }
     }
 
-    function _revokeRole(bytes32 role, address account) private {
+    /**
+     * @dev Revokes `role` from `account`.
+     *
+     * Internal function without access restriction.
+     */
+    function _revokeRole(bytes32 role, address account) internal virtual {
         if (hasRole(role, account)) {
             _roles[role].members[account] = false;
             emit RoleRevoked(role, account, _msgSender());
@@ -895,9 +917,10 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
 }
 
 
-// File @openzeppelin/contracts/utils/structs/EnumerableSet.sol@v4.3.2
+// File @openzeppelin/contracts/utils/structs/EnumerableSet.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (utils/structs/EnumerableSet.sol)
 
 pragma solidity ^0.8.0;
 
@@ -1255,9 +1278,10 @@ library EnumerableSet {
 }
 
 
-// File @openzeppelin/contracts/access/AccessControlEnumerable.sol@v4.3.2
+// File @openzeppelin/contracts/access/AccessControlEnumerable.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (access/AccessControlEnumerable.sol)
 
 pragma solidity ^0.8.0;
 
@@ -1303,42 +1327,27 @@ abstract contract AccessControlEnumerable is IAccessControlEnumerable, AccessCon
     }
 
     /**
-     * @dev Overload {grantRole} to track enumerable memberships
+     * @dev Overload {_grantRole} to track enumerable memberships
      */
-    function grantRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
-        super.grantRole(role, account);
+    function _grantRole(bytes32 role, address account) internal virtual override {
+        super._grantRole(role, account);
         _roleMembers[role].add(account);
     }
 
     /**
-     * @dev Overload {revokeRole} to track enumerable memberships
+     * @dev Overload {_revokeRole} to track enumerable memberships
      */
-    function revokeRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
-        super.revokeRole(role, account);
+    function _revokeRole(bytes32 role, address account) internal virtual override {
+        super._revokeRole(role, account);
         _roleMembers[role].remove(account);
-    }
-
-    /**
-     * @dev Overload {renounceRole} to track enumerable memberships
-     */
-    function renounceRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
-        super.renounceRole(role, account);
-        _roleMembers[role].remove(account);
-    }
-
-    /**
-     * @dev Overload {_setupRole} to track enumerable memberships
-     */
-    function _setupRole(bytes32 role, address account) internal virtual override {
-        super._setupRole(role, account);
-        _roleMembers[role].add(account);
     }
 }
 
 
-// File @openzeppelin/contracts/security/ReentrancyGuard.sol@v4.3.2
+// File @openzeppelin/contracts/security/ReentrancyGuard.sol@v4.4.0
 
 
+// OpenZeppelin Contracts v4.4.0 (security/ReentrancyGuard.sol)
 
 pragma solidity ^0.8.0;
 
@@ -1383,7 +1392,7 @@ abstract contract ReentrancyGuard {
      * @dev Prevents a contract from calling itself, directly or indirectly.
      * Calling a `nonReentrant` function from another `nonReentrant`
      * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and make it call a
+     * by making the `nonReentrant` function external, and making it call a
      * `private` function that does the actual work.
      */
     modifier nonReentrant() {
@@ -1449,7 +1458,7 @@ abstract contract IHNPool {
 // File contracts/pool/InvitePool.sol
 
 
-pragma solidity >=0.8.9;
+pragma solidity >=0.8.10;
 
 
 
@@ -1490,7 +1499,17 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
     mapping(address => EnumerableSet.AddressSet) private inviterUsers;
 
     event SetOpenStatus(bool status);
-    event BindInviter(address indexed user, address inviter);
+    event DepositInviter(
+        address indexed user,
+        address inviter,
+        uint256 hashrate
+    );
+    event WithdrawInviter(
+        address indexed user,
+        address inviter,
+        uint256 hashrate
+    );
+    event BindInviter(address indexed user, address inviter, uint256 hashrate);
     event HarvestToken(address indexed inviter, uint256 amount);
 
     /**
@@ -1547,6 +1566,8 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
 
             inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
+
+        emit DepositInviter(user, inviter, hashrate);
     }
 
     /**
@@ -1576,6 +1597,8 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
 
             inviterLastAccTokenPerStake[inviter] = accTokenPerStake;
         }
+
+        emit WithdrawInviter(user, inviter, hashrate);
     }
 
     /**
@@ -1618,7 +1641,7 @@ contract InvitePool is AccessControlEnumerable, ReentrancyGuard {
         users.add(msg.sender);
         inviterUsers[inviter].add(msg.sender);
 
-        emit BindInviter(msg.sender, inviter);
+        emit BindInviter(msg.sender, inviter, hashrate);
     }
 
     /**
