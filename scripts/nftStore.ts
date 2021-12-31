@@ -1,7 +1,6 @@
 import OSS from 'ali-oss';
 import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
-import { resolve } from 'path/posix';
 import sharp from 'sharp';
 
 const maxLevel = 5;
