@@ -38,7 +38,7 @@ contract HNBlindBoxS2 is
     mapping(uint256 => uint256) public boxesMaxSupply;
     mapping(uint256 => uint256) public totalBoxesLength;
 
-    uint256 public epicRate = 100;
+    uint256 public goldRate = 100;
     uint256[] public hashrateBases = [10000, 44000, 211200, 1098240, 6150144];
     uint256[] public hashrateRanges = [1000, 8800, 63360, 439296, 3075072];
 
@@ -487,8 +487,8 @@ contract HNBlindBoxS2 is
                 hashrates
             );
 
-            if (((randomness % 1e18) / 1e14) < epicRate) {
-                hn.setData(hnId, "epic", 1);
+            if (((randomness % 1e18) / 1e14) < goldRate) {
+                hn.setData(hnId, "gold", 1);
             }
 
             hnIds[i] = hnId;
@@ -541,8 +541,8 @@ contract HNBlindBoxS2 is
 
             uint256 hnId = hn.spawnHn(to, 1, 2, level, hashrates);
 
-            if (((randomness % 1e18) / 1e14) < epicRate) {
-                hn.setData(hnId, "epic", 1);
+            if (((randomness % 1e18) / 1e14) < goldRate) {
+                hn.setData(hnId, "gold", 1);
             }
 
             hnIds[i] = hnId;
