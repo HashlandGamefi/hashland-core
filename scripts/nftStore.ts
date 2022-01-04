@@ -171,19 +171,25 @@ async function main() {
 
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Spawn NFT #${hnId} to ${to}`);
+            if (hnId < 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Spawn NFT #${hnId} to ${to}`);
+            }
         });
 
         hn.on('SetHashrates', async (hnId, hashrates, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+            if (hnId < 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+            }
         });
 
         const filter = hn.filters.Transfer(null, '0xe0A9e5B59701a776575fDd6257c3F89Ae362629a');
         hn.on(filter, async (from, to, hnId, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Transfer NFT #${hnId} from ${from} to Binance NFT Market`);
+            if (hnId < 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Transfer NFT #${hnId} from ${from} to Binance NFT Market`);
+            }
         });
     }
 

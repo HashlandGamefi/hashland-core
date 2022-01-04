@@ -89,11 +89,12 @@ async function main() {
             try {
                 const hnClass = getRandomNumber(hnId, 'class', 1, 4);
                 const hashrates = await hn.getHashrates(hnId);
+                const gold = await hn.data(hnId, 'gold');
                 const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
                 const heroName = ['Tameka', 'Katniss', 'Natalie', `Mila`];
                 const fileName = `hashland-nft-${hnId}-${level}`;
 
-                const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79/watermark,text_${Buffer.from((hashrates[1] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_655,y_79`;
+                const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79`;
 
                 const metadata = {
                     name: `HashLand NFT #${hnId}`,
@@ -123,6 +124,10 @@ async function main() {
                         {
                             trait_type: 'HC_Hashrate',
                             value: (hashrates[0] / 1e4).toFixed(4),
+                        },
+                        {
+                            trait_type: 'Gold',
+                            value: gold ? true : false,
                         },
                     ],
                 }
@@ -167,24 +172,30 @@ async function main() {
 
     function updateMetadata() {
         hn.on('SpawnHn', async (to, hnId, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Spawn NFT #${hnId} to ${to}`);
+            if (hnId >= 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Spawn NFT #${hnId} to ${to}`);
+            }
         });
 
         hn.on('SetHashrates', async (hnId, hashrates, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+            if (hnId >= 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Set NFT #${hnId} hashrates to [${(hashrates[0] / 1e4).toFixed(4)}, ${(hashrates[1] / 1e4).toFixed(4)}]`);
+            }
         });
 
         const filter = hn.filters.Transfer(null, '0xe0A9e5B59701a776575fDd6257c3F89Ae362629a');
         hn.on(filter, async (from, to, hnId, event) => {
-            generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
-            console.log(`Transfer NFT #${hnId} from ${from} to Binance NFT Market`);
+            if (hnId >= 60000) {
+                generateAllLevelMetadatas('https://cdn.hashland.com/nft/images', hnId);
+                console.log(`Transfer NFT #${hnId} from ${from} to Binance NFT Market`);
+            }
         });
     }
 
-    const start = 60010;
-    const end = 60100;
+    const start = 60000;
+    const end = 61000;
     const batch = 10;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {

@@ -24,5 +24,17 @@ module.exports = {
       error_file: 'logs/nftStore/error.log',
       combine_logs: true,
     },
+    {
+      name: 'nftStoreS2',
+      script: 'npx',
+      args: 'hardhat run --network mainnet scripts/nftStoreS2.ts',
+      autorestart: true,
+      max_restarts: 5,
+      min_uptime: '10s',
+      restart_delay: 5000,
+      out_file: 'logs/nftStoreS2/normal.log',
+      error_file: 'logs/nftStoreS2/error.log',
+      combine_logs: true,
+    },
   ]
 };
