@@ -62,6 +62,9 @@ contract HNUpgradeV2 is
     event SetUpgradeBasePrice(uint256 price);
     event SetReceivingAddress(address receivingAddr);
     event SetDatas(
+        bool vrfFlag,
+        uint256 goldRate,
+        uint256 crossRate,
         uint256 hcBase,
         uint256 hcRange,
         uint256 hashratesBase,
@@ -70,7 +73,7 @@ contract HNUpgradeV2 is
     event Upgrade(address indexed user, uint256 level, uint256 length);
     event UpgradeHns(
         address indexed user,
-        uint256 level,
+        uint256[] levels,
         uint256 length,
         uint256[] hnIds
     );
@@ -158,17 +161,31 @@ contract HNUpgradeV2 is
      * @dev Set Datas
      */
     function setDatas(
+        bool _vrfFlag,
+        uint256 _goldRate,
+        uint256 _crossRate,
         uint256 _hcBase,
         uint256 _hcRange,
         uint256 _hashratesBase,
         uint256 _hashratesRange
     ) external onlyRole(MANAGER_ROLE) {
+        vrfFlag = _vrfFlag;
+        goldRate = _goldRate;
+        crossRate = _crossRate;
         hcBase = _hcBase;
         hcRange = _hcRange;
         hashratesBase = _hashratesBase;
         hashratesRange = _hashratesRange;
 
-        emit SetDatas(_hcBase, _hcRange, _hashratesBase, _hashratesRange);
+        emit SetDatas(
+            _vrfFlag,
+            _goldRate,
+            _crossRate,
+            _hcBase,
+            _hcRange,
+            _hashratesBase,
+            _hashratesRange
+        );
     }
 
     /**
@@ -271,7 +288,7 @@ contract HNUpgradeV2 is
         totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
 
-        emit Upgrade(msg.sender, level + 1, hnIds.length / 4);
+        emit Upgrade(msg.sender, level, hnIds.length);
     }
 
     /**
@@ -329,6 +346,7 @@ contract HNUpgradeV2 is
         uint256[] memory sameClassCounts = requestIdToSameClassCounts[
             requestId
         ];
+        uint256[] memory levels = new uint256[](upgradedHnIds.length);
         for (uint256 index = 0; index < upgradedHnIds.length; index++) {
             uint256 hnId = upgradedHnIds[index];
             uint256[] memory hashrates = upgradedHashrates[index];
@@ -405,12 +423,13 @@ contract HNUpgradeV2 is
                 hn.setHashrates(hnId, hashrates);
             }
 
+            levels[index] = level + 1;
             randomness /= 1e8;
         }
 
         emit UpgradeHns(
             requestIdToUser[requestId],
-            level + 1,
+            levels,
             upgradedHnIds.length,
             upgradedHnIds
         );
@@ -425,6 +444,7 @@ contract HNUpgradeV2 is
         uint256[][] memory upgradedHashrates,
         uint256[] memory sameClassCounts
     ) private {
+        uint256[] memory levels = new uint256[](upgradedHnIds.length);
         for (uint256 index = 0; index < upgradedHnIds.length; index++) {
             uint256 hnId = upgradedHnIds[index];
             uint256[] memory hashrates = upgradedHashrates[index];
@@ -500,11 +520,12 @@ contract HNUpgradeV2 is
                 }
                 hn.setHashrates(hnId, hashrates);
             }
+            levels[index] = level + 1;
         }
 
         emit UpgradeHns(
             msg.sender,
-            level + 1,
+            levels,
             upgradedHnIds.length,
             upgradedHnIds
         );

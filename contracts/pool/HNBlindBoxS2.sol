@@ -59,6 +59,11 @@ contract HNBlindBoxS2 is
     bytes32 public keyHash;
     uint256 public fee;
 
+    event SetDatas(
+        uint256 goldRate,
+        uint256[] hashrateBases,
+        uint256[] hashrateRanges
+    );
     event SetTokenInfo(
         uint256 tokenId,
         uint256 boxTokenPrice,
@@ -117,6 +122,21 @@ contract HNBlindBoxS2 is
      */
     function setFee(uint256 _fee) external onlyRole(MANAGER_ROLE) {
         fee = _fee;
+    }
+
+    /**
+     * @dev Set Datas
+     */
+    function setDatas(
+        uint256 _goldRate,
+        uint256[] calldata _hashrateBases,
+        uint256[] calldata _hashrateRanges
+    ) external onlyRole(MANAGER_ROLE) {
+        goldRate = _goldRate;
+        hashrateBases = _hashrateBases;
+        hashrateRanges = _hashrateRanges;
+
+        emit SetDatas(_goldRate, _hashrateBases, _hashrateRanges);
     }
 
     /**
