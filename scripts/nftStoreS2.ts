@@ -94,12 +94,13 @@ async function main() {
                 const heroName = ['Tameka', 'Katniss', 'Natalie', `Mila`];
                 const fileName = `hashland-nft-${hnId}-${level}`;
 
-                const watermark = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79`;
+                const hcHashrate = `watermark,text_${Buffer.from((hashrates[0] / 1e4).toFixed(4)).toString('base64url')},type_enpnZnhpbmd5YW4,color_ffffff,size_24,g_nw,x_395,y_79`;
+                const ultraLogo = ultra ? `/watermark,image_${Buffer.from('https://cdn.hashland.com/nft/logo/ultra_1024.png').toString('base64url')},g_center` : ``;
 
                 const metadata = {
                     name: `HashLand NFT #${hnId}`,
                     description: 'The NFTs with BTC hashrate have been sold out. Why not and cherish the last batch of NFTs with HC hashrate? The 2nd batch of Hashland NFTs with HC hashrate and strong hero attributes in game.',
-                    image: `${imagesCid}/${fileName}.png?image_process=${watermark}`,
+                    image: `${imagesCid}/${fileName}.png?image_process=${hcHashrate}${ultraLogo}`,
                     attributes: [
                         {
                             trait_type: 'Ip',
