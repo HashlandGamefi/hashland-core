@@ -2321,6 +2321,7 @@ contract HNUpgradeV2 is
                 requestIdToSameClassCounts[requestId] = sameClassCounts;
             } else {
                 upgradeHns(
+                    msg.sender,
                     level,
                     upgradedHnIds,
                     upgradedHashrates,
@@ -2408,10 +2409,10 @@ contract HNUpgradeV2 is
                 random = uint256(
                     keccak256(
                         abi.encodePacked(
-                            msg.sender,
+                            requestIdToUser[requestId],
                             block.number,
                             totalUpgradeCount,
-                            userUpgradeCount[msg.sender],
+                            userUpgradeCount[requestIdToUser[requestId]],
                             requestIdToUpgradedHnIds[requestId][index],
                             users.length(),
                             requestIdToUpgradedHashrates[requestId][index][i],
@@ -2477,10 +2478,10 @@ contract HNUpgradeV2 is
                     random = uint256(
                         keccak256(
                             abi.encodePacked(
-                                msg.sender,
+                                requestIdToUser[requestId],
                                 block.number,
                                 totalUpgradeCount,
-                                userUpgradeCount[msg.sender],
+                                userUpgradeCount[requestIdToUser[requestId]],
                                 requestIdToUpgradedHnIds[requestId][index],
                                 users.length(),
                                 requestIdToUpgradedHashrates[requestId][index][
@@ -2528,6 +2529,7 @@ contract HNUpgradeV2 is
      * @dev Upgrade Hns
      */
     function upgradeHns(
+        address user,
         uint256 level,
         uint256[] memory upgradedHnIds,
         uint256[][] memory upgradedHashrates,
@@ -2542,10 +2544,10 @@ contract HNUpgradeV2 is
                 randomness = uint256(
                     keccak256(
                         abi.encodePacked(
-                            msg.sender,
+                            user,
                             block.number,
                             totalUpgradeCount,
-                            userUpgradeCount[msg.sender],
+                            userUpgradeCount[user],
                             upgradedHnIds[index],
                             users.length(),
                             upgradedHashrates[index][i],
@@ -2586,10 +2588,10 @@ contract HNUpgradeV2 is
                     randomness = uint256(
                         keccak256(
                             abi.encodePacked(
-                                msg.sender,
+                                user,
                                 block.number,
                                 totalUpgradeCount,
-                                userUpgradeCount[msg.sender],
+                                userUpgradeCount[user],
                                 upgradedHnIds[index],
                                 users.length(),
                                 upgradedHashrates[index][i],
@@ -2613,11 +2615,6 @@ contract HNUpgradeV2 is
             levels[index] = level + 1;
         }
 
-        emit UpgradeHns(
-            msg.sender,
-            levels,
-            upgradedHnIds.length,
-            upgradedHnIds
-        );
+        emit UpgradeHns(user, levels, upgradedHnIds.length, upgradedHnIds);
     }
 }
