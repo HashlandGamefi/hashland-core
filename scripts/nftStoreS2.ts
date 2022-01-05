@@ -89,7 +89,7 @@ async function main() {
             try {
                 const hnClass = getRandomNumber(hnId, 'class', 1, 4);
                 const hashrates = await hn.getHashrates(hnId);
-                const gold = await hn.data(hnId, 'gold');
+                const ultra = await hn.data(hnId, 'ultra');
                 const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
                 const heroName = ['Tameka', 'Katniss', 'Natalie', `Mila`];
                 const fileName = `hashland-nft-${hnId}-${level}`;
@@ -126,8 +126,8 @@ async function main() {
                             value: (hashrates[0] / 1e4).toFixed(4),
                         },
                         {
-                            trait_type: 'Gold',
-                            value: gold ? true : false,
+                            trait_type: 'Ultra',
+                            value: ultra ? true : false,
                         },
                     ],
                 }
