@@ -338,24 +338,25 @@ contract HNUpgradeV2 is
         internal
         override
     {
-        uint256 level = requestIdToLevel[requestId];
-        uint256[] memory upgradedHnIds = requestIdToUpgradedHnIds[requestId];
-        uint256[][] memory upgradedHashrates = requestIdToUpgradedHashrates[
-            requestId
-        ];
-        uint256[] memory sameClassCounts = requestIdToSameClassCounts[
-            requestId
-        ];
-        uint256[] memory levels = new uint256[](upgradedHnIds.length);
-        for (uint256 index = 0; index < upgradedHnIds.length; index++) {
-            uint256 hnId = upgradedHnIds[index];
-            uint256[] memory hashrates = upgradedHashrates[index];
-            uint256 sameClassCount = sameClassCounts[index];
-
-            hn.setLevel(hnId, level + 1);
+        uint256[] memory levels = new uint256[](
+            requestIdToUpgradedHnIds[requestId].length
+        );
+        for (
+            uint256 index = 0;
+            index < requestIdToUpgradedHnIds[requestId].length;
+            index++
+        ) {
+            hn.setLevel(
+                requestIdToUpgradedHnIds[requestId][index],
+                requestIdToLevel[requestId] + 1
+            );
 
             uint256 random;
-            for (uint256 i = 0; i < hashrates.length; i++) {
+            for (
+                uint256 i = 0;
+                i < requestIdToUpgradedHashrates[requestId][index].length;
+                i++
+            ) {
                 random = uint256(
                     keccak256(
                         abi.encodePacked(
@@ -363,38 +364,68 @@ contract HNUpgradeV2 is
                             block.number,
                             totalUpgradeCount,
                             userUpgradeCount[msg.sender],
-                            hnId,
+                            requestIdToUpgradedHnIds[requestId][index],
                             users.length(),
-                            hashrates[i],
-                            level,
+                            requestIdToUpgradedHashrates[requestId][index][i],
+                            requestIdToLevel[requestId],
                             i
                         )
                     )
                 );
 
-                if (i == 0 && hashrates[i] == 0) {
-                    hashrates[i] = hcBase + ((random % 1e10) % hcRange);
+                if (
+                    i == 0 &&
+                    requestIdToUpgradedHashrates[requestId][index][i] == 0
+                ) {
+                    requestIdToUpgradedHashrates[requestId][index][i] =
+                        hcBase +
+                        ((random % 1e10) % hcRange);
                 } else {
-                    hashrates[i] =
-                        (hashrates[i] *
+                    requestIdToUpgradedHashrates[requestId][index][i] =
+                        (requestIdToUpgradedHashrates[requestId][index][i] *
                             (hcBase +
-                                ((i == 0 ? level - 1 : level) * hashratesBase) +
-                                (sameClassCount * hashratesRange) +
+                                ((
+                                    i == 0
+                                        ? requestIdToLevel[requestId] - 1
+                                        : requestIdToLevel[requestId]
+                                ) * hashratesBase) +
+                                (requestIdToSameClassCounts[requestId][index] *
+                                    hashratesRange) +
                                 ((random % 1e10) % hashratesRange))) /
                         hcBase;
                 }
             }
-            hn.setHashrates(hnId, hashrates);
+            hn.setHashrates(
+                requestIdToUpgradedHnIds[requestId][index],
+                requestIdToUpgradedHashrates[requestId][index]
+            );
 
-            if ((randomness % 1e4) < ultraRate) {
-                hn.setData(hnId, "ultra", 1);
+            if (
+                hn.series(requestIdToUpgradedHnIds[requestId][index]) >= 2 &&
+                (randomness % 1e4) < ultraRate
+            ) {
+                hn.setData(
+                    requestIdToUpgradedHnIds[requestId][index],
+                    "ultra",
+                    1
+                );
             }
 
-            if (level <= 3 && ((randomness % 1e8) / 1e4) < crossRate) {
-                level++;
-                hn.setLevel(hnId, level + 1);
+            if (
+                requestIdToLevel[requestId] <= 3 &&
+                ((randomness % 1e8) / 1e4) < crossRate
+            ) {
+                requestIdToLevel[requestId]++;
+                hn.setLevel(
+                    requestIdToUpgradedHnIds[requestId][index],
+                    requestIdToLevel[requestId] + 1
+                );
 
-                for (uint256 i = 0; i < hashrates.length; i++) {
+                for (
+                    uint256 i = 0;
+                    i < requestIdToUpgradedHashrates[requestId][index].length;
+                    i++
+                ) {
                     random = uint256(
                         keccak256(
                             abi.encodePacked(
@@ -402,36 +433,46 @@ contract HNUpgradeV2 is
                                 block.number,
                                 totalUpgradeCount,
                                 userUpgradeCount[msg.sender],
-                                hnId,
+                                requestIdToUpgradedHnIds[requestId][index],
                                 users.length(),
-                                hashrates[i],
-                                level,
+                                requestIdToUpgradedHashrates[requestId][index][
+                                    i
+                                ],
+                                requestIdToLevel[requestId],
                                 i
                             )
                         )
                     );
 
-                    hashrates[i] =
-                        (hashrates[i] *
+                    requestIdToUpgradedHashrates[requestId][index][i] =
+                        (requestIdToUpgradedHashrates[requestId][index][i] *
                             4 *
                             (hcBase +
-                                ((i == 0 ? level - 1 : level) * hashratesBase) +
-                                (sameClassCount * hashratesRange) +
+                                ((
+                                    i == 0
+                                        ? requestIdToLevel[requestId] - 1
+                                        : requestIdToLevel[requestId]
+                                ) * hashratesBase) +
+                                (requestIdToSameClassCounts[requestId][index] *
+                                    hashratesRange) +
                                 ((random % 1e10) % hashratesRange))) /
                         hcBase;
                 }
-                hn.setHashrates(hnId, hashrates);
+                hn.setHashrates(
+                    requestIdToUpgradedHnIds[requestId][index],
+                    requestIdToUpgradedHashrates[requestId][index]
+                );
             }
 
-            levels[index] = level + 1;
+            levels[index] = requestIdToLevel[requestId] + 1;
             randomness /= 1e8;
         }
 
         emit UpgradeHns(
             requestIdToUser[requestId],
             levels,
-            upgradedHnIds.length,
-            upgradedHnIds
+            requestIdToUpgradedHnIds[requestId].length,
+            requestIdToUpgradedHnIds[requestId]
         );
     }
 
@@ -446,14 +487,10 @@ contract HNUpgradeV2 is
     ) private {
         uint256[] memory levels = new uint256[](upgradedHnIds.length);
         for (uint256 index = 0; index < upgradedHnIds.length; index++) {
-            uint256 hnId = upgradedHnIds[index];
-            uint256[] memory hashrates = upgradedHashrates[index];
-            uint256 sameClassCount = sameClassCounts[index];
-
-            hn.setLevel(hnId, level + 1);
+            hn.setLevel(upgradedHnIds[index], level + 1);
 
             uint256 randomness;
-            for (uint256 i = 0; i < hashrates.length; i++) {
+            for (uint256 i = 0; i < upgradedHashrates[index].length; i++) {
                 randomness = uint256(
                     keccak256(
                         abi.encodePacked(
@@ -461,38 +498,43 @@ contract HNUpgradeV2 is
                             block.number,
                             totalUpgradeCount,
                             userUpgradeCount[msg.sender],
-                            hnId,
+                            upgradedHnIds[index],
                             users.length(),
-                            hashrates[i],
+                            upgradedHashrates[index][i],
                             level,
                             i
                         )
                     )
                 );
 
-                if (i == 0 && hashrates[i] == 0) {
-                    hashrates[i] = hcBase + ((randomness % 1e10) % hcRange);
+                if (i == 0 && upgradedHashrates[index][i] == 0) {
+                    upgradedHashrates[index][i] =
+                        hcBase +
+                        ((randomness % 1e10) % hcRange);
                 } else {
-                    hashrates[i] =
-                        (hashrates[i] *
+                    upgradedHashrates[index][i] =
+                        (upgradedHashrates[index][i] *
                             (hcBase +
                                 ((i == 0 ? level - 1 : level) * hashratesBase) +
-                                (sameClassCount * hashratesRange) +
+                                (sameClassCounts[index] * hashratesRange) +
                                 ((randomness % 1e10) % hashratesRange))) /
                         hcBase;
                 }
             }
-            hn.setHashrates(hnId, hashrates);
+            hn.setHashrates(upgradedHnIds[index], upgradedHashrates[index]);
 
-            if (((randomness % 1e14) / 1e10) < ultraRate) {
-                hn.setData(hnId, "ultra", 1);
+            if (
+                hn.series(upgradedHnIds[index]) >= 2 &&
+                ((randomness % 1e14) / 1e10) < ultraRate
+            ) {
+                hn.setData(upgradedHnIds[index], "ultra", 1);
             }
 
             if (level <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {
                 level++;
-                hn.setLevel(hnId, level + 1);
+                hn.setLevel(upgradedHnIds[index], level + 1);
 
-                for (uint256 i = 0; i < hashrates.length; i++) {
+                for (uint256 i = 0; i < upgradedHashrates[index].length; i++) {
                     randomness = uint256(
                         keccak256(
                             abi.encodePacked(
@@ -500,25 +542,25 @@ contract HNUpgradeV2 is
                                 block.number,
                                 totalUpgradeCount,
                                 userUpgradeCount[msg.sender],
-                                hnId,
+                                upgradedHnIds[index],
                                 users.length(),
-                                hashrates[i],
+                                upgradedHashrates[index][i],
                                 level,
                                 i
                             )
                         )
                     );
 
-                    hashrates[i] =
-                        (hashrates[i] *
+                    upgradedHashrates[index][i] =
+                        (upgradedHashrates[index][i] *
                             4 *
                             (hcBase +
                                 ((i == 0 ? level - 1 : level) * hashratesBase) +
-                                (sameClassCount * hashratesRange) +
+                                (sameClassCounts[index] * hashratesRange) +
                                 ((randomness % 1e10) % hashratesRange))) /
                         hcBase;
                 }
-                hn.setHashrates(hnId, hashrates);
+                hn.setHashrates(upgradedHnIds[index], upgradedHashrates[index]);
             }
             levels[index] = level + 1;
         }
