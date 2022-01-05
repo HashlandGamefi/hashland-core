@@ -35,7 +35,7 @@ contract HNUpgradeV2 is
     uint256 public totalUpgradeAmount;
 
     bool public vrfFlag = true;
-    uint256 public goldRate = 100;
+    uint256 public ultraRate = 100;
     uint256 public crossRate = 100;
 
     uint256 public hcBase = 10000;
@@ -63,7 +63,7 @@ contract HNUpgradeV2 is
     event SetReceivingAddress(address receivingAddr);
     event SetDatas(
         bool vrfFlag,
-        uint256 goldRate,
+        uint256 ultraRate,
         uint256 crossRate,
         uint256 hcBase,
         uint256 hcRange,
@@ -162,7 +162,7 @@ contract HNUpgradeV2 is
      */
     function setDatas(
         bool _vrfFlag,
-        uint256 _goldRate,
+        uint256 _ultraRate,
         uint256 _crossRate,
         uint256 _hcBase,
         uint256 _hcRange,
@@ -170,7 +170,7 @@ contract HNUpgradeV2 is
         uint256 _hashratesRange
     ) external onlyRole(MANAGER_ROLE) {
         vrfFlag = _vrfFlag;
-        goldRate = _goldRate;
+        ultraRate = _ultraRate;
         crossRate = _crossRate;
         hcBase = _hcBase;
         hcRange = _hcRange;
@@ -179,7 +179,7 @@ contract HNUpgradeV2 is
 
         emit SetDatas(
             _vrfFlag,
-            _goldRate,
+            _ultraRate,
             _crossRate,
             _hcBase,
             _hcRange,
@@ -386,8 +386,8 @@ contract HNUpgradeV2 is
             }
             hn.setHashrates(hnId, hashrates);
 
-            if ((randomness % 1e4) < goldRate) {
-                hn.setData(hnId, "gold", 1);
+            if ((randomness % 1e4) < ultraRate) {
+                hn.setData(hnId, "ultra", 1);
             }
 
             if (level <= 3 && ((randomness % 1e8) / 1e4) < crossRate) {
@@ -484,8 +484,8 @@ contract HNUpgradeV2 is
             }
             hn.setHashrates(hnId, hashrates);
 
-            if (((randomness % 1e14) / 1e10) < goldRate) {
-                hn.setData(hnId, "gold", 1);
+            if (((randomness % 1e14) / 1e10) < ultraRate) {
+                hn.setData(hnId, "ultra", 1);
             }
 
             if (level <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {

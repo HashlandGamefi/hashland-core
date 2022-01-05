@@ -38,7 +38,7 @@ contract HNBlindBoxS2 is
     mapping(uint256 => uint256) public boxesMaxSupply;
     mapping(uint256 => uint256) public totalBoxesLength;
 
-    uint256 public goldRate = 100;
+    uint256 public ultraRate = 100;
     uint256[] public hashrateBases = [10000, 44000, 211200, 1098240, 6150144];
     uint256[] public hashrateRanges = [1000, 8800, 63360, 439296, 3075072];
 
@@ -60,7 +60,7 @@ contract HNBlindBoxS2 is
     uint256 public fee;
 
     event SetDatas(
-        uint256 goldRate,
+        uint256 ultraRate,
         uint256[] hashrateBases,
         uint256[] hashrateRanges
     );
@@ -128,15 +128,15 @@ contract HNBlindBoxS2 is
      * @dev Set Datas
      */
     function setDatas(
-        uint256 _goldRate,
+        uint256 _ultraRate,
         uint256[] calldata _hashrateBases,
         uint256[] calldata _hashrateRanges
     ) external onlyRole(MANAGER_ROLE) {
-        goldRate = _goldRate;
+        ultraRate = _ultraRate;
         hashrateBases = _hashrateBases;
         hashrateRanges = _hashrateRanges;
 
-        emit SetDatas(_goldRate, _hashrateBases, _hashrateRanges);
+        emit SetDatas(_ultraRate, _hashrateBases, _hashrateRanges);
     }
 
     /**
@@ -507,8 +507,8 @@ contract HNBlindBoxS2 is
                 hashrates
             );
 
-            if (((randomness % 1e18) / 1e14) < goldRate) {
-                hn.setData(hnId, "gold", 1);
+            if (((randomness % 1e18) / 1e14) < ultraRate) {
+                hn.setData(hnId, "ultra", 1);
             }
 
             hnIds[i] = hnId;
@@ -561,8 +561,8 @@ contract HNBlindBoxS2 is
 
             uint256 hnId = hn.spawnHn(to, 1, 2, level, hashrates);
 
-            if (((randomness % 1e18) / 1e14) < goldRate) {
-                hn.setData(hnId, "gold", 1);
+            if (((randomness % 1e18) / 1e14) < ultraRate) {
+                hn.setData(hnId, "ultra", 1);
             }
 
             hnIds[i] = hnId;
