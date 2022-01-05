@@ -98,7 +98,7 @@ async function main() {
 
                 const metadata = {
                     name: `HashLand NFT #${hnId}`,
-                    description: 'Have you ever imagined an NFT with BTC hashrate? HashLand did it, and now he brings the first series of NFT - I AM MT.',
+                    description: 'The NFTs with BTC hashrate have been sold out. Why not and cherish the last batch of NFTs with HC hashrate? The 2nd batch of Hashland NFTs with HC hashrate and strong hero attributes in game.',
                     image: `${imagesCid}/${fileName}.png?image_process=${watermark}`,
                     attributes: [
                         {
