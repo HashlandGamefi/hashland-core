@@ -2556,11 +2556,11 @@ contract HNBlindBoxS2 is
 
             if (((randomness % 1e18) / 1e14) < ultraRate) {
                 hn.setData(hnId, "ultra", 1);
-                ultras[i] = true;
             }
 
             hnIds[i] = hnId;
             levels[i] = level;
+            ultras[i] = hn.data(hnId, "ultra") == 1 ? true : false;
             levelHnIds[level].add(hnId);
             randomness /= 1e18;
         }
@@ -2613,11 +2613,11 @@ contract HNBlindBoxS2 is
 
             if (((randomness % 1e18) / 1e14) < ultraRate) {
                 hn.setData(hnId, "ultra", 1);
-                ultras[i] = true;
             }
 
             hnIds[i] = hnId;
             levels[i] = level;
+            ultras[i] = hn.data(hnId, "ultra") == 1 ? true : false;
             levelHnIds[level].add(hnId);
         }
 

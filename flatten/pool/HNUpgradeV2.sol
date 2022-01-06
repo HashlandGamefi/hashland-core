@@ -2462,7 +2462,6 @@ contract HNUpgradeV2 is
                     "ultra",
                     1
                 );
-                ultras[index] = true;
             }
 
             if (
@@ -2519,6 +2518,12 @@ contract HNUpgradeV2 is
             }
 
             levels[index] = requestIdToLevel[requestId] + 1;
+            ultras[index] = hn.data(
+                requestIdToUpgradedHnIds[requestId][index],
+                "ultra"
+            ) == 1
+                ? true
+                : false;
             randomness /= 1e8;
         }
 
@@ -2585,7 +2590,6 @@ contract HNUpgradeV2 is
                 ((randomness % 1e14) / 1e10) < ultraRate
             ) {
                 hn.setData(upgradedHnIds[index], "ultra", 1);
-                ultras[index] = true;
             }
 
             if (level <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {
@@ -2620,7 +2624,11 @@ contract HNUpgradeV2 is
                 }
                 hn.setHashrates(upgradedHnIds[index], upgradedHashrates[index]);
             }
+
             levels[index] = level + 1;
+            ultras[index] = hn.data(upgradedHnIds[index], "ultra") == 1
+                ? true
+                : false;
         }
 
         emit UpgradeHns(
