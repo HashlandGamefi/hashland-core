@@ -2130,7 +2130,8 @@ contract HNBlindBoxS2 is
         address indexed user,
         uint256 boxesLength,
         uint256[] hnIds,
-        uint256[] levels
+        uint256[] levels,
+        bool[] ultras
     );
 
     /**
@@ -2227,9 +2228,6 @@ contract HNBlindBoxS2 is
         external
         onlyRole(MANAGER_ROLE)
     {
-        if (vrfFlags[tokenId]) {
-            LINK.transferFrom(msg.sender, address(this), supply * fee);
-        }
         boxesMaxSupply[tokenId] += supply;
 
         emit AddBoxesMaxSupply(supply, tokenId);
@@ -2536,6 +2534,7 @@ contract HNBlindBoxS2 is
         uint256[] memory levels = new uint256[](
             requestIdToBoxesLength[requestId]
         );
+        bool[] memory ultras = new bool[](requestIdToBoxesLength[requestId]);
         for (uint256 i = 0; i < requestIdToBoxesLength[requestId]; i++) {
             uint256 level = getLevel(
                 requestIdToTokenId[requestId],
@@ -2557,6 +2556,7 @@ contract HNBlindBoxS2 is
 
             if (((randomness % 1e18) / 1e14) < ultraRate) {
                 hn.setData(hnId, "ultra", 1);
+                ultras[i] = true;
             }
 
             hnIds[i] = hnId;
@@ -2569,7 +2569,8 @@ contract HNBlindBoxS2 is
             requestIdToUser[requestId],
             requestIdToBoxesLength[requestId],
             hnIds,
-            levels
+            levels,
+            ultras
         );
     }
 
@@ -2583,6 +2584,7 @@ contract HNBlindBoxS2 is
     ) private {
         uint256[] memory hnIds = new uint256[](boxesLength);
         uint256[] memory levels = new uint256[](boxesLength);
+        bool[] memory ultras = new bool[](boxesLength);
         for (uint256 i = 0; i < boxesLength; i++) {
             uint256 randomness = uint256(
                 keccak256(
@@ -2611,6 +2613,7 @@ contract HNBlindBoxS2 is
 
             if (((randomness % 1e18) / 1e14) < ultraRate) {
                 hn.setData(hnId, "ultra", 1);
+                ultras[i] = true;
             }
 
             hnIds[i] = hnId;
@@ -2618,6 +2621,6 @@ contract HNBlindBoxS2 is
             levelHnIds[level].add(hnId);
         }
 
-        emit SpawnHns(to, boxesLength, hnIds, levels);
+        emit SpawnHns(to, boxesLength, hnIds, levels, ultras);
     }
 }

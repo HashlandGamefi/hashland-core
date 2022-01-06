@@ -2123,7 +2123,8 @@ contract HNUpgradeV2 is
         address indexed user,
         uint256[] levels,
         uint256 length,
-        uint256[] hnIds
+        uint256[] hnIds,
+        bool[] ultras
     );
 
     /**
@@ -2390,6 +2391,9 @@ contract HNUpgradeV2 is
         uint256[] memory levels = new uint256[](
             requestIdToUpgradedHnIds[requestId].length
         );
+        bool[] memory ultras = new bool[](
+            requestIdToUpgradedHnIds[requestId].length
+        );
         for (
             uint256 index = 0;
             index < requestIdToUpgradedHnIds[requestId].length;
@@ -2458,6 +2462,7 @@ contract HNUpgradeV2 is
                     "ultra",
                     1
                 );
+                ultras[index] = true;
             }
 
             if (
@@ -2521,7 +2526,8 @@ contract HNUpgradeV2 is
             requestIdToUser[requestId],
             levels,
             requestIdToUpgradedHnIds[requestId].length,
-            requestIdToUpgradedHnIds[requestId]
+            requestIdToUpgradedHnIds[requestId],
+            ultras
         );
     }
 
@@ -2536,6 +2542,7 @@ contract HNUpgradeV2 is
         uint256[] memory sameClassCounts
     ) private {
         uint256[] memory levels = new uint256[](upgradedHnIds.length);
+        bool[] memory ultras = new bool[](upgradedHnIds.length);
         for (uint256 index = 0; index < upgradedHnIds.length; index++) {
             hn.setLevel(upgradedHnIds[index], level + 1);
 
@@ -2578,6 +2585,7 @@ contract HNUpgradeV2 is
                 ((randomness % 1e14) / 1e10) < ultraRate
             ) {
                 hn.setData(upgradedHnIds[index], "ultra", 1);
+                ultras[index] = true;
             }
 
             if (level <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {
@@ -2615,6 +2623,12 @@ contract HNUpgradeV2 is
             levels[index] = level + 1;
         }
 
-        emit UpgradeHns(user, levels, upgradedHnIds.length, upgradedHnIds);
+        emit UpgradeHns(
+            user,
+            levels,
+            upgradedHnIds.length,
+            upgradedHnIds,
+            ultras
+        );
     }
 }
