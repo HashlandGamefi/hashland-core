@@ -89,7 +89,7 @@ async function main() {
             try {
                 const hnClass = getRandomNumber(hnId, 'class', 1, 4);
                 const hashrates = await hn.getHashrates(hnId);
-                const ultra = await hn.data(hnId, 'ultra');
+                const ultra = (await hn.data(hnId, 'ultra')) == 1 ? true : false;
                 const className = ['Cavalryman', 'Holy', 'Blade', 'Hex'];
                 const heroName = ['Tameka', 'Katniss', 'Natalie', `Mila`];
                 const fileName = `hashland-nft-${hnId}-${level}`;
@@ -128,7 +128,7 @@ async function main() {
                         },
                         {
                             trait_type: 'Ultra',
-                            value: ultra ? true : false,
+                            value: ultra,
                         },
                     ],
                 }
@@ -196,7 +196,7 @@ async function main() {
     }
 
     const start = 60000;
-    const end = 61000;
+    const end = 60999;
     const batch = 10;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {
