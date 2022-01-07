@@ -222,8 +222,7 @@ contract HNUpgradeV2 is
             require(hn.series(hnId) == series, "Hn series mismatch");
 
             uint256[] memory hashrates = hn.getHashrates(hnId);
-            uint256 class = hn.data(hnId, "class");
-            class = class > 0 ? class : hn.getRandomNumber(hnId, "class", 1, 4);
+            uint256 class = hn.getRandomNumber(hnId, "class", 1, 4);
             uint256 sameClassCount;
             for (uint256 i = 0; i < materialHnIds.length; i++) {
                 require(
@@ -251,41 +250,40 @@ contract HNUpgradeV2 is
                 for (uint256 j = 0; j < hashrates.length; j++) {
                     hashrates[j] += materialHashrates[j];
                 }
-                upgradedHashrates[index / 4] = hashrates;
 
-                uint256 materialClass = hn.data(materialHnIds[i], "class");
-                materialClass = materialClass > 0
-                    ? materialClass
-                    : hn.getRandomNumber(materialHnIds[i], "class", 1, 4);
+                uint256 materialClass = hn.getRandomNumber(
+                    materialHnIds[i],
+                    "class",
+                    1,
+                    4
+                );
                 if (class == materialClass) sameClassCount++;
-                sameClassCounts[index / 4] = sameClassCount;
             }
 
-            if (vrfFlag) {
-                require(
-                    LINK.balanceOf(address(this)) >= fee,
-                    "Not Enough LINK"
-                );
-                bytes32 requestId = requestRandomness(keyHash, fee);
-                requestIdToUser[requestId] = msg.sender;
-                requestIdToLevel[requestId] = level;
-                requestIdToUpgradedHnIds[requestId] = upgradedHnIds;
-                requestIdToUpgradedHashrates[requestId] = upgradedHashrates;
-                requestIdToSameClassCounts[requestId] = sameClassCounts;
-            } else {
-                upgradeHns(
-                    msg.sender,
-                    level,
-                    upgradedHnIds,
-                    upgradedHashrates,
-                    sameClassCounts
-                );
-            }
-
-            userUpgradeCount[msg.sender]++;
-            totalUpgradeCount++;
+            upgradedHashrates[index / 4] = hashrates;
+            sameClassCounts[index / 4] = sameClassCount;
         }
 
+        if (vrfFlag) {
+            require(LINK.balanceOf(address(this)) >= fee, "Not Enough LINK");
+            bytes32 requestId = requestRandomness(keyHash, fee);
+            requestIdToUser[requestId] = msg.sender;
+            requestIdToLevel[requestId] = level;
+            requestIdToUpgradedHnIds[requestId] = upgradedHnIds;
+            requestIdToUpgradedHashrates[requestId] = upgradedHashrates;
+            requestIdToSameClassCounts[requestId] = sameClassCounts;
+        } else {
+            upgradeHns(
+                msg.sender,
+                level,
+                upgradedHnIds,
+                upgradedHashrates,
+                sameClassCounts
+            );
+        }
+
+        userUpgradeCount[msg.sender] += upgradedHnIds.length;
+        totalUpgradeCount += upgradedHnIds.length;
         userUpgradeAmount[msg.sender] += upgradePrice;
         totalUpgradeAmount += upgradePrice;
         users.add(msg.sender);
