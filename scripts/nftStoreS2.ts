@@ -40,11 +40,11 @@ async function main() {
 
                 const heroItemsByLevel = [
                     [],
-                    [heroItems[0], heroItems[1], heroItems[2]],
-                    [heroItems[0], heroItems[1], heroItems[3], heroItems[4]],
-                    [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6]],
-                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6], heroItems[7]] : [heroItems[0], heroItems[1], heroItems[7], heroItems[3], heroItems[5], heroItems[6]],
-                    hnClass == 4 ? [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6], heroItems[7], heroItems[8]] : [heroItems[0], heroItems[1], heroItems[7], heroItems[3], heroItems[5], heroItems[6], heroItems[8]],
+                    hnClass == 1 ? [heroItems[0], heroItems[2], heroItems[1]] : [heroItems[0], heroItems[1], heroItems[2]],
+                    hnClass == 1 ? [heroItems[0], heroItems[3], heroItems[4], heroItems[1]] : [heroItems[0], heroItems[1], heroItems[3], heroItems[4]],
+                    hnClass == 1 ? [heroItems[0], heroItems[3], heroItems[5], heroItems[6], heroItems[1]] : [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6]],
+                    hnClass == 1 ? [heroItems[0], heroItems[3], heroItems[5], heroItems[6], heroItems[7], heroItems[1]] : hnClass == 3 ? [heroItems[0], heroItems[1], heroItems[7], heroItems[3], heroItems[5], heroItems[6]] : [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6], heroItems[7]],
+                    hnClass == 1 ? [heroItems[0], heroItems[3], heroItems[5], heroItems[6], heroItems[7], heroItems[1], heroItems[8]] : hnClass == 3 ? [heroItems[0], heroItems[1], heroItems[7], heroItems[3], heroItems[5], heroItems[6], heroItems[8]] : [heroItems[0], heroItems[1], heroItems[3], heroItems[5], heroItems[6], heroItems[7], heroItems[8]],
                 ];
 
                 const bg = sharp(`nft/s${series}/bg/${level}.png`).toBuffer();
