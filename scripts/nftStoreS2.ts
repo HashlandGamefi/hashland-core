@@ -51,7 +51,6 @@ async function main() {
                 const materials = [
                     `nft/s${series}/class${hnClass}/effect/bg/${level}.png`,
                     ...heroItemsByLevel[level],
-                    `nft/s${series}/class${hnClass}/effect/hero/${level}.png`,
                     `nft/s${series}/class${hnClass}/info.png`,
                     `nft/s${series}/bar/${level}.png`,
                 ].reduce(async (input, overlay) => {
