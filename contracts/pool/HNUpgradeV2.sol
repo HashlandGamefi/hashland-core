@@ -414,14 +414,12 @@ contract HNUpgradeV2 is
                 );
             }
 
-            if (
-                requestIdToLevel[requestId] <= 3 &&
-                ((randomness % 1e8) / 1e4) < crossRate
-            ) {
-                requestIdToLevel[requestId]++;
+            uint256 newLevel = requestIdToLevel[requestId];
+            if (newLevel <= 3 && ((randomness % 1e8) / 1e4) < crossRate) {
+                newLevel++;
                 hn.setLevel(
                     requestIdToUpgradedHnIds[requestId][index],
-                    requestIdToLevel[requestId] + 1
+                    newLevel + 1
                 );
 
                 for (
@@ -441,7 +439,7 @@ contract HNUpgradeV2 is
                                 requestIdToUpgradedHashrates[requestId][index][
                                     i
                                 ],
-                                requestIdToLevel[requestId],
+                                newLevel,
                                 i
                             )
                         )
@@ -451,11 +449,8 @@ contract HNUpgradeV2 is
                         (requestIdToUpgradedHashrates[requestId][index][i] *
                             4 *
                             (hcBase +
-                                ((
-                                    i == 0
-                                        ? requestIdToLevel[requestId] - 1
-                                        : requestIdToLevel[requestId]
-                                ) * hashratesBase) +
+                                ((i == 0 ? newLevel - 1 : newLevel) *
+                                    hashratesBase) +
                                 (requestIdToSameClassCounts[requestId][index] *
                                     hashratesRange) +
                                 ((random % 1e10) % hashratesRange))) /
@@ -467,7 +462,7 @@ contract HNUpgradeV2 is
                 );
             }
 
-            levels[index] = requestIdToLevel[requestId] + 1;
+            levels[index] = newLevel + 1;
             ultras[index] = hn.data(
                 requestIdToUpgradedHnIds[requestId][index],
                 "ultra"
@@ -542,9 +537,10 @@ contract HNUpgradeV2 is
                 hn.setData(upgradedHnIds[index], "ultra", 1);
             }
 
-            if (level <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {
-                level++;
-                hn.setLevel(upgradedHnIds[index], level + 1);
+            uint256 newLevel = level;
+            if (newLevel <= 3 && ((randomness % 1e18) / 1e14) < crossRate) {
+                newLevel++;
+                hn.setLevel(upgradedHnIds[index], newLevel + 1);
 
                 for (uint256 i = 0; i < upgradedHashrates[index].length; i++) {
                     randomness = uint256(
@@ -557,7 +553,7 @@ contract HNUpgradeV2 is
                                 upgradedHnIds[index],
                                 users.length(),
                                 upgradedHashrates[index][i],
-                                level,
+                                newLevel,
                                 i
                             )
                         )
@@ -567,7 +563,8 @@ contract HNUpgradeV2 is
                         (upgradedHashrates[index][i] *
                             4 *
                             (hcBase +
-                                ((i == 0 ? level - 1 : level) * hashratesBase) +
+                                ((i == 0 ? newLevel - 1 : newLevel) *
+                                    hashratesBase) +
                                 (sameClassCounts[index] * hashratesRange) +
                                 ((randomness % 1e10) % hashratesRange))) /
                         hcBase;
@@ -575,7 +572,7 @@ contract HNUpgradeV2 is
                 hn.setHashrates(upgradedHnIds[index], upgradedHashrates[index]);
             }
 
-            levels[index] = level + 1;
+            levels[index] = newLevel + 1;
             ultras[index] = hn.data(upgradedHnIds[index], "ultra") == 1
                 ? true
                 : false;
