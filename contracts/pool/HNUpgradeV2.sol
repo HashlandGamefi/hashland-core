@@ -204,9 +204,7 @@ contract HNUpgradeV2 is
         hc.safeTransferFrom(msg.sender, receivingAddress, upgradePrice);
 
         uint256[] memory upgradedHnIds = new uint256[](hnIds.length / 4);
-        uint256[][] memory upgradedHashrates = new uint256[][](
-            hnIds.length / 4
-        );
+        uint256[][] memory upgradedHashrates;
         uint256[] memory sameClassCounts = new uint256[](hnIds.length / 4);
         for (uint256 index = 0; index < hnIds.length; index += 4) {
             uint256 hnId = hnIds[index];
