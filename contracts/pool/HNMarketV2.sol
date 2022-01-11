@@ -11,11 +11,11 @@ import "../token/interface/IHN.sol";
 import "../pool/interface/IHNPool.sol";
 
 /**
- * @title HN Market Contract
+ * @title HN Market Contract V2
  * @author HASHLAND-TEAM
  * @notice In this contract users can trade HN
  */
-contract HNMarket is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
+contract HNMarketV2 is ERC721Holder, AccessControlEnumerable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
