@@ -194,7 +194,7 @@ async function main() {
         });
     }
 
-    const start = 64000;
+    const start = 60000;
     const end = 70000;
     const batch = 10;
     const set: Set<number> = new Set();
@@ -226,8 +226,8 @@ async function main() {
         });
     }
 
-    // updateMetadata();
-    await uploadAllImagesAndMetadatas();
+    updateMetadata();
+    // await uploadAllImagesAndMetadatas();
 }
 
 main();
