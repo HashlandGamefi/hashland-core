@@ -194,8 +194,8 @@ async function main() {
         });
     }
 
-    const start = 60000;
-    const end = 65000;
+    const start = 64000;
+    const end = 70000;
     const batch = 10;
     const set: Set<number> = new Set();
     for (let i = start; i < end; i++) {
